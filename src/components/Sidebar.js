@@ -144,7 +144,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             : `flex items-center w-full px-2 py-1.5 rounded-md text-xs transition-all duration-200 group relative ${item.dimmed && !isActive ? 'opacity-50 hover:opacity-100' : ''}`;
         const active = isActive
             ? inFlyout ? 'bg-yellow-500 text-slate-900 font-bold' : 'bg-yellow-500 text-slate-900 shadow-md font-bold'
-            : inFlyout ? 'text-slate-300 hover:bg-slate-800 hover:text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white';
+            : inFlyout ? 'text-indigo-200 hover:bg-indigo-800 hover:text-white' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white';
 
         return (
             <li key={item.id}>
@@ -161,10 +161,10 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
     };
 
     return (
-        <div className={`bg-slate-900 text-slate-300 shadow-xl transition-all duration-300 ease-in-out flex flex-col ${isCollapsed ? 'w-14' : 'w-56'} h-full z-20`}>
+        <div className={`bg-indigo-950 text-indigo-200 shadow-xl transition-all duration-300 ease-in-out flex flex-col ${isCollapsed ? 'w-14' : 'w-56'} h-full z-20`}>
 
             {/* Header */}
-            <div className="h-14 flex items-center justify-between px-3 border-b border-slate-700 bg-slate-950 shrink-0">
+            <div className="h-14 flex items-center justify-between px-3 border-b border-indigo-800 bg-indigo-950 shrink-0">
                 {!isCollapsed ? (
                     <img src="https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png" alt="MAK" className="h-8 object-contain" />
                 ) : (
@@ -174,7 +174,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                 )}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-1 rounded text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+                    className="p-1 rounded text-indigo-300 hover:bg-indigo-800 hover:text-white transition-colors"
                 >
                     {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
                 </button>
@@ -191,7 +191,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                                     className={`flex items-center justify-center w-full p-2 rounded-md transition-all duration-200 ${
                                         isGroupActive(group)
                                             ? 'bg-yellow-500 text-slate-900 shadow-md'
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'
                                     }`}
                                     title={group.label}
                                 >
@@ -202,8 +202,8 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                                     )}
                                 </button>
                                 {/* Flyout */}
-                                <div className="hidden group-hover/flyout:block absolute left-full top-0 ml-1 z-50 w-52 bg-slate-900 border border-slate-700 rounded-lg shadow-2xl py-2 pointer-events-auto">
-                                    <div className="px-3 pb-1.5 mb-1 border-b border-slate-700">
+                                <div className="hidden group-hover/flyout:block absolute left-full top-0 ml-1 z-50 w-52 bg-indigo-950 border border-indigo-800 rounded-lg shadow-2xl py-2 pointer-events-auto">
+                                    <div className="px-3 pb-1.5 mb-1 border-b border-indigo-800">
                                         <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{group.label}</p>
                                     </div>
                                     <ul>
@@ -224,12 +224,12 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                                     className={`flex items-center w-full px-2 py-1.5 rounded-md transition-colors text-xs font-bold uppercase tracking-wide group/gh ${
                                         isGroupActive(group)
                                             ? 'text-yellow-500'
-                                            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800'
+                                            : 'text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800'
                                     }`}
                                 >
                                     <span className="mr-2">{group.icon}</span>
                                     <span className="flex-1 text-left">{group.label}</span>
-                                    <span className="text-slate-600 group-hover/gh:text-slate-400 transition-colors">
+                                    <span className="text-indigo-500 group-hover/gh:text-indigo-300 transition-colors">
                                         {expandedGroups.has(group.id) ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                                     </span>
                                 </button>
@@ -239,7 +239,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                                     className="overflow-hidden transition-all duration-200 ease-in-out"
                                     style={{ maxHeight: expandedGroups.has(group.id) ? '600px' : '0px' }}
                                 >
-                                    <ul className="ml-3 pl-2 border-l border-slate-700 mt-0.5 mb-1 space-y-0.5">
+                                    <ul className="ml-3 pl-2 border-l border-indigo-800 mt-0.5 mb-1 space-y-0.5">
                                         {group.items.map(item => renderItem(item))}
                                     </ul>
                                 </div>
@@ -250,7 +250,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             </nav>
 
             {/* Footer */}
-            <div className="p-2 border-t border-slate-700 bg-slate-950 shrink-0">
+            <div className="p-2 border-t border-indigo-800 bg-indigo-950 shrink-0">
                 <div className={`mb-2 px-2 flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
                     <div className="w-6 h-6 rounded-full bg-yellow-500 text-slate-900 flex items-center justify-center font-bold text-xs shrink-0">
                         {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
@@ -266,7 +266,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                 </div>
                 <button
                     onClick={logout}
-                    className="flex items-center w-full px-2 py-1.5 rounded-md transition-colors duration-200 hover:bg-red-900/50 text-slate-400 hover:text-red-400"
+                    className="flex items-center w-full px-2 py-1.5 rounded-md transition-colors duration-200 hover:bg-red-900/50 text-indigo-300 hover:text-red-400"
                     title="Sair"
                 >
                     <LogOut size={16} />

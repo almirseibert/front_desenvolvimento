@@ -64,10 +64,13 @@ const LoginScreen = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gray-200 font-sans">
+        <div className="flex items-center justify-center min-h-screen bg-indigo-200 font-sans">
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-lg">
                 <div className="flex justify-center">
                     <img src="https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png" alt="Logo MAK" className="w-48"/>
+                </div>
+                <div className="flex justify-center">
+                    <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase">Desenvolvimento</span>
                 </div>
                 <h2 className="text-2xl font-bold text-center text-gray-900">Sistema de Frotas</h2>
                 
