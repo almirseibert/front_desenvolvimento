@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Adicione aqui quaisquer estilos CSS personalizados ou @layer se precisar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px; /* Largura da barra */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1; /* Cor do fundo da trilha */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c5c5c5; /* Cor da barra */
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a0a0a0; /* Cor da barra ao passar o mouse */
+}
+
+/* Para Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin; /* "auto" ou "thin" */
+  scrollbar-color: #c5c5c5 #f1f1f1; /* Cor da barra e cor da trilha */
+}

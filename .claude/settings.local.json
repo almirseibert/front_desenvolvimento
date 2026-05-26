@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx react-scripts *)",
+      "Bash(git -C \"C:\\\\Aplicativos\\\\frotasmak\\\\backend\" status --short)",
+      "Bash(git *)",
+      "Bash(rm -rf \"C:\\\\Aplicativos\\\\frotasmak\\\\backend\\\\whatsapp\")",
+      "Bash(mkdir -p \"C:\\\\Aplicativos\\\\frotasmak\\\\backend\\\\whatsapp\")",
+      "Bash(node *)",
+      "Bash(npm install *)"
+    ]
+  }
+}
