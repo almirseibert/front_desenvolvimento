@@ -330,7 +330,7 @@ const apiClient = {
     adminExportData: async (module) => apiFetch(`/admin/export/${module}`),
 
     // --- SigaSul — Rastreamento Veicular ---
-    sigasulGetPositions: async () => apiFetch('/sigasul/positions'),
+    sigasulGetPositions: async (force = false) => apiFetch(`/sigasul/positions${force ? '?force=true' : ''}`),
     sigasulGetPositionsByPeriod: async (from, to) =>
         apiFetch(`/sigasul/positions/period?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
     sigasulGetPositionsByPlate: async (plate, from, to) =>

@@ -31,7 +31,7 @@ const fmtDateTime = (str) => {
     try { return new Date(str.replace(' ', 'T')).toLocaleString('pt-BR'); } catch { return str; }
 };
 
-const RATE_LIMIT_SEC = 12; // tempo mínimo entre consultas de tempo real
+const FORCE_COOLDOWN_SEC = 60; // cooldown do botão "Atualizar Agora"
 
 const TabBtn = ({ id, active, label, icon: Icon, onClick }) => (
     <button
@@ -85,28 +85,30 @@ const NotConfigured = () => (
 function TabTempoReal({ apiClient }) {
     const [data, setData] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [forcing, setForcing] = useState(false);
     const [error, setError] = useState(null);
     const [lastFetch, setLastFetch] = useState(null);
-    const [cooldown, setCooldown] = useState(0);
+    const [forceCooldown, setForceCooldown] = useState(0);
     const [search, setSearch] = useState('');
     const [showMap, setShowMap] = useState(true);
     const [notConfigured, setNotConfigured] = useState(false);
 
     useEffect(() => {
-        if (cooldown <= 0) return;
-        const t = setInterval(() => setCooldown(c => Math.max(0, c - 1)), 1000);
+        if (forceCooldown <= 0) return;
+        const t = setInterval(() => setForceCooldown(c => Math.max(0, c - 1)), 1000);
         return () => clearInterval(t);
-    }, [cooldown]);
+    }, [forceCooldown]);
 
-    const fetch = useCallback(async () => {
-        setLoading(true);
+    const loadPositions = useCallback(async (force = false) => {
+        if (force) setForcing(true);
+        else setLoading(true);
         setError(null);
         setNotConfigured(false);
         try {
-            const res = await apiClient.sigasulGetPositions();
+            const res = await apiClient.sigasulGetPositions(force);
             setData(Array.isArray(res) ? res : []);
             setLastFetch(new Date());
-            setCooldown(RATE_LIMIT_SEC);
+            if (force) setForceCooldown(FORCE_COOLDOWN_SEC);
         } catch (e) {
             if (e.message?.includes('404') || e.message?.includes('não encontrado') || e.message?.includes('not found')) {
                 setNotConfigured(true);
@@ -115,8 +117,14 @@ function TabTempoReal({ apiClient }) {
             }
         } finally {
             setLoading(false);
+            setForcing(false);
         }
     }, [apiClient]);
+
+    // Carrega automaticamente ao abrir o painel (respeita cache de 5 min do backend)
+    useEffect(() => {
+        loadPositions(false);
+    }, [loadPositions]);
 
     const filtered = useMemo(() => {
         if (!search.trim()) return data;
@@ -149,20 +157,23 @@ function TabTempoReal({ apiClient }) {
             {/* Controles */}
             <div className="flex flex-wrap items-center gap-3">
                 <button
-                    onClick={fetch}
-                    disabled={loading || cooldown > 0}
+                    onClick={() => loadPositions(true)}
+                    disabled={forcing || forceCooldown > 0}
                     className="flex items-center gap-2 px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-300 text-white font-bold rounded-lg text-sm transition-colors"
                 >
-                    {loading ? <Loader size={16} className="animate-spin" /> : <RefreshCw size={16} />}
-                    {cooldown > 0 ? `Aguardar ${cooldown}s` : 'Consultar Posições Atuais'}
+                    {forcing ? <Loader size={16} className="animate-spin" /> : <RefreshCw size={16} />}
+                    {forceCooldown > 0 ? `Aguardar ${forceCooldown}s` : 'Atualizar Agora'}
                 </button>
-                {lastFetch && (
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                        <Clock size={12} /> Última consulta: {lastFetch.toLocaleTimeString('pt-BR')}
-                    </span>
-                )}
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                    {loading && !forcing && <><Loader size={12} className="animate-spin" /> Carregando...</>}
+                    {lastFetch && !loading && (
+                        <span className="flex items-center gap-1">
+                            <Clock size={12} /> Atualizado às {lastFetch.toLocaleTimeString('pt-BR')}
+                        </span>
+                    )}
+                </div>
                 <span className="text-xs text-gray-400 ml-auto flex items-center gap-1">
-                    <Info size={12} /> Rate limit: 1 chamada / 10s
+                    <Info size={12} /> Cache de 5 min · refresh automático a cada 1h
                 </span>
             </div>
 
@@ -172,7 +183,14 @@ function TabTempoReal({ apiClient }) {
                 </div>
             )}
 
-            {data.length > 0 && (
+            {loading && data.length === 0 && (
+                <div className="py-16 text-center text-gray-400 text-sm flex flex-col items-center gap-3">
+                    <Loader size={28} className="animate-spin text-yellow-400" />
+                    Carregando posições...
+                </div>
+            )}
+
+            {!loading && data.length > 0 && (
                 <>
                     {/* KPIs */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -281,7 +299,7 @@ function TabTempoReal({ apiClient }) {
 
             {!loading && data.length === 0 && !error && (
                 <div className="py-16 text-center text-gray-400 text-sm">
-                    Clique em "Consultar Posições Atuais" para carregar os dados.
+                    Nenhum veículo com posição disponível.
                 </div>
             )}
         </div>
