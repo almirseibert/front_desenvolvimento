@@ -10,30 +10,34 @@ export const AuthProvider = ({ children }) => {
         isOperator: false,
         isEditor: false,
         isAdmin: false,
-        isViewer: false, // --- NOVA PERMISSÃO ---
+        isViewer: false,
+        isRH: false,
+        isFaturamento: false,
+        isAbastecimento: false,
+        isOficina: false,
+        isGerencia: false,
         canAccessRefueling: false,
     });
     const [loading, setLoading] = useState(true);
 
-    // Função para definir o usuário e as permissões com base nos dados da API
     const setUserAndPermissions = (userData) => {
         if (userData) {
-            setUser(userData);
-            // Normaliza o papel do usuário (tenta pegar user_type, role ou define viewer como fallback)
-            const role = userData.user_type || userData.role || 'viewer'; 
+            const role = userData.user_type || userData.role || 'viewer';
+            const roleNormalized = role.toLowerCase();
             const canAccess = userData.podeAcessarAbastecimento || false;
 
-            // Normaliza string para comparação
-            const roleNormalized = role.toLowerCase();
-
+            setUser({ ...userData, roleNormalized });
             setPermissions({
-                isOperator: roleNormalized === 'operador',
-                isEditor: ['editor', 'admin'].includes(roleNormalized),
-                isAdmin: roleNormalized === 'admin',
-                // Define se é visualizador explicitamente
-                isViewer: roleNormalized === 'viewer' || roleNormalized === 'visualizador',
-                
-                canAccessRefueling: canAccess || roleNormalized === 'admin', 
+                isOperator:      roleNormalized === 'operador',
+                isEditor:        ['editor', 'admin'].includes(roleNormalized),
+                isAdmin:         roleNormalized === 'admin',
+                isViewer:        ['viewer', 'visualizador'].includes(roleNormalized),
+                isRH:            roleNormalized === 'rh',
+                isFaturamento:   roleNormalized === 'faturamento',
+                isAbastecimento: roleNormalized === 'abastecimento',
+                isOficina:       roleNormalized === 'oficina',
+                isGerencia:      roleNormalized === 'gerencia',
+                canAccessRefueling: canAccess || roleNormalized === 'admin',
             });
         } else {
             setUser(null);
@@ -42,6 +46,11 @@ export const AuthProvider = ({ children }) => {
                 isEditor: false,
                 isAdmin: false,
                 isViewer: false,
+                isRH: false,
+                isFaturamento: false,
+                isAbastecimento: false,
+                isOficina: false,
+                isGerencia: false,
                 canAccessRefueling: false,
             });
         }

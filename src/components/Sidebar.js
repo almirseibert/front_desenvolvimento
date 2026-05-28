@@ -5,20 +5,22 @@ import {
     ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
     Radio
 } from 'lucide-react';
+import { ROLE_PAGE_ACCESS } from '../utils/permissions';
 
 const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, pendingSolicitacoesCount }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
 
-    const isAdmin = user?.user_type === 'admin';
-    const isSupervisor = user?.user_type === 'supervisor';
-    const isViewer = user?.user_type === 'viewer' || user?.user_type === 'visualizador';
-    const canRefuel = user?.podeAcessarAbastecimento || isAdmin;
+    const roleNorm = user?.roleNormalized || (user?.user_type || 'viewer').toLowerCase();
+    const userPages = ROLE_PAGE_ACCESS[roleNorm] || ROLE_PAGE_ACCESS['viewer'];
+    const canAccess = (pageId) => userPages.includes('*') || userPages.includes(pageId);
+    const canAccessAny = (pageIds) => pageIds.some(id => canAccess(id));
 
     const navGroups = [
         {
             id: 'dashboard',
             label: 'Dashboard',
             icon: <Building size={16} />,
+            hidden: !canAccess('dashboard'),
             items: [
                 { id: 'dashboard', label: 'Painel Geral' },
             ],
@@ -27,25 +29,28 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             id: 'obras',
             label: 'Obras',
             icon: <HardHat size={16} />,
+            hidden: !canAccessAny(['obras', 'expenses', 'supervisor_dashboard']),
             items: [
                 { id: 'obras',                label: 'Obras' },
-                { id: 'supervisor_dashboard', label: 'Gestão de Obras (TV)', hidden: !isAdmin && !isSupervisor },
-                { id: 'expenses',             label: 'Despesas' },
+                { id: 'supervisor_dashboard', label: 'Gestão de Obras (TV)', hidden: !canAccess('supervisor_dashboard') },
+                { id: 'expenses',             label: 'Despesas',             hidden: !canAccess('expenses') },
             ],
         },
         {
             id: 'faturamento',
             label: 'Faturamento',
             icon: <ClipboardCheck size={16} />,
+            hidden: !canAccessAny(['operacional', 'billing']),
             items: [
-                { id: 'operacional', label: 'Central Operacional',    hidden: isViewer },
-                { id: 'billing',     label: 'Relatório de Horas' },
+                { id: 'operacional', label: 'Central Operacional', hidden: !canAccess('operacional') },
+                { id: 'billing',     label: 'Relatório de Horas',  hidden: !canAccess('billing') },
             ],
         },
         {
             id: 'relatorios',
             label: 'Relatórios',
             icon: <FileText size={16} />,
+            hidden: !canAccess('reports'),
             items: [
                 { id: 'reports', label: 'Relatórios' },
             ],
@@ -54,40 +59,42 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             id: 'operacoes',
             label: 'Operações',
             icon: <Fuel size={16} />,
-            hidden: !canRefuel,
+            hidden: !canAccessAny(['refueling', 'comboio', 'admin_solicitacoes']),
             items: [
-                { id: 'refueling',          label: 'Abastecimento' },
-                { id: 'comboio',            label: 'Comboio' },
-                { id: 'admin_solicitacoes', label: 'Solicitações (App)', badge: pendingSolicitacoesCount },
+                { id: 'refueling',          label: 'Abastecimento',     hidden: !canAccess('refueling') },
+                { id: 'comboio',            label: 'Comboio',           hidden: !canAccess('comboio') },
+                { id: 'admin_solicitacoes', label: 'Solicitações (App)', hidden: !canAccess('admin_solicitacoes'), badge: pendingSolicitacoesCount },
             ],
         },
         {
             id: 'oficina',
             label: 'Oficina',
             icon: <Wrench size={16} />,
+            hidden: !canAccessAny(['revisions', 'tires', 'orders']),
             items: [
-                { id: 'revisions', label: 'Revisões & Manutenções' },
-                { id: 'tires',     label: 'Gestão de Pneus' },
-                { id: 'orders',    label: 'Ordens (C/S)' },
+                { id: 'revisions', label: 'Revisões & Manutenções', hidden: !canAccess('revisions') },
+                { id: 'tires',     label: 'Gestão de Pneus',        hidden: !canAccess('tires') },
+                { id: 'orders',    label: 'Ordens (C/S)',            hidden: !canAccess('orders') },
             ],
         },
         {
             id: 'cadastros',
             label: 'Cadastros',
             icon: <User size={16} />,
+            hidden: !canAccessAny(['vehicles', 'employees', 'partners', 'inventory', 'fines']),
             items: [
-                { id: 'vehicles',  label: 'Veículos' },
-                { id: 'employees', label: 'Funcionários' },
-                { id: 'partners',  label: 'Fornecedores' },
-                { id: 'inventory', label: 'Estoque / Peças' },
-                { id: 'fines',     label: 'Multas' },
+                { id: 'vehicles',  label: 'Veículos',        hidden: !canAccess('vehicles') },
+                { id: 'employees', label: 'Funcionários',    hidden: !canAccess('employees') },
+                { id: 'partners',  label: 'Fornecedores',    hidden: !canAccess('partners') },
+                { id: 'inventory', label: 'Estoque / Peças', hidden: !canAccess('inventory') },
+                { id: 'fines',     label: 'Multas',          hidden: !canAccess('fines') },
             ],
         },
         {
             id: 'rastreamento',
             label: 'Rastreamento',
             icon: <Radio size={16} />,
-            hidden: !isAdmin,
+            hidden: !canAccess('sigasul'),
             items: [
                 { id: 'sigasul', label: 'SigaSul GPS' },
             ],
@@ -96,7 +103,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             id: 'admin',
             label: 'Administração',
             icon: <Shield size={16} />,
-            hidden: !isAdmin,
+            hidden: !canAccess('admin'),
             items: [
                 { id: 'admin', label: 'Admin' },
             ],
