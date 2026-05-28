@@ -26,6 +26,10 @@ export const AuthProvider = ({ children }) => {
             const roleNormalized = role.toLowerCase();
             const canAccess = userData.podeAcessarAbastecimento || false;
 
+            // Roles que têm 'refueling' em ROLE_PAGE_ACCESS — BD flag mantido para retrocompat
+            const REFUELING_ROLES = ['admin', 'gerencia', 'abastecimento', 'editor'];
+            const canAccessRefueling = canAccess || REFUELING_ROLES.includes(roleNormalized);
+
             setUser({ ...userData, roleNormalized });
             setPermissions({
                 isOperator:      roleNormalized === 'operador',
@@ -37,7 +41,7 @@ export const AuthProvider = ({ children }) => {
                 isAbastecimento: roleNormalized === 'abastecimento',
                 isOficina:       roleNormalized === 'oficina',
                 isGerencia:      roleNormalized === 'gerencia',
-                canAccessRefueling: canAccess || roleNormalized === 'admin',
+                canAccessRefueling,
             });
         } else {
             setUser(null);

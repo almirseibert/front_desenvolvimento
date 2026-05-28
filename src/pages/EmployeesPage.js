@@ -28,12 +28,13 @@ import EmployeeHistoryModal from '../components/modals/EmployeeHistoryModal';
 import EmployeeFinesModal from '../components/modals/EmployeeFinesModal';
 import StatusChangeModal from '../components/modals/StatusChangeModal';
 
+const EDITOR_ROLES_EMP = ['admin', 'gerencia', 'editor'];
 const ProtectedComponent = ({ requiredPermission, user, children }) => {
     if (!user || !user.user_type) return null;
     const userRole = user.user_type.toLowerCase();
     const requiredRole = requiredPermission.toLowerCase();
     if (requiredRole === 'admin' && userRole !== 'admin') return null;
-    if (requiredRole === 'editor' && !['admin', 'editor'].includes(userRole)) return null;
+    if (requiredRole === 'editor' && !EDITOR_ROLES_EMP.includes(userRole)) return null;
     return <>{children}</>;
 };
 

@@ -18,37 +18,30 @@ const ProtectedComponent = ({ children, requiredPermission }) => {
         return null;
     }
 
-    // 2. Defina os níveis de permissão hierárquicos.
-    const permissionLevels = {
-        admin: 3,
-        editor: 2,
-        viewer: 1,
-    };
+    // Roles com permissão de escrita (criar/editar/excluir)
+    // rh e faturamento são read-only dentro das páginas
+    const EDITOR_ROLES = ['admin', 'gerencia', 'editor', 'abastecimento', 'oficina'];
 
-    // 3. Verifique se é uma permissão especial (não hierárquica).
     if (requiredPermission === 'refueling') {
-        // Verifica a flag 'podeAcessarAbastecimento'
-        // Seu backend (rota /auth/me) DEVE juntar esta informação
-        // da tabela 'employees' no objeto 'user'.
-        // Admins também têm acesso
-        const hasPermission = !!user.podeAcessarAbastecimento || user.user_type === 'admin';
+        // Mantém flag legada de BD para retrocompat + roles novos
+        const hasPermission =
+            !!user.podeAcessarAbastecimento ||
+            EDITOR_ROLES.includes(user.user_type?.toLowerCase());
         return hasPermission ? <>{children}</> : null;
     }
 
-    // 4. Se for uma permissão hierárquica, compare os níveis.
-    const requiredLevel = permissionLevels[requiredPermission];
-    
-    // ATUALIZADO: Usa 'user_type' (do seu SQL) em vez de 'role'.
-    // Seu backend (rota /auth/me) DEVE incluir este campo.
-    const userLevel = permissionLevels[user.user_type] || 0; 
-
-    if (requiredLevel !== undefined) {
-        // O usuário tem permissão se o nível dele for maior ou igual ao necessário
-        const hasPermission = userLevel >= requiredLevel;
-        return hasPermission ? <>{children}</> : null;
+    if (requiredPermission === 'admin') {
+        return user.user_type?.toLowerCase() === 'admin' ? <>{children}</> : null;
     }
-    
-    // Se a permissão requerida não for reconhecida, não renderiza por segurança.
+
+    if (requiredPermission === 'editor') {
+        return EDITOR_ROLES.includes(user.user_type?.toLowerCase()) ? <>{children}</> : null;
+    }
+
+    if (requiredPermission === 'viewer') {
+        return user.user_type?.toLowerCase() !== 'operador' ? <>{children}</> : null;
+    }
+
     console.warn(`ProtectedComponent: Permissão desconhecida '${requiredPermission}'.`);
     return null;
 };

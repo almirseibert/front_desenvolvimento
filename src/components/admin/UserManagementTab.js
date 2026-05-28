@@ -7,17 +7,27 @@ import apiClient from '../../services/apiClient';
 import UserEditModal from '../modals/UserEditModal';
 
 const ROLE_LABELS = {
-  admin: 'Administrador',
-  editor: 'Editor',
-  viewer: 'Visualizador',
-  operador: 'Operador',
+  admin:         'Administrador',
+  gerencia:      'Gerência',
+  editor:        'Editor',
+  rh:            'RH',
+  faturamento:   'Faturamento',
+  abastecimento: 'Abastecimento',
+  oficina:       'Oficina',
+  operador:      'Operador',
+  viewer:        'Visualizador',
 };
 
 const ROLE_COLORS = {
-  admin: 'bg-red-100 text-red-700',
-  editor: 'bg-blue-100 text-blue-700',
-  viewer: 'bg-gray-100 text-gray-600',
-  operador: 'bg-green-100 text-green-700',
+  admin:         'bg-red-100 text-red-700',
+  gerencia:      'bg-purple-100 text-purple-700',
+  editor:        'bg-blue-100 text-blue-700',
+  rh:            'bg-pink-100 text-pink-700',
+  faturamento:   'bg-indigo-100 text-indigo-700',
+  abastecimento: 'bg-cyan-100 text-cyan-700',
+  oficina:       'bg-orange-100 text-orange-700',
+  operador:      'bg-green-100 text-green-700',
+  viewer:        'bg-gray-100 text-gray-600',
 };
 
 const Toast = ({ message }) =>

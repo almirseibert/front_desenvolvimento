@@ -46,6 +46,7 @@ import Sidebar from './components/Sidebar';
 import LoginScreen from './components/LoginScreen';
 
 import apiClient from './services/apiClient';
+import { canAccessPage } from './utils/permissions';
 import {
     vehicleGroups,
     extraObraOptions,
@@ -355,7 +356,7 @@ const AppContent = () => {
         }
 
         // Solicitações de abastecimento pendentes
-        if (user.user_type === 'admin' || user.podeAcessarAbastecimento) {
+        if (canAccessPage(user.roleNormalized, 'admin_solicitacoes')) {
             apiClient.get?.('/solicitacoes')
                 .then(res => {
                     const data = Array.isArray(res) ? res : (res?.data || []);
@@ -386,7 +387,7 @@ const AppContent = () => {
         };
 
         const handleAdminNotification = (data) => {
-            if (user.user_type !== 'admin' && !user.podeAcessarAbastecimento) return;
+            if (!canAccessPage(user.roleNormalized, 'admin_solicitacoes')) return;
             if (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente') {
                 try {
                     const audio = new Audio('/beep.mp3');
@@ -553,17 +554,17 @@ const AppContent = () => {
             case 'partners':
                 return <PartnersPage {...commonProps} />;
             case 'refueling':
-                return (user.podeAcessarAbastecimento || user.user_type === 'admin')
+                return canAccessPage(user.roleNormalized, 'refueling')
                     ? <RefuelingPage {...commonProps} /> : <Denied />;
             case 'admin_solicitacoes':
-                return (user.podeAcessarAbastecimento || user.user_type === 'admin')
+                return canAccessPage(user.roleNormalized, 'admin_solicitacoes')
                     ? <AdminSolicitacoesPage {...commonProps} /> : <Denied />;
             case 'orders':
                 return <OrdersPage {...commonProps} />;
             case 'inventory':
                 return <InventoryPage {...commonProps} />;
             case 'comboio':
-                return (user.podeAcessarAbastecimento || user.user_type === 'admin')
+                return canAccessPage(user.roleNormalized, 'comboio')
                     ? <ComboioPage {...commonProps} /> : <Denied />;
             case 'expenses':
                 return <ExpensesPage {...commonProps} />;
@@ -576,9 +577,11 @@ const AppContent = () => {
             case 'reports': 
                 return <ReportsPage {...commonProps} />; 
             case 'admin':
-                return user.user_type === 'admin' ? <AdminPage {...commonProps} /> : <Denied />;
+                return canAccessPage(user.roleNormalized, 'admin')
+                    ? <AdminPage {...commonProps} /> : <Denied />;
             case 'sigasul':
-                return user.user_type === 'admin' ? <SigaSulPage {...commonProps} /> : <Denied />;
+                return canAccessPage(user.roleNormalized, 'sigasul')
+                    ? <SigaSulPage {...commonProps} /> : <Denied />;
             default:
                 return <Dashboard {...commonProps} />; 
         }

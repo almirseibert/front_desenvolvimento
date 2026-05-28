@@ -51,7 +51,9 @@ const DataContext = createContext(null);
 // ----------------------------------------------------------------------------
 
 const isOperador = (u) => u?.user_type === 'operador';
-const isAdminOrRefueler = (u) => u?.user_type === 'admin' || u?.podeAcessarAbastecimento;
+const REFUELING_ROLES = ['admin', 'gerencia', 'abastecimento', 'editor'];
+const isAdminOrRefueler = (u) =>
+    u?.podeAcessarAbastecimento || REFUELING_ROLES.includes(u?.user_type?.toLowerCase());
 
 const RESOURCE_DEFS = {
     // ----- Essenciais (pré-carregados após login) -----

@@ -2,10 +2,15 @@ import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
 
 const ROLES = [
-  { value: 'viewer', label: 'Visualizador' },
-  { value: 'operador', label: 'Operador' },
-  { value: 'editor', label: 'Editor' },
-  { value: 'admin', label: 'Administrador' },
+  { value: 'admin',         label: 'Administrador' },
+  { value: 'gerencia',      label: 'Gerência' },
+  { value: 'editor',        label: 'Editor' },
+  { value: 'rh',            label: 'RH' },
+  { value: 'faturamento',   label: 'Faturamento' },
+  { value: 'abastecimento', label: 'Abastecimento' },
+  { value: 'oficina',       label: 'Oficina' },
+  { value: 'operador',      label: 'Operador' },
+  { value: 'viewer',        label: 'Visualizador' },
 ];
 
 const UserEditModal = ({ user, groups = [], onClose, onSave }) => {
