@@ -104,7 +104,7 @@ const OperacionalPage = ({
     };
 
     const obrasComRisco = useMemo(() => {
-        return obras.map(obra => {
+        return obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo').map(obra => {
             const isFinished = obra.status === 'finalizada' || obra.status === 'Finalizada' ||
                 obra.status === 'Concluída' || obra.status === 'Inativa' ||
                 (obra.dataFim && new Date(obra.dataFim) < today);
@@ -499,7 +499,10 @@ const OperacionalPage = ({
     }), [machineData]);
 
     const activeObras = useMemo(() =>
-        obras.filter(o => { const s = (o.status || '').toLowerCase(); return s !== 'finalizada' && s !== 'concluída' && s !== 'inativa'; }),
+        obras.filter(o => {
+            const s = (o.status || '').toLowerCase();
+            return s !== 'finalizada' && s !== 'concluída' && s !== 'inativa' && (o.tipo_registro || 'obra') !== 'centro_custo';
+        }),
         [obras]
     );
 

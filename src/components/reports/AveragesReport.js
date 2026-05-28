@@ -160,7 +160,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                     <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="w-full p-2 border rounded bg-white text-sm">
                         <option value="">Todas as Obras</option>
                         {[...obras].sort((a, b) => sortAlphaNum(a.nome, b.nome)).map(o => (
-                            <option key={o.id} value={o.id}>{o.nome}</option>
+                            <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
                         ))}
                     </select>
                 </div>

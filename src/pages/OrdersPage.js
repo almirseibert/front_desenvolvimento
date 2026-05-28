@@ -647,7 +647,7 @@ const OrdersPage = ({
                 </select>
                 <select value={filters.obra} onChange={e => setFilters({...filters, obra: e.target.value})} className="p-2 border rounded-lg w-full bg-white">
                     <option value="">Todas as Obras</option>
-                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                     <option value="Administração">Administração</option>
                     <option value="Oficina">Oficina Central</option>
                 </select>
@@ -1407,7 +1407,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Obra de Destino (Custo) *</label>
                                 <select value={formData.obraId} onChange={e => setFormData({...formData, obraId: e.target.value})} className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500" required disabled={isReadOnly}>
                                     <option value="">Selecione...</option>
-                                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                                     <option value="Administração">Administração</option>
                                     <option value="Oficina">Oficina Central</option>
                                 </select>

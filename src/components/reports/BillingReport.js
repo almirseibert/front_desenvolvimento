@@ -109,7 +109,7 @@ const BillingReport = ({ obras, vehicles }) => {
                 <div className="flex gap-3">
                     <select value={selectedObraId} onChange={e => setSelectedObraId(e.target.value)} className="flex-1 input-field">
                         <option value="">-- Selecione --</option>
-                        {sortedObras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                        {sortedObras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                     </select>
                     <button onClick={generatePDF} disabled={!selectedObraId || loading} className="btn-primary bg-yellow-500 hover:bg-yellow-600 text-black border-none flex items-center gap-2 disabled:bg-gray-300">
                         {loading ? <Loader className="animate-spin" size={18}/> : <Printer size={18}/>} 

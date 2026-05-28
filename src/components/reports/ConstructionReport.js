@@ -158,7 +158,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
                     <div>
                         <label className="label">Selecionar Obras</label>
                         <select multiple value={selectedObraIds} onChange={e => setSelectedObraIds(Array.from(e.target.selectedOptions, o => o.value))} className="w-full h-32 p-2 border rounded text-sm custom-scrollbar">
-                            {filteredObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                            {filteredObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Use Ctrl+Click para selecionar várias.</p>
                     </div>

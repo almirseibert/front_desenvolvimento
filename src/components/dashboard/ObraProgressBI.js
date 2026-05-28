@@ -6,7 +6,9 @@ const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
     const [selectedObraId, setSelectedObraId] = useState('');
 
     const activeObras = useMemo(() => {
-        return obras.filter(o => o.status === 'ativa').sort((a,b) => a.nome.localeCompare(b.nome));
+        return obras
+            .filter(o => o.status === 'ativa' && (o.tipo_registro || 'obra') !== 'centro_custo')
+            .sort((a,b) => a.nome.localeCompare(b.nome));
     }, [obras]);
 
     const obraData = useMemo(() => {

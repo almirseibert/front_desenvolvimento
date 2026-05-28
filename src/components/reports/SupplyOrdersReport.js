@@ -195,7 +195,7 @@ const SupplyOrdersReport = ({
 
                 <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="input-field">
                     <option value="">Todas as Obras</option>
-                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                 </select>
             </FilterSection>
 

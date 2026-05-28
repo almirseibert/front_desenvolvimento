@@ -113,7 +113,7 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
                 <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="input-field">
                     <option value="">Todas as Obras</option>
                     <option value="N/A">Sem Obra (Pátio/Outros)</option>
-                    {obras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                    {obras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                 </select>
                 <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="input-field">
                     <option value="">Todos os Status</option>

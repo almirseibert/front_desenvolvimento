@@ -254,7 +254,7 @@ const BillingPage = ({
         const now = new Date();
         now.setHours(0, 0, 0, 0); // Zera hora para comparar apenas datas
 
-        obras.forEach(obra => {
+        obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo').forEach(obra => {
             let isFinished = false;
 
             // Critério 1: Status explícito (se existir essa propriedade no futuro)

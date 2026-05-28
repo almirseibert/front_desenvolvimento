@@ -410,7 +410,7 @@ const ControleDiarioPage = ({
                     {filterType === 'obra' && (
                         <select value={selectedObraId} onChange={e => setSelectedObraId(e.target.value)} className="w-full p-2 border rounded-md bg-white">
                             <option value="">Selecione uma Obra</option>
-                            {sortedObras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome}</option>)}
+                            {sortedObras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome}{obra.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                         </select>
                     )}
                     {filterType === 'vehicleType' && (

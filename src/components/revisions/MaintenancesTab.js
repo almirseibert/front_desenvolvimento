@@ -305,7 +305,7 @@ const NovaExecutadaModal = ({ vehicles, obras, defaultData = {}, onClose, onSave
                             <select name="obraId" value={formData.obraId} onChange={handleChange} className="w-full p-2 border border-blue-300 bg-blue-50 text-blue-900 rounded text-sm outline-none" required>
                                 <option value="">Selecione a Obra...</option>
                                 <option value="Patio">Pátio / Não Alocado</option>
-                                {obras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                {obras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                             </select>
                             <p className="text-[9px] text-gray-500 mt-0.5">O valor informado será lançado como despesa nesta obra.</p>
                         </div>

@@ -256,7 +256,7 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                 <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="input-field">
                     <option value="">Todas as Obras (Alocação)</option>
                     <option value="N/A">Sem Alocação</option>
-                    {obras.filter(o => o.status === 'ativa').sort((a,b) => sortAlphaNum(a.nome, b.nome)).map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                    {obras.filter(o => o.status === 'ativa').sort((a,b) => sortAlphaNum(a.nome, b.nome)).map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                 </select>
             </FilterSection>
 

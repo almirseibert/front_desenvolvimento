@@ -90,7 +90,7 @@ const Dashboard = ({
 
         return {
             total: activeVehicles.length,
-            obrasAtivas: obras.filter(o => o.status === 'ativa').length,
+            obrasAtivas: obras.filter(o => o.status === 'ativa' && (o.tipo_registro || 'obra') !== 'centro_custo').length,
             emObra: activeVehicles.filter(v => v.status === 'Em Obra').length,
             operacao: activeVehicles.filter(v => v.status === 'Em Operação').length,
             disponivel: activeVehicles.filter(v => v.status === 'Disponível').length,

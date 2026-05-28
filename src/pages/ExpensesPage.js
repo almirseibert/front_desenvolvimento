@@ -193,7 +193,7 @@ const ExpensesPage = ({
                              <label className="block font-medium text-gray-600 mb-1">Obra*</label>
                             <select value={selectedObra} onChange={e => setSelectedObra(e.target.value)} className="w-full p-2 border rounded bg-white" required>
                                 <option value="">Selecione...</option>
-                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                                 <option value="Administração">Administração</option>
                                 <option value="Oficina">Oficina</option>
                                 <option value="Pátio">Pátio</option>

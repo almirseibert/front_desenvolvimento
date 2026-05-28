@@ -235,7 +235,7 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
                     <div className="flex-1">
                         <label className="block text-sm font-bold text-gray-700 mb-2">Selecione as Obras (Ctrl+Click)</label>
                         <select multiple value={pdfWorkplanSelectedObras} onChange={e => setPdfWorkplanSelectedObras(Array.from(e.target.selectedOptions, option => option.value))} className="w-full h-48 p-2 border rounded-lg bg-gray-50 custom-scrollbar">
-                            {obrasToDisplay.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                            {obrasToDisplay.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                         </select>
                     </div>
                 </div>

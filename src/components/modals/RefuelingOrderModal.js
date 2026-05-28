@@ -723,7 +723,7 @@ ${readingMsg}`;
                             <select name="obraId" value={formData.obraId} onChange={handleChange} className="w-full p-1 border border-gray-300 rounded" required>
                                 <option value="">Selecione...</option>
                                 <option value="Patio">Pátio</option>
-                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                                 {extraObraOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                             </select>
                         </div>

@@ -439,7 +439,7 @@ const ObraAllocationModal = ({
                                     >
                                         <option value="">Selecione a obra...</option>
                                         {activeObras.map(o => (
-                                            <option key={o.id} value={o.id}>{o.nome}</option>
+                                            <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
                                         ))}
                                     </select>
                                     {activeObras.length === 0 && (

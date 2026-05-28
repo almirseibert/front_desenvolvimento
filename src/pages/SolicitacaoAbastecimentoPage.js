@@ -860,7 +860,7 @@ const SolicitacaoAbastecimentoPage = ({
                             >
                                 <option value="">Selecione a Obra...</option>
                                 {allowedObras.map(o => (
-                                    <option key={o.id} value={o.id}>{o.nome}</option>
+                                    <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
                                 ))}
                             </select>
                         </div>

@@ -22,7 +22,7 @@ const ProductionBI = ({ onBack }) => {
 
     // Carrega a listagem de obras para o Select
     useEffect(() => {
-        apiClient.get('/supervisor/dashboard').then(res => setObras(res)).catch(console.error);
+        apiClient.get('/supervisor/dashboard').then(res => setObras((res || []).filter(o => (o.tipo_registro || 'obra') !== 'centro_custo'))).catch(console.error);
     }, []);
 
     // Carrega os dados Analíticos + Configuração de Tickets salva no Banco de Dados
@@ -309,7 +309,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
         try {
             if (obras.length === 0) setLoading(true);
             const data = await apiClient.get('/supervisor/dashboard');
-            setObras(data);
+            setObras((data || []).filter(o => (o.tipo_registro || 'obra') !== 'centro_custo'));
             setLastUpdate(new Date());
         } catch (error) {
             console.error("Erro ao carregar dashboard:", error);
