@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Loader, MapPin, Clock, Truck, Plus, Trash2, DollarSign, User, ClipboardList } from 'lucide-react';
 
-const ObraModal = ({ 
-    user, 
-    obra, 
-    onClose, 
-    apiClient, 
-    reloadData, 
-    setAlertMessage, 
-    equipmentTypesForHours = [] // Recebe a lista filtrada (derivedEquipmentTypes) do Pai (ObrasPage)
+const ObraModal = ({
+    user,
+    obra,
+    onClose,
+    apiClient,
+    reloadData,
+    setAlertMessage,
+    equipmentTypesForHours = [], // Recebe a lista filtrada (derivedEquipmentTypes) do Pai (ObrasPage)
+    initialTipoRegistro = 'obra'
 }) => {
     // --- ESTADOS DO FORMULÁRIO ---
+    const [tipoRegistro, setTipoRegistro] = useState(initialTipoRegistro); // 'obra' | 'centro_custo'
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [fiscal, setFiscal] = useState('');
@@ -36,6 +38,7 @@ const ObraModal = ({
     // --- INICIALIZAÇÃO (Modo Edição) ---
     useEffect(() => {
         if (obra) {
+            setTipoRegistro(obra.tipo_registro || 'obra');
             setNome(obra.nome || '');
             setResponsavel(obra.responsavel || '');
             setFiscal(obra.fiscal || '');
@@ -125,6 +128,7 @@ const ObraModal = ({
         setIsSubmitting(true);
 
         const payload = {
+            tipo_registro: tipoRegistro,
             nome,
             responsavel,
             fiscal,
@@ -184,22 +188,49 @@ const ObraModal = ({
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                 <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-gray-800">{obra ? 'Editar Obra' : 'Nova Obra'}</h2>
+                    <h2 className="text-xl font-bold text-gray-800">
+                        {obra
+                            ? (tipoRegistro === 'centro_custo' ? 'Editar Centro de Custo' : 'Editar Obra')
+                            : (tipoRegistro === 'centro_custo' ? 'Novo Centro de Custo' : 'Nova Obra')}
+                    </h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200 text-gray-500" disabled={isSubmitting}><X size={24}/></button>
                 </div>
                 
                 <form onSubmit={handleSubmit} className="p-6 space-y-6">
                     {/* 1. Dados Básicos */}
                     <div className="space-y-4">
+                        {/* Tipo de Registro */}
                         <div>
-                            <label className="block text-sm font-bold text-gray-700 mb-1">Nome da Obra *</label>
-                            <input 
-                                type="text" 
-                                value={nome} 
-                                onChange={(e) => setNome(e.target.value)} 
-                                className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none" 
-                                required 
-                                placeholder="Ex: Pavimentação Rua A"
+                            <label className="block text-sm font-bold text-gray-700 mb-2">Tipo de Registro</label>
+                            <div className="flex gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setTipoRegistro('obra')}
+                                    className={`flex-1 py-2 rounded-lg border-2 font-bold transition text-sm ${tipoRegistro === 'obra' ? 'border-yellow-400 bg-yellow-50 text-yellow-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                                >
+                                    Obra
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setTipoRegistro('centro_custo')}
+                                    className={`flex-1 py-2 rounded-lg border-2 font-bold transition text-sm ${tipoRegistro === 'centro_custo' ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-500 hover:border-gray-300'}`}
+                                >
+                                    Centro de Custo
+                                </button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-1">
+                                {tipoRegistro === 'centro_custo' ? 'Nome do Centro de Custo *' : 'Nome da Obra *'}
+                            </label>
+                            <input
+                                type="text"
+                                value={nome}
+                                onChange={(e) => setNome(e.target.value)}
+                                className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none"
+                                required
+                                placeholder={tipoRegistro === 'centro_custo' ? 'Ex: Manutenção Interna' : 'Ex: Pavimentação Rua A'}
                             />
                         </div>
 
@@ -474,7 +505,7 @@ const ObraModal = ({
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200 transition" disabled={isSubmitting}>Cancelar</button>
                         <button type="submit" className="px-6 py-2 bg-yellow-400 text-gray-900 font-bold rounded hover:bg-yellow-500 transition shadow-lg flex items-center gap-2" disabled={isSubmitting}>
-                            {isSubmitting ? <><Loader className="animate-spin" size={18}/> Salvando...</> : 'Salvar Obra'}
+                            {isSubmitting ? <><Loader className="animate-spin" size={18}/> Salvando...</> : (tipoRegistro === 'centro_custo' ? 'Salvar Centro de Custo' : 'Salvar Obra')}
                         </button>
                     </div>
                 </form>

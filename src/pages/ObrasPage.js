@@ -23,6 +23,7 @@ const ObrasPage = ({
 }) => {
     // --- ESTADOS DA PÁGINA ---
     const [filter, setFilter] = useState('ativas'); // 'ativas' | 'finalizadas'
+    const [tipoFilter, setTipoFilter] = useState('todos'); // 'todos' | 'obra' | 'centro_custo'
     const [searchTerm, setSearchTerm] = useState('');
     
     // --- ESTADOS DOS MODAIS ---
@@ -123,20 +124,22 @@ const ObrasPage = ({
             .filter(o => {
                 const statusMatch = filter === 'finalizadas' ? o.status === 'finalizada' : o.status !== 'finalizada';
                 const searchMatch = (o.nome || '').toLowerCase().includes(searchTerm.toLowerCase());
-                return statusMatch && searchMatch;
+                const tipoMatch = tipoFilter === 'todos' || (o.tipo_registro || 'obra') === tipoFilter;
+                return statusMatch && searchMatch && tipoMatch;
             })
             .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-    }, [obras, filter, searchTerm]);
+    }, [obras, filter, tipoFilter, searchTerm]);
 
     const exportToCSV = () => {
         if (!filteredObras || filteredObras.length === 0) {
              setAlertMessage("Nenhuma obra para exportar.");
              return;
          }
-        const headers = ['Nome', 'Status', 'Responsável', 'Fiscal', 'Data Início', 'Data Fim', 'Tipo de Contrato', 'Horas Contratadas', 'Horas Realizadas', 'Latitude', 'Longitude'];
+        const headers = ['Tipo de Registro', 'Nome', 'Status', 'Responsável', 'Fiscal', 'Data Início', 'Data Fim', 'Tipo de Contrato', 'Horas Contratadas', 'Horas Realizadas', 'Latitude', 'Longitude'];
         const rows = filteredObras.map(o => {
             const contractedHours = Object.values(o.horasContratadasPorTipo || {}).reduce((sum, h) => sum + (parseFloat(h) || 0), 0);
             return [
+                o.tipo_registro === 'centro_custo' ? 'Centro de Custo' : 'Obra',
                 o.nome,
                 o.status,
                 o.responsavel || '',
@@ -176,7 +179,7 @@ const ObrasPage = ({
                             <Download size={16}/> CSV
                         </button>
                         <button onClick={() => openModal('createEdit')} className="flex items-center gap-2 px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg shadow transition text-sm">
-                            <PlusCircle size={18}/> Nova Obra
+                            <PlusCircle size={18}/> {tipoFilter === 'centro_custo' ? 'Novo Centro de Custo' : 'Nova Obra'}
                         </button>
                     </div>
                 </ProtectedComponent>
@@ -184,26 +187,48 @@ const ObrasPage = ({
 
             {/* CONTROLES DE FILTRO */}
             <div className="bg-white p-4 rounded-lg shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-                <div className="flex bg-gray-100 p-1 rounded-lg">
-                    <button 
-                        onClick={() => setFilter('ativas')} 
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'ativas' ? 'bg-white shadow text-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Em Andamento
-                    </button>
-                    <button 
-                        onClick={() => setFilter('finalizadas')} 
-                        className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'finalizadas' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    >
-                        Finalizadas
-                    </button>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setFilter('ativas')}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'ativas' ? 'bg-white shadow text-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Em Andamento
+                        </button>
+                        <button
+                            onClick={() => setFilter('finalizadas')}
+                            className={`px-4 py-1.5 text-sm font-medium rounded-md transition-all ${filter === 'finalizadas' ? 'bg-white shadow text-green-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Finalizadas
+                        </button>
+                    </div>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        <button
+                            onClick={() => setTipoFilter('todos')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${tipoFilter === 'todos' ? 'bg-white shadow text-gray-700' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Todos
+                        </button>
+                        <button
+                            onClick={() => setTipoFilter('obra')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${tipoFilter === 'obra' ? 'bg-white shadow text-yellow-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Obras
+                        </button>
+                        <button
+                            onClick={() => setTipoFilter('centro_custo')}
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${tipoFilter === 'centro_custo' ? 'bg-white shadow text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+                        >
+                            Centros de Custo
+                        </button>
+                    </div>
                 </div>
-                
+
                 <div className="relative w-full md:w-64">
                     <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                    <input 
-                        type="text" 
-                        placeholder="Buscar obra..." 
+                    <input
+                        type="text"
+                        placeholder="Buscar obra..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="pl-10 pr-4 py-2 border rounded-lg w-full focus:ring-2 focus:ring-yellow-400 focus:border-transparent outline-none"
@@ -231,6 +256,11 @@ const ObrasPage = ({
                             {/* Header do Card */}
                             <div className="flex justify-between items-start mb-4">
                                 <div>
+                                    {obra.tipo_registro === 'centro_custo' && (
+                                        <span className="inline-block text-[10px] font-bold uppercase tracking-wide bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded mb-1">
+                                            Centro de Custo
+                                        </span>
+                                    )}
                                     <h3 className="text-lg font-bold text-gray-800 line-clamp-1" title={obra.nome}>{obra.nome}</h3>
                                     {obra.latitude && (
                                         <a 
@@ -340,14 +370,15 @@ const ObrasPage = ({
             {/* --- MODAIS --- */}
             
             {modalState.createEdit && (
-                <ObraModal 
+                <ObraModal
                     user={user}
-                    obra={selectedObra} 
-                    onClose={() => closeModal('createEdit')} 
-                    apiClient={apiClient} 
-                    reloadData={reloadData} 
+                    obra={selectedObra}
+                    onClose={() => closeModal('createEdit')}
+                    apiClient={apiClient}
+                    reloadData={reloadData}
                     setAlertMessage={setAlertMessage}
                     equipmentTypesForHours={derivedEquipmentTypes}
+                    initialTipoRegistro={selectedObra ? (selectedObra.tipo_registro || 'obra') : (tipoFilter !== 'todos' ? tipoFilter : 'obra')}
                 />
             )}
 
