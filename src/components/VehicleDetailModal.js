@@ -1,5 +1,6 @@
 import React from 'react';
 import { ImageOff, X, MapPin } from 'lucide-react';
+import { getGroupUnit, getReadingSourceForUnit } from '../utils/vehicleRules';
 
 // --- Modal de Detalhes do Veículo (V2.7 - Rastreador Label) ---
 const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) => {
@@ -19,28 +20,13 @@ const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) 
     const groups = vehicleGroups && typeof vehicleGroups === 'object' ? vehicleGroups : {};
     const vehicleGroup = Object.keys(groups).find(group => groups[group]?.includes(vehicle.tipo));
 
-    let readingLabel = 'Leitura';
-    let readingValue = 'N/A';
-    let consumptionUnit = 'Unidade/L';
-
-    if (vehicleGroup === 'Máquinas Pesadas') {
-         readingLabel = 'Horímetro';
-         readingValue = `${vehicle.horimetro || 'N/A'} Hr`;
-         consumptionUnit = 'L/Hr';
-    } else if (vehicleGroup === 'Caminhões') {
-        readingLabel = 'Horímetro';
-        readingValue = `${vehicle.horimetro || 'N/A'} Hr`;
-        
-        if (vehicle.tipo === 'Caminhões Prancha') {
-            consumptionUnit = 'Km/L'; 
-        } else {
-            consumptionUnit = vehicle.mediaCalculo === 'horimetro' ? 'L/Hr' : 'Km/L'; 
-        }
-    } else { 
-        readingLabel = 'Odômetro';
-        readingValue = `${vehicle.odometro ?? 'N/A'} Km`;
-        consumptionUnit = 'Km/L';
-    }
+    // Unidade de consumo e leitura derivadas da configuração do grupo
+    const consumptionUnit = getGroupUnit(vehicle.tipo);
+    const usaHorimetro = getReadingSourceForUnit(consumptionUnit) === 'horimetro';
+    const readingLabel = usaHorimetro ? 'Horímetro' : 'Odômetro';
+    const readingValue = usaHorimetro
+        ? `${vehicle.horimetro || 'N/A'} Hr`
+        : `${vehicle.odometro ?? 'N/A'} Km`;
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
@@ -94,8 +80,13 @@ const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) 
                         <div className="font-semibold text-gray-600">Placa:</div>
                         <div className="text-gray-800 font-medium">{vehicle.placa || 'N/A'}</div>
 
-                        <div className="font-semibold text-gray-600">Tipo:</div>
+                        <div className="font-semibold text-gray-600">Grupo:</div>
                         <div className="text-gray-800 font-medium">{vehicle.tipo || 'N/A'}</div>
+
+                        {vehicle.sub_tipo && (<>
+                            <div className="font-semibold text-gray-600">Subgrupo:</div>
+                            <div className="text-gray-800 font-medium">{vehicle.sub_tipo}</div>
+                        </>)}
 
                         <div className="font-semibold text-gray-600">{readingLabel}:</div>
                         <div className="text-gray-800 font-medium">{readingValue}</div>

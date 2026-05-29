@@ -24,6 +24,79 @@ export const vehicleSubTypes = {
     'Trator Esteira':  ['Trator Esteira 21T', 'Trator Esteira 36T'],
 };
 
+// =============================================================================
+// Unidade de consumo por GRUPO (hidratada do banco em runtime).
+// Valores possíveis: 'L/h', 'h/L', 'Km/L', 'L/Km'.
+// Seed padrão: derivado da regra histórica (Leves/Trecho = Km/L; resto = L/h).
+// =============================================================================
+export const groupUnitMap = {};
+Object.keys(vehicleGroups).forEach(grupo => {
+    groupUnitMap[grupo] = (grupo === 'Veículos Leves' || grupo === 'Caminhões de Trecho') ? 'Km/L' : 'L/h';
+});
+
+/**
+ * Hidrata a taxonomia em runtime a partir da árvore vinda da API.
+ * Muta IN-PLACE vehicleGroups, vehicleSubTypes e groupUnitMap para que os ~38
+ * arquivos que importam esses objetos passem a refletir os dados do banco.
+ * @param {Array} tree - [{ nome, unidade, tipos: [{ nome, subTipos: [{ nome }] }] }]
+ */
+export const hydrateVehicleTaxonomy = (tree) => {
+    if (!Array.isArray(tree) || tree.length === 0) return;
+
+    // Limpa os objetos preservando a referência
+    Object.keys(vehicleGroups).forEach(k => delete vehicleGroups[k]);
+    Object.keys(vehicleSubTypes).forEach(k => delete vehicleSubTypes[k]);
+    Object.keys(groupUnitMap).forEach(k => delete groupUnitMap[k]);
+
+    tree.forEach(grupo => {
+        const tipos = (grupo.tipos || []).map(t => t.nome);
+        vehicleGroups[grupo.nome] = tipos;
+        groupUnitMap[grupo.nome] = grupo.unidade || 'L/h';
+        (grupo.tipos || []).forEach(t => {
+            if (t.subTipos && t.subTipos.length > 0) {
+                vehicleSubTypes[t.nome] = t.subTipos.map(s => s.nome);
+            }
+        });
+    });
+};
+
+/** Retorna o grupo ao qual um tipo pertence (ou null). */
+export const getGroupForType = (tipo) =>
+    Object.keys(vehicleGroups).find(g => vehicleGroups[g]?.includes(tipo)) || null;
+
+/** Unidade de consumo configurada para o grupo de um tipo. */
+export const getGroupUnit = (tipo) => {
+    const group = getGroupForType(tipo);
+    return (group && groupUnitMap[group]) || 'L/h';
+};
+
+/** Qual leitura uma unidade exige: 'odometro' (Km) ou 'horimetro' (Hr). */
+export const getReadingSourceForUnit = (unidade) =>
+    (unidade === 'Km/L' || unidade === 'L/Km') ? 'odometro' : 'horimetro';
+
+/**
+ * Calcula a média de consumo conforme a unidade.
+ * @param {string} unidade - 'L/h' | 'h/L' | 'Km/L' | 'L/Km'
+ * @param {number} leitura - distância percorrida (Km) ou horas trabalhadas
+ * @param {number} litros  - litros abastecidos
+ * @returns {number|null}
+ */
+export const computeConsumption = (unidade, leitura, litros) => {
+    const l = parseFloat(leitura);
+    const f = parseFloat(litros);
+    if (!(l > 0) || !(f > 0)) return null;
+    switch (unidade) {
+        case 'Km/L': return l / f;   // distância / litros (maior melhor)
+        case 'L/Km': return f / l;   // litros / distância (menor melhor)
+        case 'h/L':  return l / f;   // horas / litros (maior melhor)
+        case 'L/h':
+        default:     return f / l;   // litros / horas (menor melhor)
+    }
+};
+
+/** Para a unidade, valor MAIOR é melhor? (Km/L e h/L). */
+export const isHigherBetter = (unidade) => unidade === 'Km/L' || unidade === 'h/L';
+
 export const extraObraOptions = ['Administração', 'Oficina', 'Pátio', 'Rampa', 'Diversos'];
 export const operationalSubGroups = ['Administrativo', 'Oficina', 'Operacional', 'Supervisor'];
 
@@ -35,17 +108,19 @@ export const equipmentTypesForHours = ['Caminhão', 'Escavadeira', 'Escavadeira 
  * Somente Leves e Caminhões de Trecho usam KM. O resto é Hora.
  */
 export const getAllowedReadingTypes = (vehicleType) => {
-    // Busca o grupo do veículo
     const group = Object.keys(vehicleGroups).find(key => vehicleGroups[key].includes(vehicleType));
 
-    // Regra Global 1:
-    // Leves e Trecho -> Odômetro (Km)
+    // A leitura é derivada da unidade configurada para o grupo:
+    //   Km/L | L/Km -> odômetro (Km) · L/h | h/L -> horímetro (Hr)
+    if (group && groupUnitMap[group]) {
+        return [getReadingSourceForUnit(groupUnitMap[group])];
+    }
+
+    // Fallback (taxonomia ainda não hidratada): regra histórica
     if (group === 'Veículos Leves' || group === 'Caminhões de Trecho') {
         return ['odometro'];
     }
-    
-    // Caminhões Pesados e Máquinas -> Horímetro (Hr)
-    return ['horimetro']; 
+    return ['horimetro'];
 };
 
 /**
@@ -222,6 +297,7 @@ if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         vehicleGroups,
         vehicleSubTypes,
+        groupUnitMap,
         extraObraOptions,
         operationalSubGroups,
         equipmentTypesForHours,
@@ -229,5 +305,11 @@ if (typeof module !== 'undefined' && module.exports) {
         getVehicleMainReading,
         checkReadingConsistency,
         checkVehicleRestrictions,
+        hydrateVehicleTaxonomy,
+        getGroupForType,
+        getGroupUnit,
+        getReadingSourceForUnit,
+        computeConsumption,
+        isHigherBetter,
     };
 }

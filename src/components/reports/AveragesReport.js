@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Activity, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
+import { getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
 
 // Helper para ordenação alfanumérica
 const sortAlphaNum = (a, b) => (a || '').toString().localeCompare((b || '').toString(), 'pt-BR', { numeric: true, sensitivity: 'base' });
@@ -55,15 +56,17 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
             const vId = r.veiculoId;
             if (!grouped[vId]) {
                 const vehicleObj = vehicles.find(v => v.id === vId) || {};
-                const isKm = ['Leves', 'Trecho'].includes(vehicleObj.grupo); 
+                const unit = getGroupUnit(vehicleObj.tipo);
+                const isKm = getReadingSourceForUnit(unit) === 'odometro';
 
                 grouped[vId] = {
                     vehicleId: vId,
                     placa: vehicleObj.placa || 'N/A',
                     nome: vehicleObj.nome || 'Desconhecido',
-                    grupo: vehicleObj.grupo || 'N/A',
+                    grupo: vehicleObj.grupo || vehicleObj.tipo || 'N/A',
                     obraAtual: vehicleObj.obraAtual || 'N/A',
                     isKm: isKm,
+                    consumoUnit: unit,
                     totalLiters: 0,
                     leituras: []
                 };
@@ -92,8 +95,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
             }
 
             if (totalUsage > 0 && item.totalLiters > 0) {
-                if (item.isKm) average = totalUsage / item.totalLiters;
-                else average = item.totalLiters / totalUsage;
+                average = computeConsumption(item.consumoUnit, totalUsage, item.totalLiters) || 0;
             }
 
             return {
@@ -101,7 +103,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                 totalUsage,
                 average: average.toFixed(2),
                 unit: item.isKm ? 'Km' : 'Hr',
-                avgUnit: item.isKm ? 'Km/L' : 'L/Hr'
+                avgUnit: item.consumoUnit
             };
         }).sort((a, b) => sortAlphaNum(a.placa, b.placa));
 
@@ -120,7 +122,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
         doc.text(`Obra: ${obraNome}`, 14, 27);
         doc.text(`Total Litros Consumidos (Filtro): ${totalLitersGlobal.toFixed(2)} L`, 14, 32);
 
-        const tableColumn = ["Placa/Nome", "Grupo", "Obra Atual", "Tipo", "Total Consumido (L)", "Uso Total (Km/Hr)", "Média"];
+        const tableColumn = ["Placa/Nome", "Tipo", "Obra Atual", "Unidade", "Total Consumido (L)", "Uso Total (Km/Hr)", "Média"];
         const tableRows = reportData.map(item => [
             `${item.placa} - ${item.nome}`,
             item.grupo,
@@ -165,9 +167,9 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                     </select>
                 </div>
                 <div>
-                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Grupo de Equipamento</label>
+                    <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Tipo de Equipamento</label>
                     <select value={filters.groupId} onChange={e => setFilters({...filters, groupId: e.target.value, vehicleIds: []})} className="w-full p-2 border rounded bg-white text-sm">
-                        <option value="">Todos os Grupos</option>
+                        <option value="">Todos os Tipos</option>
                         {Object.keys(vehicleGroups).sort(sortAlphaNum).map(g => (
                             <option key={g} value={g}>{g}</option>
                         ))}
@@ -209,7 +211,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                         <thead className="bg-gray-100 sticky top-0 z-10 shadow-sm">
                             <tr>
                                 <th className="p-3 font-bold text-gray-600">Placa / Nome</th>
-                                <th className="p-3 font-bold text-gray-600">Grupo</th>
+                                <th className="p-3 font-bold text-gray-600">Tipo</th>
                                 <th className="p-3 font-bold text-gray-600">Obra Atual</th>
                                 <th className="p-3 font-bold text-gray-600 text-right">Consumo (L)</th>
                                 <th className="p-3 font-bold text-gray-600 text-right">Uso Total (Km/Hr)</th>

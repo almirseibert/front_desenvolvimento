@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel } from 'lucide-react';
-import { checkReadingConsistency, vehicleSubTypes } from '../utils/vehicleRules';
+import { checkReadingConsistency, vehicleSubTypes, getGroupUnit } from '../utils/vehicleRules';
 
 // Statuses que podem ser definidos manualmente no cadastro/edição
 const MANUAL_STATUS_OPTIONS = [
@@ -349,7 +349,7 @@ const VehicleModal = ({
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Tipo de Equipamento *</label>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Grupo de Equipamento *</label>
                                     <select name="tipo" value={formData.tipo} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm" required>
                                         <option value="">Selecione...</option>
                                         {(vehicleTypes || []).map(type => <option key={type} value={type}>{type}</option>)}
@@ -358,7 +358,7 @@ const VehicleModal = ({
 
                                 {availableSubTypes.length > 0 && (
                                     <div>
-                                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Sub-tipo</label>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Subgrupo</label>
                                         <select name="sub_tipo" value={formData.sub_tipo} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm">
                                             <option value="">Nenhum</option>
                                             {availableSubTypes.map(st => <option key={st} value={st}>{st}</option>)}
@@ -510,7 +510,7 @@ const VehicleModal = ({
                                     <div className="space-y-2.5">
                                         <div>
                                             <label className="block text-xs text-gray-600 mb-1">
-                                                Média esperada ({showOdometro ? 'L/100km' : 'L/hr'})
+                                                Média esperada ({getGroupUnit(formData.tipo)})
                                             </label>
                                             <div className="relative">
                                                 <input
@@ -527,7 +527,7 @@ const VehicleModal = ({
                                             </div>
                                             {typeConfigDefault?.media_consumo_padrao != null && !formData.media_consumo && (
                                                 <p className="text-[10px] text-amber-600 mt-0.5">
-                                                    Usando padrão do tipo: {typeConfigDefault.media_consumo_padrao} {typeConfigDefault.unidade}
+                                                    Usando padrão do grupo: {typeConfigDefault.media_consumo_padrao} {typeConfigDefault.unidade}
                                                 </p>
                                             )}
                                         </div>

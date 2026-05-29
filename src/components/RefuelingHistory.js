@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Download, Printer, Droplet, Loader, Filter, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../utils/vehicleRules';
 
 const RefuelingHistory = ({ 
     vehicleId, 
@@ -54,20 +55,10 @@ const RefuelingHistory = ({
             return { filteredHistory: [], overallAverage: null, unit: 'N/A', readingLabel: 'Leitura', totalLitrosPeriodo: 0, totalPercorridoPeriodo: 0 };
         }
 
-        // 1. Determina Unidade (Unificada)
-        const getUnitAndLabel = () => {
-             let isHourBased = false;
-             if (vehicleGroups && Object.keys(vehicleGroups).length > 0) {
-                 const group = Object.keys(vehicleGroups).find(g => vehicleGroups[g]?.includes(vehicle.tipo));
-                 if (group === 'Máquinas Pesadas' || group === 'Caminhões' || group === 'Caminhões Pesados') {
-                     if (group === 'Veículos Leves' || group === 'Caminhões de Trecho') isHourBased = false;
-                     else isHourBased = true;
-                 }
-             }
-             if (vehicle.mediaCalculo === 'horimetro') isHourBased = true;
-             return isHourBased ? { unit: 'L/Hr', label: 'Horímetro' } : { unit: 'Km/L', label: 'Odômetro' };
-        };
-        const { unit, readingLabel } = getUnitAndLabel();
+        // 1. Determina Unidade (conforme configuração do grupo) e leitura usada
+        const unit = getGroupUnit(vehicle.tipo);                 // 'L/h' | 'h/L' | 'Km/L' | 'L/Km'
+        const readingSource = getReadingSourceForUnit(unit);     // 'odometro' | 'horimetro'
+        const readingLabel = readingSource === 'odometro' ? 'Odômetro' : 'Horímetro';
 
         // 2. Ordena Histórico Completo (Decrescente)
         const sortedFullHistory = refuelings
@@ -81,12 +72,9 @@ const RefuelingHistory = ({
             let average = null;
             let diff = 0;
             
-            const getReading = (item) => {
-                if (unit === 'L/Hr') return parseFloat(item.horimetro || 0);
-                return parseFloat(item.odometro || 0);
-            };
-            
-            const displayReading = unit === 'L/Hr' ? (current.horimetro || '-') : (current.odometro || '-');
+            const getReading = (item) => parseFloat((readingSource === 'horimetro' ? item.horimetro : item.odometro) || 0);
+
+            const displayReading = (readingSource === 'horimetro' ? current.horimetro : current.odometro) || '-';
             const displayPartner = current.partnerName || partners.find(p => p.id === current.partnerId)?.razaoSocial || 'N/A';
 
             if (previous) {
@@ -96,7 +84,7 @@ const RefuelingHistory = ({
                 const liters = parseFloat(current.litrosAbastecidos || 0);
 
                 if (diff > 0 && liters > 0) {
-                    average = (unit === 'Km/L') ? (diff / liters) : (liters / diff);
+                    average = computeConsumption(unit, diff, liters);
                 }
             }
 
@@ -125,9 +113,7 @@ const RefuelingHistory = ({
             totalLitrosPeriodo = filteredHistory.reduce((acc, curr) => acc + (parseFloat(curr.litrosAbastecidos) || 0), 0);
 
             if (totalPercorridoPeriodo > 0 && totalLitrosPeriodo > 0) {
-                overallAverage = (unit === 'Km/L') 
-                    ? (totalPercorridoPeriodo / totalLitrosPeriodo) 
-                    : (totalLitrosPeriodo / totalPercorridoPeriodo);
+                overallAverage = computeConsumption(unit, totalPercorridoPeriodo, totalLitrosPeriodo);
             }
         }
 
@@ -176,7 +162,7 @@ const RefuelingHistory = ({
             const gap = 45;
             
             doc.text(`Total Abastecido: ${processedData.totalLitrosPeriodo.toFixed(2)} L`, resumoX, resumoY);
-            doc.text(`Total Percorrido: ${processedData.totalPercorridoPeriodo.toFixed(1)} ${processedData.unit === 'L/Hr' ? 'Hr' : 'Km'}`, resumoX + gap, resumoY);
+            doc.text(`Total Percorrido: ${processedData.totalPercorridoPeriodo.toFixed(1)} ${getReadingSourceForUnit(processedData.unit) === 'horimetro' ? 'Hr' : 'Km'}`, resumoX + gap, resumoY);
             doc.text(`Média Geral: ${processedData.overallAverage ? processedData.overallAverage.toFixed(2) : '--'} ${processedData.unit}`, resumoX + (gap * 2), resumoY);
 
             // Tabela
@@ -281,7 +267,7 @@ const RefuelingHistory = ({
                         <span className="text-[10px] font-bold text-gray-400 uppercase">Percorrido/Trabalhado</span>
                         <div className="text-xl font-bold text-gray-700">
                             {processedData.totalPercorridoPeriodo.toFixed(0)}
-                            <span className="text-xs text-gray-400 ml-1">{processedData.unit === 'L/Hr' ? 'Horas' : 'Km'}</span>
+                            <span className="text-xs text-gray-400 ml-1">{getReadingSourceForUnit(processedData.unit) === 'horimetro' ? 'Horas' : 'Km'}</span>
                         </div>
                     </div>
                 </div>

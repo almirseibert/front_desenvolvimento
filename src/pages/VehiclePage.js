@@ -15,7 +15,6 @@ import OperationalAssignmentModal from '../components/OperationalAssignmentModal
 import ObraAllocationModal from '../components/ObraAllocationModal';
 import HistoryModal from '../components/HistoryModal';
 import ChecklistModal from '../components/ChecklistModal';
-import VehicleTypeConfigModal from '../components/modals/VehicleTypeConfigModal';
 
 import { getVehicleMainReading, checkVehicleRestrictions } from '../utils/vehicleRules';
 
@@ -49,8 +48,7 @@ const VehiclePage = ({
 
     // --- Estados ---
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isTypeConfigModalOpen, setIsTypeConfigModalOpen] = useState(false);
-    const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
+const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
     const [isObraAllocationModalOpen, setIsObraAllocationModalOpen] = useState(false);
     const [isOperationalModalOpen, setIsOperationalModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -262,7 +260,7 @@ const VehiclePage = ({
     };
 
     const exportToCSV = () => {
-        const headers = ['Registro', 'Placa', 'Marca', 'Modelo', 'Tipo', 'Leitura', 'Status', 'Terceiro?', 'Ativo'];
+        const headers = ['Registro', 'Placa', 'Marca', 'Modelo', 'Grupo', 'Leitura', 'Status', 'Terceiro?', 'Ativo'];
         const rows = filteredVehicles.map(v => [
             v.registroInterno, v.placa, v.marca, v.modelo, v.tipo,
             v.vehicleReading, v.computedStatus, v.isOutsourced ? 'SIM' : 'NÃO', v.ativo ? 'SIM' : 'NÃO'
@@ -315,14 +313,7 @@ const VehiclePage = ({
                             <button onClick={exportToCSV} className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition text-sm shadow-sm">
                                 <Download size={14}/> Exportar
                             </button>
-                            <button
-                                onClick={() => setIsTypeConfigModalOpen(true)}
-                                className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition text-sm shadow-sm"
-                                title="Configurar médias de consumo por tipo/sub-tipo"
-                            >
-                                <Fuel size={14}/> Consumo
-                            </button>
-                            <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition text-sm shadow-sm">
+<button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition text-sm shadow-sm">
                                 <PlusCircle size={15}/> Novo Veículo
                             </button>
                         </div>
@@ -419,16 +410,16 @@ const VehiclePage = ({
                     {showFilters && (
                         <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-gray-50/60 border-b border-gray-100">
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Grupo</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Tipo</label>
                                 <select name="group" value={filters.group} onChange={handleFilterChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                    <option value="todos">Todos os grupos</option>
+                                    <option value="todos">Todos os tipos</option>
                                     {Object.keys(vehicleGroups).map(g => <option key={g} value={g}>{g}</option>)}
                                 </select>
                             </div>
                             <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Tipo</label>
+                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Grupo</label>
                                 <select name="type" value={filters.type} onChange={handleFilterChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                    <option value="todos">Todos os tipos</option>
+                                    <option value="todos">Todos os grupos</option>
                                     {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
                                 </select>
                             </div>
@@ -664,8 +655,7 @@ const VehiclePage = ({
 
             {/* ── Modais ──────────────────────────────────────────────────── */}
             {isModalOpen && <VehicleModal user={user} vehicle={selectedVehicle} vehicles={vehicles} vehicleTypes={vehicleTypes} vehicleGroups={vehicleGroups} vehicleTypeConfigs={vehicleTypeConfigs} onClose={() => setIsModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} PasswordConfirmationModal={PasswordConfirmationModal}/>}
-            {isTypeConfigModalOpen && <VehicleTypeConfigModal onClose={() => { setIsTypeConfigModalOpen(false); apiClient.getVehicleTypeConfigs().then(setVehicleTypeConfigs).catch(() => {}); }} apiClient={apiClient} setAlertMessage={setAlertMessage}/>}
-            {isObraAllocationModalOpen && <ObraAllocationModal user={user} vehicle={selectedVehicle} obras={obras} employees={employees} revisions={revisions} onClose={() => setIsObraAllocationModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} vehicles={vehicles} PasswordConfirmationModal={PasswordConfirmationModal}/>}
+{isObraAllocationModalOpen && <ObraAllocationModal user={user} vehicle={selectedVehicle} obras={obras} employees={employees} revisions={revisions} onClose={() => setIsObraAllocationModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} vehicles={vehicles} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isOperationalModalOpen && <OperationalAssignmentModal user={user} vehicle={selectedVehicle} employees={employees} revisions={revisions} onClose={() => setIsOperationalModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} operationalSubGroups={operationalSubGroups} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isHistoryModalOpen && <HistoryModal vehicle={selectedVehicle} onClose={() => setIsHistoryModalOpen(false)} obras={obras} apiClient={apiClient} employees={employees}/>}
             {isChecklistModalOpen && <ChecklistModal vehicle={selectedVehicle} onClose={() => setIsChecklistModalOpen(false)} apiClient={apiClient}/>}

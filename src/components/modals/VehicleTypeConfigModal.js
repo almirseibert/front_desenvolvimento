@@ -1,19 +1,26 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, Edit2, Save, Loader, AlertTriangle, ChevronDown, ChevronUp, Fuel } from 'lucide-react';
-import { vehicleGroups, vehicleSubTypes, getAllowedReadingTypes } from '../../utils/vehicleRules';
+import { vehicleGroups, vehicleSubTypes, getGroupUnit, getReadingSourceForUnit } from '../../utils/vehicleRules';
 
 const EMPTY_FORM = {
     tipo: '',
     sub_tipo: '',
     media_consumo_padrao: '',
     percentual_tolerancia_padrao: '20',
-    unidade: 'L/hr',
+    unidade: 'L/h',
 };
 
-const unidadeParaTipo = (tipo) => {
-    if (!tipo) return 'L/hr';
-    const types = getAllowedReadingTypes(tipo);
-    return types.includes('odometro') ? 'L/100km' : 'L/hr';
+// A unidade é derivada do grupo (configurável na aba Admin → Veículos).
+const unidadeParaTipo = (tipo) => (tipo ? getGroupUnit(tipo) : 'L/h');
+
+const unidadeDescricao = (unidade) => {
+    switch (unidade) {
+        case 'Km/L': return 'Quilômetros rodados por litro';
+        case 'L/Km': return 'Litros consumidos por quilômetro';
+        case 'h/L':  return 'Horas de operação por litro';
+        case 'L/h':
+        default:     return 'Litros consumidos por hora de operação';
+    }
 };
 
 const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
@@ -69,7 +76,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
     };
 
     const handleSave = async () => {
-        if (!form.tipo) { setError('Selecione um tipo de equipamento.'); return; }
+        if (!form.tipo) { setError('Selecione um grupo de equipamento.'); return; }
         setSaving(true);
         setError('');
         try {
@@ -127,10 +134,10 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                     <div>
                         <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                             <Fuel size={20} className="text-yellow-500"/>
-                            Configuração de Tipos de Equipamento
+                            Configuração de Grupos de Equipamento
                         </h2>
                         <p className="text-xs text-gray-500 mt-0.5">
-                            Defina a média de consumo padrão e a tolerância por tipo e sub-tipo.
+                            Defina a média de consumo padrão e a tolerância por grupo e subgrupo.
                         </p>
                     </div>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
@@ -166,7 +173,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                             <div className="grid grid-cols-2 gap-4">
                                 {/* Tipo */}
                                 <div>
-                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Tipo *</label>
+                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Grupo *</label>
                                     <select
                                         value={form.tipo}
                                         onChange={e => handleTipoChange(e.target.value)}
@@ -177,10 +184,10 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                     </select>
                                 </div>
 
-                                {/* Sub-tipo (condicional) */}
+                                {/* Subgrupo (condicional) */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
-                                        Sub-tipo {subTypesForSelected.length > 0 ? '' : '(sem sub-tipos)'}
+                                        Subgrupo {subTypesForSelected.length > 0 ? '' : '(sem subgrupos)'}
                                     </label>
                                     <select
                                         value={form.sub_tipo}
@@ -188,7 +195,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                         disabled={subTypesForSelected.length === 0}
                                         className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm disabled:bg-gray-100 disabled:text-gray-400"
                                     >
-                                        <option value="">Nenhum (vale para todo o tipo)</option>
+                                        <option value="">Nenhum (vale para todo o grupo)</option>
                                         {subTypesForSelected.map(st => <option key={st} value={st}>{st}</option>)}
                                     </select>
                                 </div>
@@ -208,9 +215,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                         className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm font-mono"
                                     />
                                     <p className="text-[10px] text-gray-400 mt-1">
-                                        {form.unidade === 'L/hr'
-                                            ? 'Litros consumidos por hora de operação'
-                                            : 'Litros consumidos a cada 100 km'}
+                                        {unidadeDescricao(form.unidade)}
                                     </p>
                                 </div>
 
@@ -240,10 +245,10 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
 
                             {/* Unidade (somente leitura — derivada do tipo) */}
                             <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg p-2.5">
-                                <span className="text-xs text-gray-500">Unidade derivada do tipo:</span>
+                                <span className="text-xs text-gray-500">Unidade do grupo:</span>
                                 <span className="font-bold text-sm text-blue-700 bg-blue-50 px-2 py-0.5 rounded">{form.unidade}</span>
                                 <span className="text-xs text-gray-400">
-                                    ({form.unidade === 'L/hr' ? 'equipamento usa horímetro' : 'equipamento usa odômetro'})
+                                    ({getReadingSourceForUnit(form.unidade) === 'odometro' ? 'usa odômetro (Km)' : 'usa horímetro (Hr)'} · edite em Admin → Veículos)
                                 </span>
                             </div>
 
@@ -332,7 +337,7 @@ const TipoGroup = ({ tipo, items, onEdit, onDelete, deleting }) => {
                                 <p className="text-sm text-gray-700">
                                     {cfg.sub_tipo
                                         ? <span className="font-medium">{cfg.sub_tipo}</span>
-                                        : <span className="text-gray-400 italic">Padrão do tipo (sem sub-tipo)</span>}
+                                        : <span className="text-gray-400 italic">Padrão do grupo (sem subgrupo)</span>}
                                 </p>
                                 <div className="flex items-center gap-3 mt-0.5">
                                     <span className="text-xs text-gray-500">

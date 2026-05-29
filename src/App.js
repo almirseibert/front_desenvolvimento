@@ -52,6 +52,7 @@ import {
     extraObraOptions,
     operationalSubGroups,
     equipmentTypesForHours,
+    hydrateVehicleTaxonomy,
 } from './utils/vehicleRules';
 import { processVehiclesWithAlerts } from './utils/vehicleAlerts';
 
@@ -332,6 +333,35 @@ const AppContent = () => {
 
     const [agendaAlerts, setAgendaAlerts] = useState([]);
 
+    // ---------- Taxonomia de veículos (hidratada do banco) ----------
+    // Incrementa a cada hidratação para forçar recompute dos consumidores.
+    const [taxonomyVersion, setTaxonomyVersion] = useState(0);
+
+    const hydrateTaxonomy = useCallback(() => {
+        apiClient.getVehicleTaxonomy?.()
+            .then(tree => {
+                hydrateVehicleTaxonomy(tree);
+                setTaxonomyVersion(v => v + 1);
+            })
+            .catch(e => console.warn('Erro ao carregar taxonomia de veículos:', e));
+    }, []);
+
+    useEffect(() => {
+        if (!user) return;
+        hydrateTaxonomy();
+    }, [user, hydrateTaxonomy]);
+
+    // Re-hidrata quando o admin altera a taxonomia (via socket).
+    useEffect(() => {
+        if (!socket) return;
+        const onSync = (payload) => {
+            const targets = payload?.targets || [];
+            if (targets.includes('vehicleTaxonomy')) hydrateTaxonomy();
+        };
+        socket.on('server:sync', onSync);
+        return () => socket.off('server:sync', onSync);
+    }, [socket, hydrateTaxonomy]);
+
     // ---------- Avisos auxiliares (não bloqueantes do bootstrap) ----------
     useEffect(() => {
         if (!user || user.user_type === 'operador') return;
@@ -467,7 +497,7 @@ const AppContent = () => {
         setAlertMessage,
         PasswordConfirmationModal: PasswordConfirmationModalWrapped,
         ConfirmationModal,
-        vehicleGroups,
+        vehicleGroups: { ...vehicleGroups },
         extraObraOptions,
         equipmentTypesForHours,
         operationalSubGroups,
@@ -487,6 +517,8 @@ const AppContent = () => {
         dailyWorkLogs,
         orders,
         socket,
+    // taxonomyVersion força recompute quando a taxonomia (mutada in-place) é re-hidratada
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }), [
         user,
         PasswordConfirmationModalWrapped,
@@ -494,6 +526,7 @@ const AppContent = () => {
         processedVehicles, obras, revisions, expenses, employees, partners,
         refuelings, comboioTransactions, fines, diarioDeBordoLogs, dailyWorkLogs, orders,
         socket,
+        taxonomyVersion,
     ]);
 
     const closeAgendaAlert = useCallback((index) => {

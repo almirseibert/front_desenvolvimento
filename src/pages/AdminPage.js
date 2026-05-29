@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, Users, Layers, MessageSquare, Settings, Server } from 'lucide-react';
+import { Shield, Users, Layers, MessageSquare, Settings, Server, Truck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/apiClient';
 
@@ -8,10 +8,12 @@ import AccessGroupsTab from '../components/admin/AccessGroupsTab';
 import CommunicationTab from '../components/admin/CommunicationTab';
 import ConfiguracoesTab from '../components/admin/ConfiguracoesTab';
 import SystemTab from '../components/admin/SystemTab';
+import VehicleTaxonomyTab from '../components/admin/VehicleTaxonomyTab';
 
 const TABS = [
   { id: 'usuarios',      label: 'Usuários',         icon: <Users size={15} /> },
   { id: 'grupos',        label: 'Grupos de Acesso',  icon: <Layers size={15} /> },
+  { id: 'veiculos',      label: 'Veículos',          icon: <Truck size={15} /> },
   { id: 'comunicacao',   label: 'Comunicação',       icon: <MessageSquare size={15} /> },
   { id: 'configuracoes', label: 'Configurações',     icon: <Settings size={15} /> },
   { id: 'sistema',       label: 'Sistema',           icon: <Server size={15} /> },
@@ -100,6 +102,9 @@ const AdminPage = ({ socket }) => {
             groups={groups}
             onGroupsChange={setGroups}
           />
+        )}
+        {activeTab === 'veiculos' && (
+          <VehicleTaxonomyTab />
         )}
         {activeTab === 'comunicacao' && (
           <CommunicationTab

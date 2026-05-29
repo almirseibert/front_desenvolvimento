@@ -102,6 +102,18 @@ const apiClient = {
     updateVehicleTypeConfig: async (id, data) => apiFetch(`/vehicle-type-configs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteVehicleTypeConfig: async (id) => apiFetch(`/vehicle-type-configs/${id}`, { method: 'DELETE' }),
 
+    // --- Taxonomia de Veículos (grupos → tipos → sub-tipos) ---
+    getVehicleTaxonomy: async () => apiFetch('/vehicle-taxonomy'),
+    createVehicleGroup: async (data) => apiFetch('/vehicle-taxonomy/groups', { method: 'POST', body: JSON.stringify(data) }),
+    updateVehicleGroup: async (id, data) => apiFetch(`/vehicle-taxonomy/groups/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteVehicleGroup: async (id) => apiFetch(`/vehicle-taxonomy/groups/${id}`, { method: 'DELETE' }),
+    createVehicleType: async (data) => apiFetch('/vehicle-taxonomy/types', { method: 'POST', body: JSON.stringify(data) }),
+    updateVehicleType: async (id, data) => apiFetch(`/vehicle-taxonomy/types/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteVehicleType: async (id) => apiFetch(`/vehicle-taxonomy/types/${id}`, { method: 'DELETE' }),
+    createVehicleSubType: async (data) => apiFetch('/vehicle-taxonomy/sub-types', { method: 'POST', body: JSON.stringify(data) }),
+    updateVehicleSubType: async (id, data) => apiFetch(`/vehicle-taxonomy/sub-types/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteVehicleSubType: async (id) => apiFetch(`/vehicle-taxonomy/sub-types/${id}`, { method: 'DELETE' }),
+
     // --- Checklists ---
     getVehicleChecklists: async (vehicleId) => apiFetch(`/checklists/vehicle/${vehicleId}`),
 

@@ -1,15 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, TrendingUp, Mail, Send } from 'lucide-react';
 
-// Movido para dentro do arquivo para evitar erro de importação (Could not resolve)
-const getAllowedReadingTypes = (tipo) => {
-    if (!tipo) return [];
-    const isLeveOrTrecho = [
-        'Automóvel', 'Camionete', 'Utilitários', 'Moto', 
-        'Caminhão Prancha', 'Semirreboques'
-    ].includes(tipo);
-    return isLeveOrTrecho ? ['odometro'] : ['horimetro'];
-};
+import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
 
 const RefuelingOrderModal = ({
     user,
@@ -278,22 +270,20 @@ const RefuelingOrderModal = ({
             const prevRefuel = history[1];
             const litros = parseFloat(last.litrosAbastecidos || 0);
             let diff = 0;
-            let unit = 'Km/L';
 
-            const allowed = getAllowedReadingTypes(selectedVehicle.tipo);
-            if (allowed.includes('horimetro')) {
-                const lastHr = parseFloat(last.horimetro || 0); 
+            const unit = getGroupUnit(selectedVehicle.tipo);
+            if (getReadingSourceForUnit(unit) === 'horimetro') {
+                const lastHr = parseFloat(last.horimetro || 0);
                 const prevHr = parseFloat(prevRefuel.horimetro || 0);
                 diff = lastHr - prevHr;
-                unit = 'L/Hr';
             } else {
                 const lastKm = parseFloat(last.odometro || 0);
                 const prevKm = parseFloat(prevRefuel.odometro || 0);
                 diff = lastKm - prevKm;
             }
 
-            if (diff > 0 && litros > 0) {
-                const avg = unit === 'Km/L' ? (diff / litros) : (litros / diff);
+            const avg = computeConsumption(unit, diff, litros);
+            if (avg != null) {
                 setLastAverage(`${avg.toFixed(2)} ${unit}`);
             } else {
                 setLastAverage('Incalculável');
