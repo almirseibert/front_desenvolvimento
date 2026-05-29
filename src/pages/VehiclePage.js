@@ -3,7 +3,7 @@ import {
     HardHat, Users, Wrench, ShieldAlert, Edit, Clock, Trash2, PlusCircle,
     Download, ChevronsUpDown, AlertTriangle, Truck,
     FileText, Ban, ClipboardCheck, Power, Package, Search, SlidersHorizontal,
-    CheckCircle2, Briefcase
+    CheckCircle2, Briefcase, Fuel
 } from 'lucide-react';
 
 import ProtectedComponent from '../components/ProtectedComponent';
@@ -15,6 +15,7 @@ import OperationalAssignmentModal from '../components/OperationalAssignmentModal
 import ObraAllocationModal from '../components/ObraAllocationModal';
 import HistoryModal from '../components/HistoryModal';
 import ChecklistModal from '../components/ChecklistModal';
+import VehicleTypeConfigModal from '../components/modals/VehicleTypeConfigModal';
 
 import { getVehicleMainReading, checkVehicleRestrictions } from '../utils/vehicleRules';
 
@@ -48,6 +49,8 @@ const VehiclePage = ({
 
     // --- Estados ---
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isTypeConfigModalOpen, setIsTypeConfigModalOpen] = useState(false);
+    const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
     const [isObraAllocationModalOpen, setIsObraAllocationModalOpen] = useState(false);
     const [isOperationalModalOpen, setIsOperationalModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -69,6 +72,10 @@ const VehiclePage = ({
     useEffect(() => {
         if (initialFilter) setFilters(prev => ({ ...prev, ...initialFilter }));
     }, [initialFilter]);
+
+    useEffect(() => {
+        apiClient.getVehicleTypeConfigs().then(setVehicleTypeConfigs).catch(() => {});
+    }, [apiClient]);
 
     const handleFilterChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -307,6 +314,13 @@ const VehiclePage = ({
                         <div className="flex gap-2">
                             <button onClick={exportToCSV} className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition text-sm shadow-sm">
                                 <Download size={14}/> Exportar
+                            </button>
+                            <button
+                                onClick={() => setIsTypeConfigModalOpen(true)}
+                                className="flex items-center gap-2 px-3.5 py-2 bg-white border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition text-sm shadow-sm"
+                                title="Configurar médias de consumo por tipo/sub-tipo"
+                            >
+                                <Fuel size={14}/> Consumo
                             </button>
                             <button onClick={handleNew} className="flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 transition text-sm shadow-sm">
                                 <PlusCircle size={15}/> Novo Veículo
@@ -649,7 +663,8 @@ const VehiclePage = ({
             </div>
 
             {/* ── Modais ──────────────────────────────────────────────────── */}
-            {isModalOpen && <VehicleModal user={user} vehicle={selectedVehicle} vehicles={vehicles} vehicleTypes={vehicleTypes} vehicleGroups={vehicleGroups} onClose={() => setIsModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} PasswordConfirmationModal={PasswordConfirmationModal}/>}
+            {isModalOpen && <VehicleModal user={user} vehicle={selectedVehicle} vehicles={vehicles} vehicleTypes={vehicleTypes} vehicleGroups={vehicleGroups} vehicleTypeConfigs={vehicleTypeConfigs} onClose={() => setIsModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} PasswordConfirmationModal={PasswordConfirmationModal}/>}
+            {isTypeConfigModalOpen && <VehicleTypeConfigModal onClose={() => { setIsTypeConfigModalOpen(false); apiClient.getVehicleTypeConfigs().then(setVehicleTypeConfigs).catch(() => {}); }} apiClient={apiClient} setAlertMessage={setAlertMessage}/>}
             {isObraAllocationModalOpen && <ObraAllocationModal user={user} vehicle={selectedVehicle} obras={obras} employees={employees} revisions={revisions} onClose={() => setIsObraAllocationModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} vehicles={vehicles} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isOperationalModalOpen && <OperationalAssignmentModal user={user} vehicle={selectedVehicle} employees={employees} revisions={revisions} onClose={() => setIsOperationalModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} operationalSubGroups={operationalSubGroups} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isHistoryModalOpen && <HistoryModal vehicle={selectedVehicle} onClose={() => setIsHistoryModalOpen(false)} obras={obras} apiClient={apiClient} employees={employees}/>}

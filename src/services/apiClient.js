@@ -96,6 +96,12 @@ const apiClient = {
         });
     },
 
+    // --- Configurações de Tipos/Sub-tipos de Veículos ---
+    getVehicleTypeConfigs: async () => apiFetch('/vehicle-type-configs'),
+    createVehicleTypeConfig: async (data) => apiFetch('/vehicle-type-configs', { method: 'POST', body: JSON.stringify(data) }),
+    updateVehicleTypeConfig: async (id, data) => apiFetch(`/vehicle-type-configs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteVehicleTypeConfig: async (id) => apiFetch(`/vehicle-type-configs/${id}`, { method: 'DELETE' }),
+
     // --- Checklists ---
     getVehicleChecklists: async (vehicleId) => apiFetch(`/checklists/vehicle/${vehicleId}`),
 

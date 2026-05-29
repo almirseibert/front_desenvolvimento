@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package } from 'lucide-react';
-import { checkReadingConsistency } from '../utils/vehicleRules';
+import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel } from 'lucide-react';
+import { checkReadingConsistency, vehicleSubTypes } from '../utils/vehicleRules';
 
 // Statuses que podem ser definidos manualmente no cadastro/edição
 const MANUAL_STATUS_OPTIONS = [
@@ -16,6 +16,7 @@ const VehicleModal = ({
     vehicles = [],
     vehicleTypes = [],
     vehicleGroups = {},
+    vehicleTypeConfigs = [],
     onClose,
     setAlertMessage,
     apiClient,
@@ -61,6 +62,10 @@ const VehicleModal = ({
 
         // Rastreador
         rastreador: vehicle?.rastreador || 'Sem Rastreador',
+
+        sub_tipo: vehicle?.sub_tipo || '',
+        media_consumo: vehicle?.media_consumo?.toString() || '',
+        percentual_tolerancia: vehicle?.percentual_tolerancia?.toString() || '20',
 
         fuelCapacity: vehicle?.fuelCapacity?.toString() || '',
 
@@ -110,6 +115,19 @@ const VehicleModal = ({
     const showOdometro  = useMemo(() => effectiveGroup === 'Veículos Leves'     || effectiveGroup === 'Caminhões de Trecho', [effectiveGroup]);
     const showHorimetro = useMemo(() => effectiveGroup === 'Máquinas Pesadas'   || effectiveGroup === 'Caminhões',           [effectiveGroup]);
 
+    const availableSubTypes = useMemo(() => vehicleSubTypes[formData.tipo] || [], [formData.tipo]);
+
+    // Busca a config padrão do tipo/sub-tipo cadastrada
+    const typeConfigDefault = useMemo(() => {
+        if (!vehicleTypeConfigs.length) return null;
+        // Tenta match exato tipo+sub_tipo, fallback para só o tipo
+        const exact = vehicleTypeConfigs.find(
+            c => c.tipo === formData.tipo && c.sub_tipo === (formData.sub_tipo || null)
+        );
+        if (exact) return exact;
+        return vehicleTypeConfigs.find(c => c.tipo === formData.tipo && !c.sub_tipo) || null;
+    }, [vehicleTypeConfigs, formData.tipo, formData.sub_tipo]);
+
     const canBeComboio = useMemo(() => {
         const type = formData.tipo;
         if (effectiveGroup === 'Máquinas Pesadas') return false;
@@ -133,6 +151,29 @@ const VehicleModal = ({
         const { name, value, type, checked } = e.target;
         if (name === 'naoPodeCircular') {
             setFormData(prev => ({ ...prev, canCirculate: !checked }));
+            return;
+        }
+        if (name === 'tipo') {
+            // Ao trocar tipo: limpa sub_tipo e sugere média do novo tipo (se houver config)
+            const cfg = vehicleTypeConfigs.find(c => c.tipo === value && !c.sub_tipo);
+            setFormData(prev => ({
+                ...prev,
+                tipo: value,
+                sub_tipo: '',
+                media_consumo: !vehicle && cfg?.media_consumo_padrao != null ? cfg.media_consumo_padrao.toString() : prev.media_consumo,
+                percentual_tolerancia: !vehicle && cfg ? cfg.percentual_tolerancia_padrao?.toString() || '20' : prev.percentual_tolerancia,
+            }));
+            return;
+        }
+        if (name === 'sub_tipo') {
+            // Ao selecionar sub-tipo, sugere média específica do sub-tipo (se houver)
+            const cfg = vehicleTypeConfigs.find(c => c.tipo === formData.tipo && c.sub_tipo === value);
+            setFormData(prev => ({
+                ...prev,
+                sub_tipo: value,
+                media_consumo: !vehicle && cfg?.media_consumo_padrao != null ? cfg.media_consumo_padrao.toString() : prev.media_consumo,
+                percentual_tolerancia: !vehicle && cfg ? cfg.percentual_tolerancia_padrao?.toString() || '20' : prev.percentual_tolerancia,
+            }));
             return;
         }
         setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
@@ -199,6 +240,9 @@ const VehicleModal = ({
             cor:       formData.cor,
             rastreador: formData.rastreador,
             status:     formData.status,
+            sub_tipo:   formData.sub_tipo || null,
+            media_consumo: formData.media_consumo !== '' ? parseFloat(formData.media_consumo) : null,
+            percentual_tolerancia: formData.percentual_tolerancia !== '' ? parseFloat(formData.percentual_tolerancia) : 20,
             // Sucata: força canCirculate = false e remove alocações ativas
             ...(isSucata && { canCirculate: false }),
         };
@@ -311,6 +355,16 @@ const VehicleModal = ({
                                         {(vehicleTypes || []).map(type => <option key={type} value={type}>{type}</option>)}
                                     </select>
                                 </div>
+
+                                {availableSubTypes.length > 0 && (
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Sub-tipo</label>
+                                        <select name="sub_tipo" value={formData.sub_tipo} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm">
+                                            <option value="">Nenhum</option>
+                                            {availableSubTypes.map(st => <option key={st} value={st}>{st}</option>)}
+                                        </select>
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
@@ -445,6 +499,55 @@ const VehicleModal = ({
                                     <div className={showCapacity ? '' : 'col-span-2'}>
                                         <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Tanque (L)</label>
                                         <input name="fuelCapacity" value={formData.fuelCapacity} onChange={handleChange} type="number" step="any" className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm"/>
+                                    </div>
+                                </div>
+
+                                {/* ── Consumo: média e tolerância ── */}
+                                <div className={`p-3 rounded-lg border ${isSucata ? 'opacity-50' : 'bg-amber-50 border-amber-200'}`}>
+                                    <p className="text-xs font-bold text-amber-800 uppercase mb-2.5 flex items-center gap-1.5">
+                                        <Fuel size={13}/> Parâmetros de Consumo
+                                    </p>
+                                    <div className="space-y-2.5">
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">
+                                                Média esperada ({showOdometro ? 'L/100km' : 'L/hr'})
+                                            </label>
+                                            <div className="relative">
+                                                <input
+                                                    name="media_consumo"
+                                                    value={formData.media_consumo}
+                                                    onChange={handleChange}
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    disabled={isSucata}
+                                                    placeholder={typeConfigDefault?.media_consumo_padrao != null ? `Padrão: ${typeConfigDefault.media_consumo_padrao}` : 'Ex: 15.00'}
+                                                    className="w-full p-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none text-sm font-mono disabled:bg-gray-100"
+                                                />
+                                            </div>
+                                            {typeConfigDefault?.media_consumo_padrao != null && !formData.media_consumo && (
+                                                <p className="text-[10px] text-amber-600 mt-0.5">
+                                                    Usando padrão do tipo: {typeConfigDefault.media_consumo_padrao} {typeConfigDefault.unidade}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs text-gray-600 mb-1">Tolerância acima da média (%)</label>
+                                            <div className="relative">
+                                                <input
+                                                    name="percentual_tolerancia"
+                                                    value={formData.percentual_tolerancia}
+                                                    onChange={handleChange}
+                                                    type="number"
+                                                    step="1"
+                                                    min="0"
+                                                    max="200"
+                                                    disabled={isSucata}
+                                                    className="w-full p-2 pr-8 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-400 outline-none text-sm font-mono disabled:bg-gray-100"
+                                                />
+                                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-bold">%</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
