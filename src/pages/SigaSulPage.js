@@ -18,12 +18,52 @@ L.Icon.Default.mergeOptions({
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// Ícones coloridos simples — usados apenas na aba de rota (início/fim/ponto)
 const makeIcon = (color) => new L.Icon({
     iconUrl: `https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-${color}.png`,
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
     iconSize: [25, 41], iconAnchor: [12, 41], popupAnchor: [1, -34], shadowSize: [41, 41],
 });
 const ICONS = { green: makeIcon('green'), red: makeIcon('red'), grey: makeIcon('grey') };
+
+// ── Ícones por tipo de veículo (mapa de tempo real) ───────────────────────────
+const VEHICLE_TYPE_GROUPS = {
+    leve:     ['Automóvel', 'Camionete', 'Utilitários', 'Moto'],
+    caminhao: ['Bitruck', 'Caminhão Pipa', 'Caminhão Tanque', 'Caminhão Carroceria', 'Cavalo',
+               'Caçamba Bitruck', 'Caçamba Toco', 'Caçamba Traçado', 'Caçamba Truckado', 'Caminhão', 'Caçamba'],
+    trecho:   ['Caminhão Prancha', 'Semirreboques'],
+    maquina:  ['Motoniveladora', 'Pá Carregadeira', 'Retroescavadeira', 'Rolo', 'Trator',
+               'Escavadeira', 'Escavadeira + Rompedor', 'Fresadora', 'Trator Esteira'],
+};
+
+const GROUP_CONFIG = {
+    leve:         { emoji: '🚗', label: 'Veículo Leve' },
+    caminhao:     { emoji: '🚛', label: 'Caminhão' },
+    trecho:       { emoji: '🚚', label: 'Caminhão de Trecho' },
+    maquina:      { emoji: '🚜', label: 'Máquina Pesada' },
+    desconhecido: { emoji: '📍', label: 'Não cadastrado' },
+};
+
+const vehicleTypeGroup = (tipo) => {
+    if (!tipo) return 'desconhecido';
+    for (const [group, types] of Object.entries(VEHICLE_TYPE_GROUPS)) {
+        if (types.includes(tipo)) return group;
+    }
+    return 'desconhecido';
+};
+
+const makeVehicleIcon = (tipo, ignicao) => {
+    const { emoji } = GROUP_CONFIG[vehicleTypeGroup(tipo)];
+    const border = ignicao ? '#22c55e' : '#9ca3af';
+    const bg     = ignicao ? '#f0fdf4' : '#f9fafb';
+    return L.divIcon({
+        className: '',
+        html: `<div style="width:32px;height:32px;border-radius:50%;background:${bg};border:2.5px solid ${border};display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 1px 4px rgba(0,0,0,.25)">${emoji}</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -18],
+    });
+};
 
 // --- helpers ---
 const fmtDateTime = (str) => {
@@ -214,31 +254,50 @@ function TabTempoReal({ apiClient }) {
                             </button>
                         </div>
                         {showMap && (
-                            <div style={{ height: 340 }}>
-                                <MapContainer center={mapCenter} zoom={6} style={{ height: '100%', width: '100%' }}>
-                                    <TileLayer
-                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                                        attribution='&copy; OpenStreetMap contributors'
-                                    />
-                                    {data.filter(p => p.pos_latitude && p.pos_longitude).map((p, i) => (
-                                        <Marker
-                                            key={i}
-                                            position={[p.pos_latitude, p.pos_longitude]}
-                                            icon={p.pos_ignicao ? ICONS.green : ICONS.grey}
-                                        >
-                                            <Popup>
-                                                <div className="text-xs space-y-1">
-                                                    <p className="font-bold text-sm">{p.pos_placa}</p>
-                                                    {p.pos_nome_motorista && <p>Motorista: {p.pos_nome_motorista}</p>}
-                                                    <p>Velocidade: {p.pos_velocidade} km/h</p>
-                                                    <p>Ignição: {p.pos_ignicao ? 'Ligado' : 'Desligado'}</p>
-                                                    <p className="text-gray-400">{fmtDateTime(p.pos_data_hora_gps)}</p>
-                                                </div>
-                                            </Popup>
-                                        </Marker>
+                            <>
+                                <div style={{ height: 340 }}>
+                                    <MapContainer center={mapCenter} zoom={6} style={{ height: '100%', width: '100%' }}>
+                                        <TileLayer
+                                            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                            attribution='&copy; OpenStreetMap contributors'
+                                        />
+                                        {data.filter(p => p.pos_latitude && p.pos_longitude).map((p, i) => (
+                                            <Marker
+                                                key={i}
+                                                position={[p.pos_latitude, p.pos_longitude]}
+                                                icon={makeVehicleIcon(p.veiculo_tipo, p.pos_ignicao)}
+                                            >
+                                                <Popup>
+                                                    <div className="text-xs space-y-1">
+                                                        <p className="font-bold text-sm">{p.pos_placa}</p>
+                                                        {p.veiculo_tipo && <p className="text-gray-500">{p.veiculo_tipo}</p>}
+                                                        {p.pos_nome_motorista && <p>Motorista: {p.pos_nome_motorista}</p>}
+                                                        <p>Velocidade: {p.pos_velocidade} km/h</p>
+                                                        <p>Ignição: {p.pos_ignicao ? 'Ligado' : 'Desligado'}</p>
+                                                        <p className="text-gray-400">{fmtDateTime(p.pos_data_hora_gps)}</p>
+                                                    </div>
+                                                </Popup>
+                                            </Marker>
+                                        ))}
+                                    </MapContainer>
+                                </div>
+                                {/* Legenda */}
+                                <div className="px-4 py-2 bg-gray-50 border-t flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-500">
+                                    {Object.entries(GROUP_CONFIG).map(([key, { emoji, label }]) => (
+                                        <span key={key} className="flex items-center gap-1">{emoji} {label}</span>
                                     ))}
-                                </MapContainer>
-                            </div>
+                                    <span className="ml-auto flex items-center gap-3">
+                                        <span className="flex items-center gap-1.5">
+                                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#22c55e' }} />
+                                            Ligado
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', background: '#9ca3af' }} />
+                                            Desligado
+                                        </span>
+                                    </span>
+                                </div>
+                            </>
                         )}
                     </div>
 
@@ -259,6 +318,7 @@ function TabTempoReal({ apiClient }) {
                                 <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
                                     <tr>
                                         <th className="px-4 py-2">Placa</th>
+                                        <th className="px-4 py-2">Tipo</th>
                                         <th className="px-4 py-2">Motorista</th>
                                         <th className="px-4 py-2 text-center">Ignição</th>
                                         <th className="px-4 py-2 text-right">Velocidade</th>
@@ -271,6 +331,11 @@ function TabTempoReal({ apiClient }) {
                                     {filtered.map((p, i) => (
                                         <tr key={i} className="hover:bg-gray-50">
                                             <td className="px-4 py-2 font-bold text-gray-800">{p.pos_placa}</td>
+                                            <td className="px-4 py-2 text-gray-500 text-xs">
+                                                {p.veiculo_tipo
+                                                    ? <span>{GROUP_CONFIG[vehicleTypeGroup(p.veiculo_tipo)].emoji} {p.veiculo_tipo}</span>
+                                                    : <span className="text-gray-300">—</span>}
+                                            </td>
                                             <td className="px-4 py-2 text-gray-600">{p.pos_nome_motorista || '—'}</td>
                                             <td className="px-4 py-2 text-center"><IgnicaoBadge on={p.pos_ignicao} /></td>
                                             <td className="px-4 py-2 text-right font-mono text-gray-700">{p.pos_velocidade ?? 0} km/h</td>
@@ -288,7 +353,7 @@ function TabTempoReal({ apiClient }) {
                                         </tr>
                                     ))}
                                     {filtered.length === 0 && (
-                                        <tr><td colSpan="7" className="px-4 py-6 text-center text-gray-400">Nenhum veículo encontrado.</td></tr>
+                                        <tr><td colSpan="8" className="px-4 py-6 text-center text-gray-400">Nenhum veículo encontrado.</td></tr>
                                     )}
                                 </tbody>
                             </table>
