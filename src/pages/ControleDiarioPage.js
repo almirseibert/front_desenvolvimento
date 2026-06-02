@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react'; // Adicionado useCallback
-// REMOVIDO: Imports do Firebase Firestore
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Eye, Edit, Trash2,
-    Clock, HardHat, Loader, X, Truck // Ícones: Loader, X e Truck adicionados
+    Clock, HardHat, Loader, X, Truck
 } from 'lucide-react';
-import apiClient from '../services/apiClient'; // Importa apiClient
+import apiClient from '../services/apiClient';
+import SearchableObraSelect from '../components/SearchableObraSelect';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -406,12 +406,14 @@ const ControleDiarioPage = ({
                     </select>
                 </div>
                 {/* Select Condicional */}
-                <div className="min-h-[42px]"> {/* Altura mínima para evitar pulo de layout */}
+                <div className="min-h-[42px]">
                     {filterType === 'obra' && (
-                        <select value={selectedObraId} onChange={e => setSelectedObraId(e.target.value)} className="w-full p-2 border rounded-md bg-white">
-                            <option value="">Selecione uma Obra</option>
-                            {sortedObras.map(obra => <option key={obra.id} value={obra.id}>{obra.nome}{obra.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                        </select>
+                        <SearchableObraSelect
+                            obras={sortedObras}
+                            value={selectedObraId}
+                            onChange={(obra) => setSelectedObraId(obra?.id || '')}
+                            placeholder="Buscar obra..."
+                        />
                     )}
                     {filterType === 'vehicleType' && (
                         <select value={selectedVehicleType} onChange={e => setSelectedVehicleType(e.target.value)} className="w-full p-2 border rounded-md bg-white">

@@ -828,13 +828,15 @@ ${readingMsg}`;
 
                 <div className="p-2 border-t bg-gray-50 flex justify-between items-center rounded-b-xl shrink-0">
                     {blockReason && (
-                        <p className="text-[10px] font-bold text-red-600 flex items-center gap-1 max-w-xs">
-                            <Lock size={10}/> Salvo bloqueado — corrija ou aguarde liberação do Administrador
+                        <p className="text-[10px] font-bold text-red-700 flex items-start gap-1 max-w-sm leading-snug">
+                            <Lock size={10} className="mt-0.5 flex-shrink-0"/>
+                            Ordem salva com bloqueio de leitura. Esta ordem <u>não será enviada ao posto</u> até ser verificada e liberada por um administrador do sistema.
                         </p>
                     )}
                     {requiresBudgetOverride && !blockReason && (
-                        <p className="text-[10px] font-bold text-orange-600 flex items-center gap-1">
-                            <Lock size={10}/> Orçamento atingido — aguarde liberação do Administrador
+                        <p className="text-[10px] font-bold text-orange-700 flex items-start gap-1 max-w-sm leading-snug">
+                            <Lock size={10} className="mt-0.5 flex-shrink-0"/>
+                            Orçamento de combustível atingido (≥20% do contrato). Esta ordem <u>não será enviada ao posto</u> até ser liberada por um administrador do sistema.
                         </p>
                     )}
                     <div className="flex gap-2 ml-auto">

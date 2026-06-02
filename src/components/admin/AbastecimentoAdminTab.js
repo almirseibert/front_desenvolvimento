@@ -73,43 +73,57 @@ const AbastecimentoAdminTab = () => {
         return 'Leitura de Km/Hr inválida ou salto excessivo.';
     };
 
-    const enviarAoPosto = async (ordem) => {
+    const enviarAoPosto = (ordem) => {
         const partner = partners.find(p => p.id === ordem.partnerId);
         const vehicle = getVehicle(ordem.vehicleId);
+        const employee = getEmployee(ordem.employeeId);
         if (!partner) return;
 
         const authNum = String(ordem.authNumber).padStart(6, '0');
+        const qtd = ordem.isFillUp ? 'COMPLETAR TANQUE' : `${ordem.litrosLiberados} Litros`;
+        const dataFormatada = formatDate(ordem.data || ordem.date);
+        const veiculoInfo = vehicle ? `${vehicle.marca || ''} ${vehicle.modelo || ''} - ${vehicle.placa} / ${vehicle.registroInterno}`.trim() : 'N/A';
+        const outrosMsg = ordem.outros ? `\nOutros/Obs: ${ordem.outros}` : '';
 
         if (partner.email && partner.email.includes('@')) {
-            try {
-                await apiClient.sendRefuelingEmail({
-                    partnerEmail: partner.email,
-                    orderData: {
-                        authNumber: authNum,
-                        vehicleInfo: vehicle ? `${vehicle.marca || ''} ${vehicle.modelo || ''} - ${vehicle.placa} / ${vehicle.registroInterno}` : 'N/A',
-                        fuelType: ordem.fuelType,
-                        isFillUp: ordem.isFillUp,
-                        litrosLiberados: ordem.litrosLiberados,
-                        outros: ordem.outros,
-                        partnerName: partner.razaoSocial,
-                    }
-                });
-            } catch {
-                // Email falhou — tenta WhatsApp como fallback
-                const phone = partner.whatsapp || partner.telefone;
-                if (phone) {
-                    const qtd = ordem.isFillUp ? 'COMPLETAR TANQUE' : `${ordem.litrosLiberados} Litros`;
-                    const msg = `*ORDEM DE ABASTECIMENTO - FROTAS MAK*\n\n*Nº Ordem:* ${authNum}\n*Veículo:* ${vehicle?.registroInterno || ''} - ${vehicle?.placa || ''}\n*Combustível:* ${ordem.fuelType}\n*Qtd:* ${qtd}`;
-                    window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-                }
-            }
-        } else {
-            const phone = partner.whatsapp || partner.telefone;
-            if (phone) {
-                const qtd = ordem.isFillUp ? 'COMPLETAR TANQUE' : `${ordem.litrosLiberados} Litros`;
-                const msg = `*ORDEM DE ABASTECIMENTO - FROTAS MAK*\n\n*Nº Ordem:* ${authNum}\n*Veículo:* ${vehicle?.registroInterno || ''} - ${vehicle?.placa || ''}\n*Combustível:* ${ordem.fuelType}\n*Qtd:* ${qtd}`;
-                window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-            }
+            const subject = `Autorização de Abastecimento #${authNum} - ${partner.razaoSocial}`;
+            const body =
+`Olá,
+
+Segue autorização de abastecimento emitida pelo sistema Frotas MAK.
+
+--- RESUMO ---
+
+Nº Ordem: ${authNum}
+Data: ${dataFormatada}
+Posto: ${partner.razaoSocial}
+Veículo: ${veiculoInfo}
+Combustível: ${ordem.fuelType}
+Qtd: ${qtd}${outrosMsg}
+Motorista: ${employee?.nome || 'N/A'}
+
+Esta ordem foi liberada pelo Administrador do sistema.
+
+Att,
+Equipe Frotas MAK`;
+            window.location.href = `mailto:${partner.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            return;
+        }
+
+        const phone = partner.whatsapp || partner.telefone;
+        if (phone) {
+            const msg =
+`*ORDEM DE ABASTECIMENTO - FROTAS MAK*
+*(Liberada pelo Administrador)*
+
+*Nº Ordem:* ${authNum}
+*Data:* ${dataFormatada}
+*Posto:* ${partner.razaoSocial}
+*Veículo:* ${veiculoInfo}
+*Combustível:* ${ordem.fuelType}
+*Qtd:* ${qtd}${outrosMsg ? '\n*Obs:* ' + ordem.outros : ''}
+*Motorista:* ${employee?.nome || 'N/A'}`;
+            window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
         }
     };
 

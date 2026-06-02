@@ -8,6 +8,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import apiClient from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext'; // Importar Auth Context
+import SearchableObraSelect from '../components/SearchableObraSelect';
 
 const RECENT_OBRAS_KEY = 'mak_billing_recent_obras';
 
@@ -69,11 +70,6 @@ const BillingPage = ({
         }
     });
 
-    // --- ESTADOS COMBOBOX DE OBRA ---
-    const [obraSearch, setObraSearch] = useState('');
-    const [obraDropdownOpen, setObraDropdownOpen] = useState(false);
-    const obraComboboxRef = useRef(null);
-
     // --- ESTADOS SELETOR DE MÊS (RELATÓRIO) ---
     const [showMonthPickerReport, setShowMonthPickerReport] = useState(false);
     const [reportPickerYear, setReportPickerYear] = useState(new Date().getFullYear());
@@ -94,12 +90,9 @@ const BillingPage = ({
         }
     }, [isViewer, activeTab]);
 
-    // Fechar combobox ao clicar fora
+    // Fechar month pickers ao clicar fora
     useEffect(() => {
         const handleMouseDown = (e) => {
-            if (obraComboboxRef.current && !obraComboboxRef.current.contains(e.target)) {
-                setObraDropdownOpen(false);
-            }
             if (monthPickerReportRef.current && !monthPickerReportRef.current.contains(e.target)) {
                 setShowMonthPickerReport(false);
             }
@@ -286,14 +279,6 @@ const BillingPage = ({
     }, [obras]);
 
 
-    // Filtragem de obras para o combobox
-    const filteredObras = useMemo(() => {
-        const normalize = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-        const q = normalize(obraSearch);
-        const filter = list => q ? list.filter(o => normalize(o.nome).includes(q)) : list;
-        return { active: filter(activeObras), inactive: filter(inactiveObras) };
-    }, [obraSearch, activeObras, inactiveObras]);
-
     // Obra selecionada e status
     const selectedObra = useMemo(() => obras.find(o => o.id === selectedObraId), [selectedObraId, obras]);
     const obraIsActive = useMemo(() => {
@@ -442,15 +427,11 @@ const BillingPage = ({
 
     const handleObraSelect = (obra) => {
         setSelectedObraId(obra.id);
-        setObraSearch(obra.nome);
-        setObraDropdownOpen(false);
         saveRecentObra(obra.id);
     };
 
     const handleObraClear = () => {
         setSelectedObraId('');
-        setObraSearch('');
-        setObraDropdownOpen(false);
     };
 
     // --- API CALLS ---
@@ -872,60 +853,17 @@ const BillingPage = ({
                 <FileText className="text-yellow-500" /> Faturamento & Controle
             </h1>
 
-            {/* Seleção de Obra — Combobox com busca */}
-            {/* Seleção de Obra — Combobox com busca */}
+            {/* Seleção de Obra */}
             <div className="bg-white p-4 rounded-lg shadow mb-6">
                 <label className="block text-sm font-medium text-gray-700 mb-1">Selecione a Obra</label>
-                <div className="relative" ref={obraComboboxRef}>
-                    <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-yellow-500">
-                        <Search size={16} className="ml-3 text-gray-400 flex-shrink-0" />
-                        <input
-                            type="text"
-                            className="flex-1 p-2 outline-none text-sm bg-transparent"
-                            placeholder="Buscar obra pelo nome..."
-                            value={obraDropdownOpen ? obraSearch : (selectedObra?.nome || '')}
-                            onFocus={() => { setObraSearch(''); setObraDropdownOpen(true); }}
-                            onChange={(e) => setObraSearch(e.target.value)}
-                        />
-                        {selectedObraId && (
-                            <button onClick={handleObraClear} className="p-2 text-gray-400 hover:text-red-500 transition">
-                                <X size={16} />
-                            </button>
-                        )}
-                    </div>
-
-                    {obraDropdownOpen && (
-                        <div className="absolute z-30 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-72 overflow-y-auto">
-                            {filteredObras.active.length === 0 && filteredObras.inactive.length === 0 && (
-                                <p className="p-4 text-sm text-gray-500 text-center">Nenhuma obra encontrada.</p>
-                            )}
-                            {filteredObras.active.length > 0 && (
-                                <>
-                                    <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-b">Obras Ativas</div>
-                                    {filteredObras.active.map(obra => (
-                                        <button key={obra.id} onClick={() => handleObraSelect(obra)}
-                                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-yellow-50 hover:text-yellow-800 transition flex items-center gap-2 ${selectedObraId === obra.id ? 'bg-yellow-50 font-semibold text-yellow-800' : 'text-gray-800'}`}>
-                                            <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-                                            {obra.nome}
-                                        </button>
-                                    ))}
-                                </>
-                            )}
-                            {filteredObras.inactive.length > 0 && (
-                                <>
-                                    <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-t mt-1">Obras Finalizadas</div>
-                                    {filteredObras.inactive.map(obra => (
-                                        <button key={obra.id} onClick={() => handleObraSelect(obra)}
-                                            className={`w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 hover:text-red-700 transition flex items-center gap-2 ${selectedObraId === obra.id ? 'bg-red-50 font-semibold text-red-700' : 'text-gray-500'}`}>
-                                            <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-                                            {obra.nome} <span className="text-xs opacity-60">(Finalizada)</span>
-                                        </button>
-                                    ))}
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+                <SearchableObraSelect
+                    obras={obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo')}
+                    value={selectedObraId}
+                    onChange={(obra) => obra ? handleObraSelect(obra) : handleObraClear()}
+                    placeholder="Buscar obra pelo nome..."
+                    includeInactive={true}
+                    storageKey={RECENT_OBRAS_KEY}
+                />
             </div>
 
             {/* Estado vazio orientado */}
