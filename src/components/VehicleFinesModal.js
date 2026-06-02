@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { X, AlertCircle, CheckCircle, Clock, FileText, User } from 'lucide-react';
 
 // --- Modal de Multas do Veículo (Atualizado) ---
@@ -36,12 +36,12 @@ const VehicleFinesModal = ({ vehicle, fines = [], onClose }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[110] p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+            <div className="mak-modal max-w-2xl">
                 
                 {/* Cabeçalho */}
                 <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="mak-modal-title">
                             <FileText size={20} className="text-blue-600"/> 
                             Histórico de Multas
                         </h2>
@@ -111,7 +111,7 @@ const VehicleFinesModal = ({ vehicle, fines = [], onClose }) => {
                                             {/* Lado Direito: Valor */}
                                             <div className="text-right min-w-[100px]">
                                                 <p className="text-xs text-gray-500 uppercase font-bold tracking-wider mb-0.5">Valor</p>
-                                                <p className="text-xl font-bold text-gray-900">
+                                                <p className="mak-modal-title">
                                                     R$ {valorNumerico.toFixed(2).replace('.', ',')}
                                                 </p>
                                             </div>
@@ -125,7 +125,7 @@ const VehicleFinesModal = ({ vehicle, fines = [], onClose }) => {
                             <div className="bg-green-50 p-4 rounded-full mb-4">
                                 <CheckCircle size={40} className="text-green-500" />
                             </div>
-                            <h3 className="text-lg font-bold text-gray-800">Tudo certo!</h3>
+                            <h3 className="mak-modal-title">Tudo certo!</h3>
                             <p className="text-gray-500">Nenhuma multa registrada para este veículo.</p>
                         </div>
                     )}

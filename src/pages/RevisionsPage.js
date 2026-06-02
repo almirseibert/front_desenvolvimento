@@ -15,31 +15,31 @@ const RevisionsPage = ({
 
     return (
         <div className="container mx-auto p-2 md:p-4 animate-fadeIn">
-            <h1 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                {/* Ícone alterado para Chave de Boca (Wrench) */}
-                <Wrench className="text-blue-600" /> Revisões & Manutenções
+            <h1 className="flex items-center gap-2 mb-4" style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14' }}>
+                <Wrench size={20} style={{ color: '#9E7A42' }}/> Revisões & Manutenções
             </h1>
-            
+
             {/* NAVEGAÇÃO EM ABAS */}
-            <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg pt-2 px-2 overflow-x-auto shadow-sm">
-                <button 
-                    onClick={() => setActiveTab('revisoes')} 
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'revisoes' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                >
-                    <Calendar size={16} /> Revisões Preventivas
-                </button>
-                <button 
-                    onClick={() => setActiveTab('manutencoes')} 
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'manutencoes' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                >
-                    <Wrench size={16} /> Manutenções (Prog/Exec)
-                </button>
-                <button 
-                    onClick={() => setActiveTab('lavagens')} 
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'lavagens' ? 'border-b-2 border-blue-600 text-blue-600 bg-blue-50/50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
-                >
-                    <Droplet size={16} /> Lavagens
-                </button>
+            <div className="flex mb-4 bg-white rounded-t-xl pt-1 px-2 overflow-x-auto" style={{ borderBottom: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
+                {[
+                    { id: 'revisoes',   icon: <Calendar size={14}/>,  label: 'Revisões Preventivas' },
+                    { id: 'manutencoes',icon: <Wrench size={14}/>,    label: 'Manutenções (Prog/Exec)' },
+                    { id: 'lavagens',   icon: <Droplet size={14}/>,   label: 'Lavagens' },
+                ].map(tab => (
+                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                        className="py-3 px-4 flex items-center gap-2 whitespace-nowrap transition-colors"
+                        style={{
+                            fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', background: 'transparent',
+                            borderBottom: activeTab === tab.id ? '2px solid #9E7A42' : '2px solid transparent',
+                            color: activeTab === tab.id ? '#9E7A42' : '#9a8a78',
+                            marginBottom: -1,
+                        }}
+                        onMouseEnter={e => { if (activeTab !== tab.id) e.currentTarget.style.color = '#6a5e4e'; }}
+                        onMouseLeave={e => { if (activeTab !== tab.id) e.currentTarget.style.color = '#9a8a78'; }}
+                    >
+                        {tab.icon} {tab.label}
+                    </button>
+                ))}
             </div>
 
             {/* CONTEÚDO DAS ABAS */}

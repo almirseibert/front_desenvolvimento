@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X } from 'lucide-react';
 
 const ComboioDrenagemModal = ({ 
@@ -72,10 +72,10 @@ const ComboioDrenagemModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-                    <h2 className="text-xl font-bold text-gray-800">Registrar Drenagem</h2>
+        <div className="mak-modal-backdrop p-2 sm:p-4">
+            <div className="mak-modal max-w-lg">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">Registrar Drenagem</h2>
                     <button onClick={onClose}><X size={20}/></button>
                 </div>
                 
@@ -136,3 +136,4 @@ const ComboioDrenagemModal = ({
 };
 
 export default ComboioDrenagemModal;
+

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clock, RefreshCw, User, ClipboardList, Trash2 } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 
@@ -67,7 +67,7 @@ const EditActiveVehicleAssignmentModal = ({ assignment, vehicle, employees = [],
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="mak-modal max-w-md">
                  <div className="p-6 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold">Editar Alocação Ativa</h2>
                      <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200" disabled={isSaving}><X size={20}/></button>
@@ -147,7 +147,7 @@ const EditPastVehicleAssignmentModal = ({ assignment, vehicle, employees = [], o
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="mak-modal max-w-md">
                  <div className="p-6 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold">Editar Histórico do Veículo</h2>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200" disabled={isSaving}><X size={20}/></button>
@@ -463,8 +463,8 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
     // --- RENDERIZAÇÃO ---
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[90vh] flex flex-col">
+        <div className="mak-modal-backdrop p-2 sm:p-4 backdrop-blur-sm">
+            <div className="mak-modal max-w-5xl">
                 
                 {/* Header */}
                 <div className="p-6 border-b flex justify-between items-start bg-white rounded-t-xl sticky top-0 z-10">
@@ -877,3 +877,4 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
 };
 
 export default ObraDetailModal;
+

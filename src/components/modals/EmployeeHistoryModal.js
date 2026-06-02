@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Loader, HardHat, AlertCircle } from 'lucide-react';
 
 const EmployeeHistoryModal = ({ employee, onClose, apiClient }) => {
@@ -32,11 +32,11 @@ const EmployeeHistoryModal = ({ employee, onClose, apiClient }) => {
     }, [employee, apiClient]);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl h-[600px] flex flex-col animate-fadeIn">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+        <div className="mak-modal-backdrop">
+            <div className="mak-modal w-full max-w-$3 h-[600px] flex flex-col animate-fadeIn">
+                <div className="mak-modal-header">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="mak-modal-title">
                             <HardHat size={20} className="text-yellow-600"/> Histórico de Obras
                         </h2>
                         <p className="text-xs text-gray-500 font-medium">{employee?.nome}</p>
@@ -89,3 +89,4 @@ const EmployeeHistoryModal = ({ employee, onClose, apiClient }) => {
 };
 
 export default EmployeeHistoryModal;
+

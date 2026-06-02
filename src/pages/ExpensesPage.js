@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react'; // 1. Importa o useEffect
+﻿import React, { useState, useMemo, useEffect } from 'react'; // 1. Importa o useEffect
 // REMOVIDO: Imports do Firebase Firestore
 import {
     Download,
@@ -181,11 +181,11 @@ const ExpensesPage = ({
     // Renderização Principal
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6 font-sans">
-            <h1 className="text-3xl font-bold text-gray-800">Gerenciamento de Despesas Manuais</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Gerenciamento de Despesas Manuais</h1>
 
             {/* Formulário (Apenas Editor/Admin) */}
             <ProtectedComponent requiredPermission="editor">
-                <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md border border-gray-200">
+                <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md " style={{ border: "1px solid #f0ebe3" }}>
                     <h2 className="text-xl font-semibold mb-4 text-gray-700">{editingExpense ? 'Editar Despesa' : 'Adicionar Nova Despesa Manual'}</h2>
                     <form onSubmit={handleAddOrUpdateExpense} className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 items-end text-sm">
                         {/* Select Obra */}
@@ -226,11 +226,11 @@ const ExpensesPage = ({
                         {/* Botão Salvar/Cancelar */}
                         <div className="lg:col-span-4 flex justify-end gap-2 mt-2">
                              {editingExpense && (
-                                <button type="button" onClick={resetForm} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition text-sm font-medium">
+                                <button type="button" onClick={resetForm} className="mak-btn mak-btn-cancel">
                                      Cancelar Edição
                                  </button>
                              )}
-                            <button type="submit" disabled={isSaving} className="px-4 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-2 text-sm">
+                            <button type="submit" disabled={isSaving} className="px-4 py-2 mak-btn mak-btn-primary">
                                 {/* *** AQUI ESTAVA O ERRO: ISaving -> isSaving *** */}
                                 {isSaving ? <><Loader className="animate-spin" size={16}/> Salvando...</> : (editingExpense ? <><Edit size={16}/> Salvar</> : <><PlusCircle size={16}/> Adicionar</>)}
                             </button>
@@ -240,21 +240,21 @@ const ExpensesPage = ({
             </ProtectedComponent>
 
             {/* Tabela/Lista de Despesas */}
-            <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md border border-gray-200">
+            <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md " style={{ border: "1px solid #f0ebe3" }}>
                 <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
                      {/* Título com nome da Obra */}
                      <h2 className="text-xl font-semibold text-gray-700">
                          {selectedObra ? `Despesas: ${obras?.find(o => o.id === selectedObra)?.nome || selectedObra}` : "Selecione uma obra"}
                      </h2>
                      {/* Botão Exportar */}
-                    <button onClick={exportExpensesToCSV} className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white font-semibold rounded-lg shadow hover:bg-blue-600 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm" disabled={!selectedObra || obraExpenses.length === 0}>
+                    <button onClick={exportExpensesToCSV} className="flex items-center gap-2 px-4 py-2 mak-btn mak-btn-dark" disabled={!selectedObra || obraExpenses.length === 0}>
                         <Download size={16} />Exportar CSV
                     </button>
                 </div>
                  {/* Lista */}
                 <div className="space-y-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar text-sm">
                     {obraExpenses.length > 0 ? obraExpenses.map(exp => (
-                        <div key={exp.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-gray-50 rounded-lg border border-gray-200 gap-2">
+                        <div key={exp.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-3 bg-gray-50 rounded-lg gap-2" style={{ border: "1px solid #f0ebe3" }}>
                             {/* Detalhes da Despesa */}
                             <div className="flex-1">
                                 <p className="font-medium text-gray-800">{exp.description || 'Sem descrição'}</p>
@@ -281,7 +281,7 @@ const ExpensesPage = ({
                                         A lógica antiga 'exp.amount.toString()' quebra se 'amount' for string.
                                         Convertemos para número primeiro e DEPOIS para string.
                                     */}
-                                    <button onClick={() => { setEditingExpense(exp); setDescription(exp.description); setAmount(parseFloat(exp.amount || 0).toString().replace('.', ',')); setCategory(exp.category || 'Outros'); setSelectedObra(exp.obraId); window.scrollTo(0, 0); }} title="Editar" className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-gray-100 rounded-full transition"><Edit size={14}/></button>
+                                    <button onClick={() => { setEditingExpense(exp); setDescription(exp.description); setAmount(parseFloat(exp.amount || 0).toString().replace('.', ',')); setCategory(exp.category || 'Outros'); setSelectedObra(exp.obraId); window.scrollTo(0, 0); }} title="Editar" className="p-1.5 text-gray-400 hover:text-[#9E7A42] hover:bg-[#f5f2ed] rounded-full transition"><Edit size={14}/></button>
                                 </ProtectedComponent>
                                 <ProtectedComponent requiredPermission="admin">
                                     <button onClick={() => openDeleteModal(exp.id)} title="Excluir" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full transition"><Trash2 size={14}/></button>
@@ -307,3 +307,6 @@ const ExpensesPage = ({
 };
 
 export default ExpensesPage;
+
+
+

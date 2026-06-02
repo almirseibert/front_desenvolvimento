@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
     Camera, MapPin, Send, AlertTriangle, CheckCircle, Clock, 
     XCircle, ChevronRight, Fuel, Image as ImageIcon, Loader, 
@@ -835,7 +835,7 @@ const SolicitacaoAbastecimentoPage = ({
                         )}
                         
                         {gpsError && (
-                            <div className="bg-gray-100 text-gray-600 p-2 rounded-lg flex items-center gap-2 text-xs border border-gray-200">
+                            <div className="bg-gray-100 text-gray-600 p-2 rounded-lg flex items-center gap-2 text-xs " style={{ border: "1px solid #f0ebe3" }}>
                                 <MapPin size={14} className="text-gray-400" /> 
                                 <span>Localização indisponível (Verifique permissões).</span>
                             </div>
@@ -1001,11 +1001,11 @@ const SolicitacaoAbastecimentoPage = ({
                                     </div>
                                 ) : (
                                     <div className="flex flex-row gap-4 w-full h-full items-center justify-center">
-                                         <div onClick={() => cameraInputRef.current.click()} className="flex-1 h-full flex flex-col items-center justify-center bg-gray-100 rounded-lg cursor-pointer hover:bg-yellow-50 active:bg-yellow-100 transition border border-gray-200 shadow-sm">
+                                         <div onClick={() => cameraInputRef.current.click()} className="flex-1 h-full flex flex-col items-center justify-center bg-gray-100 rounded-lg cursor-pointer hover:bg-[#fdf8f0] active:bg-yellow-100 transition shadow-sm" style={{ border: "1px solid #f0ebe3" }}>
                                             <Camera size={32} className="text-gray-700 mb-2" />
                                             <span className="text-sm font-bold text-gray-800">Câmera</span>
                                          </div>
-                                         <div onClick={() => galleryInputRef.current.click()} className="flex-1 h-full flex flex-col items-center justify-center bg-gray-100 rounded-lg cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition border border-gray-200 shadow-sm">
+                                         <div onClick={() => galleryInputRef.current.click()} className="flex-1 h-full flex flex-col items-center justify-center bg-gray-100 rounded-lg cursor-pointer hover:bg-blue-50 active:bg-blue-100 transition shadow-sm" style={{ border: "1px solid #f0ebe3" }}>
                                             <ImageIcon size={32} className="text-gray-700 mb-2" />
                                             <span className="text-sm font-bold text-gray-800">Galeria</span>
                                          </div>
@@ -1202,7 +1202,7 @@ const SolicitacaoAbastecimentoPage = ({
                         </h2>
                         
                         {visibleRequests.length === 0 ? (
-                            <div className="text-center py-10 bg-white rounded-2xl border border-dashed border-gray-300">
+                            <div className="text-center py-10 bg-white rounded-2xl border border-dashed">
                                 <p className="text-gray-400 text-sm">Nenhuma solicitação encontrada para sua obra atual.</p>
                             </div>
                         ) : (
@@ -1211,7 +1211,7 @@ const SolicitacaoAbastecimentoPage = ({
                                     const isMine = String(req.usuario_id) === String(user.id);
                                     
                                     return (
-                                        <div key={req.id} onClick={() => setSelectedRequest(req)} className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden">
+                                        <div key={req.id} onClick={() => setSelectedRequest(req)} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md cursor-pointer relative overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                                             <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${req.status === 'LIBERADO' ? 'bg-green-500' : req.status === 'NEGADO' ? 'bg-red-500' : 'bg-gray-300'}`}></div>
                                             <div className="pl-2">
                                                 <div className="flex justify-between items-start mb-2">
@@ -1322,3 +1322,6 @@ const SolicitacaoAbastecimentoPage = ({
 };
 
 export default SolicitacaoAbastecimentoPage;
+
+
+

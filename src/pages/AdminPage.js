@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Shield, Users, Layers, MessageSquare, Settings, Server, Truck, Fuel } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/apiClient';
@@ -65,7 +65,7 @@ const AdminPage = ({ socket }) => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
-        <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+        <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" flex items-center gap-2">
           <Shield size={22} className="text-yellow-500" />
           Administração do Sistema
         </h1>
@@ -80,8 +80,8 @@ const AdminPage = ({ socket }) => {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
                 activeTab === tab.id
-                  ? 'border-yellow-500 text-yellow-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-200'
+                  ? 'border-[#9E7A42] text-[#9E7A42]'
+                  : 'border-transparent text-[#9a8a78] hover:text-[#6a5e4e] hover:border-gray-200'
               }`}
             >
               {tab.icon}
@@ -129,3 +129,4 @@ const AdminPage = ({ socket }) => {
 };
 
 export default AdminPage;
+

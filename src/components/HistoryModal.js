@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+﻿import React, { useMemo, useState, useEffect } from 'react';
 import { X, Loader, MapPin, Wrench, FileText, AlertTriangle, User, ArrowRight, Disc } from 'lucide-react';
 
 const HistoryModal = ({ vehicle, onClose, obras = [], apiClient, employees = [] }) => {
@@ -204,9 +204,9 @@ const HistoryModal = ({ vehicle, onClose, obras = [], apiClient, employees = [] 
     if (!vehicle) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div className="mak-modal-backdrop backdrop-blur-sm">
             {/* O modal foi ajustado de max-w-md para max-w-3xl para dar mais largura horizontal */}
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col animate-scale-in">
+            <div className="mak-modal max-w-3xl">
                 <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
                     <div>
                         <h3 className="text-base font-bold text-gray-800">Histórico de Eventos</h3>
@@ -243,3 +243,5 @@ const HistoryModal = ({ vehicle, onClose, obras = [], apiClient, employees = [] 
 };
 
 export default HistoryModal;
+
+

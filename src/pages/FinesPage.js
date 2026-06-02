@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
     PlusCircle,
     Edit,
@@ -243,7 +243,7 @@ const FineModal = ({
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-2 sm:p-4 backdrop-blur-sm">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col my-auto overflow-hidden">
                 <div className="p-4 sm:p-5 border-b bg-gray-50 flex justify-between items-center sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" flex items-center gap-2">
                         {isEditing ? <Edit size={20}/> : <PlusCircle size={20}/>}
                         {isEditing ? 'Editar Multa' : 'Registrar Nova Multa'}
                     </h2>
@@ -271,7 +271,7 @@ const FineModal = ({
                             </div>
                         </div>
 
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="p-4 bg-gray-50 rounded-lg md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4" style={{ border: "1px solid #f0ebe3" }}>
                             <h3 className="md:col-span-3 text-xs font-bold text-gray-500 uppercase border-b pb-1 mb-1">Detalhes da Infração</h3>
                             
                             <div>
@@ -338,7 +338,7 @@ const FineModal = ({
 
                 <div className="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 z-10">
                     <button type="button" onClick={onClose} className="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 font-medium transition w-full sm:w-auto">Cancelar</button>
-                    <button type="submit" onClick={handleSubmit} disabled={isSaving} className="px-5 py-2.5 bg-yellow-400 text-gray-900 font-bold rounded-lg hover:bg-yellow-500 shadow-md transition disabled:opacity-50 flex items-center justify-center gap-2 w-full sm:w-auto">
+                    <button type="submit" onClick={handleSubmit} disabled={isSaving} className="px-5 py-2.5 mak-btn mak-btn-primary">
                         {isSaving ? <><Loader className="animate-spin" size={18}/> Processando...</> : <><PlusCircle size={18}/> Salvar Multa</>}
                     </button>
                 </div>
@@ -514,15 +514,15 @@ const FinesPage = ({
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6 font-sans">
             <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
-                <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Gerenciamento de Multas</h1>
+                <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" tracking-tight">Gerenciamento de Multas</h1>
                 <ProtectedComponent requiredPermission="editor">
-                    <button onClick={() => openModal()} className="flex items-center gap-2 px-5 py-2.5 bg-yellow-400 text-gray-900 font-bold rounded-lg shadow hover:bg-yellow-500 transition hover:scale-105 transform duration-200">
+                    <button onClick={() => openModal()} className="flex items-center gap-2 px-5 py-2.5 mak-btn mak-btn-primary">
                         <PlusCircle size={20} />Registrar Multa
                     </button>
                 </ProtectedComponent>
             </div>
 
-            <div className="mb-6 p-5 bg-white rounded-xl shadow-sm border border-gray-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="mb-6 p-5 bg-white rounded-xl shadow-sm grid grid-cols-1 md:grid-cols-2 gap-4" style={{ border: "1px solid #f0ebe3" }}>
                 <input
                     type="text"
                     name="search"
@@ -545,7 +545,7 @@ const FinesPage = ({
                 </select>
             </div>
 
-            <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+            <div className="bg-white rounded-xl shadow-sm overflow-hidden " style={{ border: "1px solid #f0ebe3" }}>
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left text-gray-600 min-w-[800px]">
                          <thead className="text-xs text-gray-700 uppercase bg-gray-50 border-b">
@@ -572,7 +572,7 @@ const FinesPage = ({
                             {processedFines.map(fine => {
                                 const isNotifying = notifyingIds.has(fine.id);
                                 return (
-                                <tr key={fine.id} className="bg-white hover:bg-yellow-50 transition-colors duration-150 group">
+                                <tr key={fine.id} className="bg-white transition-colors duration-150 group">
                                     <td className="px-6 py-4">
                                         <div className="font-bold text-gray-900">
                                             {fine.vehicleInfo?.registroInterno || 'N/A'}
@@ -635,7 +635,7 @@ const FinesPage = ({
                                             </button>
 
                                             <ProtectedComponent requiredPermission="editor">
-                                                <button onClick={() => openModal(fine)} title="Editar" className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-full transition"><Edit size={18} /></button>
+                                                <button onClick={() => openModal(fine)} title="Editar" className="p-1.5 text-gray-400 hover:text-[#9E7A42] hover:bg-[#fdf8f0] rounded-full transition"><Edit size={18} /></button>
                                             </ProtectedComponent>
                                             <ProtectedComponent requiredPermission="admin">
                                                 <button onClick={() => openDeleteModal(fine.id)} title="Excluir" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition"><Trash2 size={18} /></button>
@@ -665,3 +665,6 @@ const FinesPage = ({
 };
 
 export default FinesPage;
+
+
+

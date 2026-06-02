@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, useEffect } from 'react';
+﻿import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
     Radio, RefreshCw, Loader, Wifi, WifiOff,
     MapPin, Gauge, Zap, ZapOff, AlertTriangle,
@@ -77,7 +77,7 @@ const TabBtn = ({ id, active, label, icon: Icon, onClick }) => (
     <button
         onClick={() => onClick(id)}
         className={`pb-3 pt-4 px-4 text-sm font-medium border-b-2 transition-colors flex items-center gap-2 whitespace-nowrap ${
-            active ? 'border-yellow-500 text-yellow-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            active ? 'border-[#9E7A42] text-[#9E7A42]' : 'border-transparent text-[#9a8a78] hover:text-[#6a5e4e]'
         }`}
     >
         <Icon size={16} /> {label}
@@ -86,7 +86,7 @@ const TabBtn = ({ id, active, label, icon: Icon, onClick }) => (
 
 // ── Cartão de KPI ─────────────────────────────────────────────────
 const KpiCard = ({ icon: Icon, bg, value, label }) => (
-    <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex items-center gap-3">
+    <div className="bg-white rounded-xl shadow-sm p-4 flex items-center gap-3" style={{ border: "1px solid #f0ebe3" }}>
         <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${bg}`}>
             <Icon size={18} className="text-white" />
         </div>
@@ -241,7 +241,7 @@ function TabTempoReal({ apiClient }) {
                     </div>
 
                     {/* Mapa */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                         <div className="flex items-center justify-between px-4 py-3 border-b">
                             <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
                                 <MapPin size={15} className="text-gray-400" /> Mapa de Posições
@@ -302,7 +302,7 @@ function TabTempoReal({ apiClient }) {
                     </div>
 
                     {/* Tabela */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                         <div className="flex items-center gap-3 px-4 py-3 border-b">
                             <Search size={15} className="text-gray-400" />
                             <input
@@ -419,7 +419,7 @@ function TabPorPeriodo({ apiClient }) {
 
     return (
         <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-4">
+            <div className="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-end gap-4" style={{ border: "1px solid #f0ebe3" }}>
                 <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">Início</label>
                     <input type="datetime-local" value={from} onChange={e => setFrom(e.target.value)}
@@ -456,7 +456,7 @@ function TabPorPeriodo({ apiClient }) {
             )}
 
             {data.length > 0 && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                     <div className="flex items-center gap-3 px-4 py-3 border-b">
                         <Search size={15} className="text-gray-400" />
                         <input value={search} onChange={e => setSearch(e.target.value)}
@@ -543,7 +543,7 @@ function TabPorVeiculo({ apiClient }) {
 
     return (
         <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-4">
+            <div className="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-end gap-4" style={{ border: "1px solid #f0ebe3" }}>
                 <div>
                     <label className="block text-xs font-bold text-gray-500 mb-1">Placa</label>
                     <input
@@ -584,7 +584,7 @@ function TabPorVeiculo({ apiClient }) {
 
             {data.length > 0 && (
                 <>
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                         <div className="px-4 py-3 border-b flex items-center gap-2 text-sm font-bold text-gray-700">
                             <MapPin size={15} className="text-gray-400"/> Rota de {plate} — {data.length} posições
                         </div>
@@ -606,7 +606,7 @@ function TabPorVeiculo({ apiClient }) {
                             </MapContainer>
                         </div>
                     </div>
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                         <div className="overflow-x-auto max-h-72">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase sticky top-0">
@@ -705,7 +705,7 @@ function TabJornadas({ apiClient }) {
             {data.length > 0 && (
                 <div className="space-y-2">
                     {data.map((j) => (
-                        <div key={j.id_jornada} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div key={j.id_jornada} className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                             <button
                                 onClick={() => setExpandedId(expandedId === j.id_jornada ? null : j.id_jornada)}
                                 className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-50 text-left"
@@ -822,7 +822,7 @@ function ObraPickerModal({ obras, onSelect, onClose }) {
     const ObraItem = ({ obra }) => (
         <button
             onClick={() => onSelect(obra.id)}
-            className="w-full text-left px-4 py-2.5 hover:bg-yellow-50 flex items-center justify-between gap-2 transition-colors"
+            className="w-full text-left px-4 py-2.5 hover:bg-[#fdf8f0] flex items-center justify-between gap-2 transition-colors"
         >
             <span className="text-sm text-gray-800 font-medium">{obra.nome}</span>
             {obra.status === 'finalizada'
@@ -1016,7 +1016,7 @@ function TabConfrontoFaturamento({ apiClient, obras = [], vehicles = [] }) {
             )}
 
             {/* Controles */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-wrap items-end gap-4">
+            <div className="bg-white rounded-xl shadow-sm p-4 flex flex-wrap items-end gap-4" style={{ border: "1px solid #f0ebe3" }}>
                 <div className="flex-1 min-w-48">
                     <label className="block text-xs font-bold text-gray-500 mb-1">Obra</label>
                     <button
@@ -1093,7 +1093,7 @@ function TabConfrontoFaturamento({ apiClient, obras = [], vehicles = [] }) {
                     </div>
 
                     {/* Tabela */}
-                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
                                 <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
@@ -1239,3 +1239,6 @@ export default function SigaSulPage({ apiClient, obras = [], vehicles = [] }) {
         </div>
     );
 }
+
+
+

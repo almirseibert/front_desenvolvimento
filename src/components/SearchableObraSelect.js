@@ -96,11 +96,17 @@ const SearchableObraSelect = ({
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-yellow-500 bg-white">
-                <Search size={15} className="ml-3 text-gray-400 flex-shrink-0" />
+            <div
+                className="flex items-center rounded-lg transition-all"
+                style={{ border: '1px solid #e8e0d4', background: '#faf9f7' }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = '#9E7A42'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(158,122,66,0.18)'; e.currentTarget.style.background = '#fff'; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = '#e8e0d4'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.background = '#faf9f7'; }}
+            >
+                <Search size={15} className="ml-3 flex-shrink-0" style={{ color: '#b0a090' }} />
                 <input
                     type="text"
-                    className="flex-1 px-2 py-2 outline-none text-sm bg-transparent min-w-0"
+                    className="mak-bare-input flex-1 outline-none bg-transparent min-w-0"
+                    style={{ border: 'none', background: 'transparent', boxShadow: 'none', padding: '7px 8px', fontSize: 13, color: '#3d3528', width: '100%' }}
                     placeholder={placeholder}
                     value={open ? search : (selectedObra?.nome || '')}
                     onFocus={() => { setSearch(''); setOpen(true); }}
@@ -109,7 +115,10 @@ const SearchableObraSelect = ({
                 {value && (
                     <button
                         onClick={handleClear}
-                        className="p-2 text-gray-400 hover:text-red-500 transition flex-shrink-0"
+                        className="mak-bare-input p-2 flex-shrink-0 transition"
+                        style={{ border: 'none', background: 'transparent', color: '#b0a090', cursor: 'pointer', lineHeight: 0 }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#b03828'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#b0a090'}
                         title="Limpar seleção"
                     >
                         <X size={15} />
@@ -118,29 +127,33 @@ const SearchableObraSelect = ({
             </div>
 
             {open && (
-                <div className="absolute z-40 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-72 overflow-y-auto">
+                <div className="absolute z-40 w-full mt-1 bg-white rounded-lg shadow-xl max-h-72 overflow-y-auto mak-scrollbar" style={{ border: '1px solid #e8e0d4' }}>
                     {showEmpty && (
-                        <p className="p-4 text-sm text-gray-500 text-center">Nenhuma obra encontrada.</p>
+                        <p className="p-4 text-sm text-center" style={{ color: '#9a8a78' }}>Nenhuma obra encontrada.</p>
                     )}
 
-                    {/* Recentes — só aparece quando ainda não há busca */}
+                    {/* Recentes */}
                     {storageKey && !search && recentObras.length > 0 && (
                         <>
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-b">
+                            <div className="px-3 py-1.5 uppercase tracking-wider border-b" style={{ fontSize: 10, fontWeight: 700, color: '#b0a090', background: '#faf9f7' }}>
                                 Recentes
                             </div>
                             {recentObras.map(obra => {
                                 const isInactive = inactiveObras.some(o => o.id === obra.id);
+                                const isSel = value === obra.id;
                                 return (
                                     <button
                                         key={`recent-${obra.id}`}
                                         onClick={() => handleSelect(obra)}
-                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-yellow-50 hover:text-yellow-800 transition flex items-center gap-2 ${value === obra.id ? 'bg-yellow-50 font-semibold text-yellow-800' : 'text-gray-700'}`}
+                                        className="mak-bare-input w-full text-left px-4 py-2 transition flex items-center gap-2"
+                                        style={{ fontSize: 13, border: 'none', background: isSel ? '#fdf8f0' : 'transparent', color: isSel ? '#9E7A42' : '#3d3528', fontWeight: isSel ? 600 : 400, cursor: 'pointer' }}
+                                        onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = '#faf9f7'; }}
+                                        onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
                                     >
                                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isInactive ? 'bg-red-400' : 'bg-green-400'}`} />
                                         {obra.nome}
-                                        {obra.tipo_registro === 'centro_custo' && <span className="text-[10px] text-gray-400 ml-auto">(CC)</span>}
-                                        {isInactive && <span className="text-[10px] text-gray-400 ml-auto opacity-60">(finalizada)</span>}
+                                        {obra.tipo_registro === 'centro_custo' && <span className="ml-auto" style={{ fontSize: 10, color: '#b0a090' }}>(CC)</span>}
+                                        {isInactive && <span className="ml-auto opacity-60" style={{ fontSize: 10, color: '#b0a090' }}>(finalizada)</span>}
                                     </button>
                                 );
                             })}
@@ -150,40 +163,52 @@ const SearchableObraSelect = ({
                     {/* Obras Ativas */}
                     {filtered.active.length > 0 && (
                         <>
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-t">
+                            <div className="px-3 py-1.5 uppercase tracking-wider border-b border-t" style={{ fontSize: 10, fontWeight: 700, color: '#b0a090', background: '#faf9f7' }}>
                                 Obras Ativas
                             </div>
-                            {filtered.active.map(obra => (
-                                <button
-                                    key={obra.id}
-                                    onClick={() => handleSelect(obra)}
-                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-yellow-50 hover:text-yellow-800 transition flex items-center gap-2 ${value === obra.id ? 'bg-yellow-50 font-semibold text-yellow-800' : 'text-gray-800'}`}
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-                                    {obra.nome}
-                                    {obra.tipo_registro === 'centro_custo' && <span className="text-[10px] text-gray-400 ml-1">(CC)</span>}
-                                </button>
-                            ))}
+                            {filtered.active.map(obra => {
+                                const isSel = value === obra.id;
+                                return (
+                                    <button
+                                        key={obra.id}
+                                        onClick={() => handleSelect(obra)}
+                                        className="mak-bare-input w-full text-left px-4 py-2.5 transition flex items-center gap-2"
+                                        style={{ fontSize: 13, border: 'none', background: isSel ? '#fdf8f0' : 'transparent', color: isSel ? '#9E7A42' : '#3d3528', fontWeight: isSel ? 600 : 400, cursor: 'pointer' }}
+                                        onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = '#faf9f7'; }}
+                                        onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
+                                        {obra.nome}
+                                        {obra.tipo_registro === 'centro_custo' && <span className="ml-1" style={{ fontSize: 10, color: '#b0a090' }}>(CC)</span>}
+                                    </button>
+                                );
+                            })}
                         </>
                     )}
 
                     {/* Obras Finalizadas */}
                     {includeInactive && filtered.inactive.length > 0 && (
                         <>
-                            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider bg-gray-50 border-b border-t mt-1">
+                            <div className="px-3 py-1.5 uppercase tracking-wider border-b border-t mt-1" style={{ fontSize: 10, fontWeight: 700, color: '#b0a090', background: '#faf9f7' }}>
                                 Obras Finalizadas
                             </div>
-                            {filtered.inactive.map(obra => (
-                                <button
-                                    key={obra.id}
-                                    onClick={() => handleSelect(obra)}
-                                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-red-50 hover:text-red-700 transition flex items-center gap-2 ${value === obra.id ? 'bg-red-50 font-semibold text-red-700' : 'text-gray-500'}`}
-                                >
-                                    <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-                                    {obra.nome}
-                                    <span className="text-xs opacity-60">(Finalizada)</span>
-                                </button>
-                            ))}
+                            {filtered.inactive.map(obra => {
+                                const isSel = value === obra.id;
+                                return (
+                                    <button
+                                        key={obra.id}
+                                        onClick={() => handleSelect(obra)}
+                                        className="mak-bare-input w-full text-left px-4 py-2.5 transition flex items-center gap-2"
+                                        style={{ fontSize: 13, border: 'none', background: isSel ? '#fdf0ec' : 'transparent', color: isSel ? '#b03828' : '#9a8a78', fontWeight: isSel ? 600 : 400, cursor: 'pointer' }}
+                                        onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = '#faf9f7'; }}
+                                        onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
+                                    >
+                                        <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
+                                        {obra.nome}
+                                        <span className="opacity-60" style={{ fontSize: 11 }}>(Finalizada)</span>
+                                    </button>
+                                );
+                            })}
                         </>
                     )}
                 </div>

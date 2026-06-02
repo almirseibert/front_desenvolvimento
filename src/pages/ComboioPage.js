@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Droplet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Recycle, Edit, Trash2, MapPin } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -282,7 +282,7 @@ const ComboioPage = ({
         <div className="container mx-auto p-4 space-y-6">
             <header className="flex flex-col md:flex-row justify-between items-center gap-4 border-b pb-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800">Gestão de Comboio</h1>
+                    <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Gestão de Comboio</h1>
                     <p className="text-sm text-gray-500">Controle de estoque, abastecimentos e movimentações.</p>
                 </div>
                 <ProtectedComponent requiredPermission="editor">
@@ -312,7 +312,7 @@ const ComboioPage = ({
                             <div className="flex justify-between items-start mb-2">
                                 <div>
                                     <div className="flex items-center gap-2">
-                                        <span className="text-xl font-bold text-gray-800">{comboio.registroInterno}</span>
+                                        <span style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">{comboio.registroInterno}</span>
                                         <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">{comboio.placa}</span>
                                     </div>
                                     <p className="text-xs text-gray-500 mt-0.5">{comboio.modelo}</p>
@@ -347,7 +347,7 @@ const ComboioPage = ({
                                     </button>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); setModalState({ type: 'saida', data: comboio, isEditing: false }); }}
-                                        className="bg-yellow-400 text-gray-900 py-2.5 rounded-lg text-sm font-semibold hover:bg-yellow-500 flex justify-center items-center gap-2 transition shadow-sm"
+                                        className="bg-yellow-400 text-gray-900 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#fdf8f0]0 flex justify-center items-center gap-2 transition shadow-sm"
                                     >
                                         <Minus size={16}/> Abastecer
                                     </button>
@@ -363,7 +363,7 @@ const ComboioPage = ({
                 </div>
 
                 {/* COLUNA DIREITA: HISTÓRICO */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[700px]">
+                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm flex flex-col h-[700px]" style={{ border: "1px solid #f0ebe3" }}>
                     <div className="p-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
                         <h2 className="font-bold text-gray-700">Histórico de Operações {selectedComboio ? `- ${selectedComboio.registroInterno}` : ''}</h2>
                         {selectedComboio && (
@@ -374,7 +374,7 @@ const ComboioPage = ({
                     </div>
                     <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-3 bg-gray-50/50">
                         {transactions.length > 0 ? transactions.map(t => (
-                            <div key={t.id} className="flex items-center p-4 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-all group">
+                            <div key={t.id} className="flex items-center p-4 bg-white rounded-lg hover:shadow-md transition-all group" style={{ border: "1px solid #f0ebe3" }}>
                                 <div className={`p-3 rounded-full mr-4 shadow-sm flex-shrink-0 ${t.type === 'entrada' ? 'bg-blue-100 text-blue-600' : t.type === 'saida' ? 'bg-yellow-100 text-yellow-600' : 'bg-orange-100 text-orange-600'}`}>
                                     {t.type === 'entrada' ? <ArrowUpCircle size={24}/> : t.type === 'saida' ? <ArrowDownCircle size={24}/> : <Recycle size={24}/>}
                                 </div>
@@ -502,3 +502,5 @@ const ComboioPage = ({
 };
 
 export default ComboioPage;
+
+

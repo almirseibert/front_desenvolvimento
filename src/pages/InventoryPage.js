@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import apiClient from '../services/apiClient';
 import {
     Package, Plus, Edit, Trash2, Search, AlertTriangle, TrendingDown,
@@ -839,7 +839,7 @@ const InventoryPage = ({ user, setAlertMessage, socket }) => {
             {/* Cabeçalho */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b pb-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-2">
+                    <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" flex items-center gap-2">
                         <Package className="text-purple-600" size={32} /> Almoxarifado
                     </h1>
                     <p className="text-gray-500 text-sm mt-1">Gestão de peças, lubrificantes e insumos.</p>
@@ -856,7 +856,7 @@ const InventoryPage = ({ user, setAlertMessage, socket }) => {
                     <ProtectedComponent requiredPermission="editor">
                         <button
                             onClick={() => { setSelectedCategory(null); setCategoryModalOpen(true); }}
-                            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition text-sm"
+                            className="flex items-center gap-2 px-3 py-2 mak-btn mak-btn-dark"
                         >
                             <Plus size={16} /> Categoria
                         </button>
@@ -1157,3 +1157,4 @@ const InventoryPage = ({ user, setAlertMessage, socket }) => {
 };
 
 export default InventoryPage;
+

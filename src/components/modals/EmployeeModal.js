@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Loader, FileText, Save, Stethoscope, Briefcase, User, Shield, PlusCircle } from 'lucide-react';
 
 const EmployeeModal = ({ 
@@ -172,10 +172,10 @@ const EmployeeModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fadeIn">
-                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
-                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <div className="mak-modal-backdrop overflow-y-auto">
+            <div className="mak-modal max-w-4xl">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">
                         {employee ? <User size={20}/> : <PlusCircle size={20}/>}
                         {employee ? 'Editar Funcionário' : 'Novo Funcionário'}
                     </h2>
@@ -382,12 +382,12 @@ const EmployeeModal = ({
                     )}
                 </form>
 
-                <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-xl">
+                <div className="mak-modal-footer">
                     <button onClick={onClose} className="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 font-bold text-sm transition shadow-sm">Cancelar</button>
                     <button 
                         onClick={handleSubmit} 
                         disabled={loading || uploading} 
-                        className="px-6 py-2.5 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm transition transform active:scale-95"
+                        className="px-6 py-2.5 bg-yellow-400 text-gray-900 rounded-lg hover:bg-[#fdf8f0]0 font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm transition transform active:scale-95"
                     >
                         {loading ? <Loader className="animate-spin" size={18}/> : <Save size={18}/>}
                         {employee ? 'Salvar Alterações' : 'Cadastrar Funcionário'}
@@ -399,3 +399,6 @@ const EmployeeModal = ({
 };
 
 export default EmployeeModal;
+
+
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Fuel, CheckCircle, Loader, AlertTriangle, RefreshCw, Gauge, Wallet, XCircle } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 
@@ -176,7 +176,7 @@ Equipe Frotas MAK`;
             {/* Cabeçalho */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
-                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <h2 className="mak-modal-title">
                         <Fuel size={20} className="text-yellow-500" />
                         Ordens de Abastecimento Bloqueadas
                     </h2>
@@ -326,3 +326,4 @@ Equipe Frotas MAK`;
 };
 
 export default AbastecimentoAdminTab;
+

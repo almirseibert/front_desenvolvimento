@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
     Calendar, CheckCircle, Clock, FileText, Filter, AlertTriangle,
     Download, Search, Save, Lock, ArrowRight, User, Printer, X,
@@ -849,7 +849,7 @@ const BillingPage = ({
     // --- RENDERIZAÇÃO ---
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" mb-6 flex items-center gap-2">
                 <FileText className="text-yellow-500" /> Faturamento & Controle
             </h1>
 
@@ -943,18 +943,18 @@ const BillingPage = ({
                     )}
 
                     {/* Abas */}
-                    <div className="flex border-b border-gray-300 mb-6">
+                    <div className="flex mb-6" style={{ borderBottom: "1px solid #e8e0d4" }}>
                         {!isViewer && (
                             <button
                                 onClick={() => setActiveTab('controle')}
-                                className={`py-2 px-6 font-semibold flex items-center gap-2 ${activeTab === 'controle' ? 'border-b-2 border-yellow-500 text-yellow-600' : 'text-gray-500'}`}
+                                className={`py-2 px-6 font-semibold flex items-center gap-2 ${activeTab === 'controle' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42]' : 'text-gray-500'}`}
                             >
                                 <Clock size={18}/> Controle Diário
                             </button>
                         )}
                         <button
                             onClick={() => setActiveTab('relatorio')}
-                            className={`py-2 px-6 font-semibold flex items-center gap-2 ${activeTab === 'relatorio' ? 'border-b-2 border-yellow-500 text-yellow-600' : 'text-gray-500'}`}
+                            className={`py-2 px-6 font-semibold flex items-center gap-2 ${activeTab === 'relatorio' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42]' : 'text-gray-500'}`}
                         >
                             <Download size={18}/> Relatórios & Faturamento
                         </button>
@@ -1002,13 +1002,13 @@ const BillingPage = ({
                                         <div className="relative" ref={monthPickerControlRef}>
                                             <button
                                                 onClick={() => { setControlPickerYear(parseInt(controlMonth.split('-')[0])); setShowMonthPickerControl(v => !v); }}
-                                                className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap border rounded bg-white hover:bg-yellow-50 hover:border-yellow-400 transition"
+                                                className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap border rounded bg-white hover:bg-[#fdf8f0] hover:border-[#9E7A42] transition"
                                                 title="Selecionar mês/ano"
                                             >
                                                 {formatMonthLabel(controlMonth)}
                                             </button>
                                             {showMonthPickerControl && (
-                                                <div className="absolute z-40 top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-64">
+                                                <div className="absolute z-40 top-full mt-1 left-1/2 -translate-x-1/2 bg-white rounded-xl shadow-2xl p-3 w-64" style={{ border: "1px solid #f0ebe3" }}>
                                                     <div className="flex items-center justify-between mb-2">
                                                         <button onClick={() => setControlPickerYear(y => y - 1)} className="p-1 rounded hover:bg-gray-100"><ChevronLeft size={16}/></button>
                                                         <span className="font-bold text-sm text-gray-700">{controlPickerYear}</span>
@@ -1019,7 +1019,7 @@ const BillingPage = ({
                                                             const isSelected = controlMonth === `${controlPickerYear}-${String(i+1).padStart(2,'0')}`;
                                                             return (
                                                                 <button key={i} onClick={() => applyMonthToControl(controlPickerYear, i)}
-                                                                    className={`py-1.5 rounded text-xs font-semibold transition ${isSelected ? 'bg-yellow-500 text-white' : 'hover:bg-yellow-50 text-gray-700'}`}>
+                                                                    className={`py-1.5 rounded text-xs font-semibold transition ${isSelected ? 'bg-[#9E7A42] text-white' : 'hover:bg-[#fdf8f0] text-gray-700'}`}>
                                                                     {m}
                                                                 </button>
                                                             );
@@ -1033,7 +1033,7 @@ const BillingPage = ({
                                             <ChevronRight size={16} />
                                         </button>
                                         <button onClick={scrollToToday} title="Ir para hoje"
-                                            className="px-2 py-2 rounded border bg-white hover:bg-yellow-50 hover:border-yellow-400 transition text-xs font-bold text-yellow-600 whitespace-nowrap">
+                                            className="px-2 py-2 rounded border bg-white hover:bg-[#fdf8f0] hover:border-[#9E7A42] transition text-xs font-bold text-yellow-600 whitespace-nowrap">
                                             Hoje
                                         </button>
                                     </div>
@@ -1210,12 +1210,12 @@ const BillingPage = ({
                                                                                 <AlertTriangle size={14}/>
                                                                             </button>
                                                                             {justificativaOpenDate === dayDate && (
-                                                                                <div className="absolute z-20 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-1 min-w-max">
+                                                                                <div className="absolute z-20 right-0 mt-1 bg-white rounded-lg shadow-xl p-1 min-w-max" style={{ border: "1px solid #f0ebe3" }}>
                                                                                     {Object.entries(JUSTIFICATIVA_LABELS).map(([tipo, label]) => (
                                                                                         <button
                                                                                             key={tipo}
                                                                                             onClick={() => handleSetJustificativa(dayDate, tipo)}
-                                                                                            className="block w-full text-left text-xs px-3 py-2 hover:bg-yellow-50 rounded text-gray-700 hover:text-yellow-800"
+                                                                                            className="block w-full text-left text-xs px-3 py-2 hover:bg-[#fdf8f0] rounded text-gray-700 hover:text-yellow-800"
                                                                                         >
                                                                                             {label}
                                                                                         </button>
@@ -1298,7 +1298,7 @@ const BillingPage = ({
                                         { key: 'custom', label: 'Personalizado' },
                                     ].map(p => (
                                         <button key={p.key} onClick={() => p.key === 'custom' ? setPeriodPreset('custom') : applyPreset(p.key)}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${periodPreset === p.key ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-gray-600 border-gray-300 hover:border-yellow-400 hover:text-yellow-700'}`}>
+                                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${periodPreset === p.key ? 'bg-[#9E7A42] text-white border-yellow-500' : 'bg-white text-gray-600 border-gray-300 hover:border-[#9E7A42] hover:text-[#9E7A42]'}`}>
                                             {p.label}
                                         </button>
                                     ))}
@@ -1307,11 +1307,11 @@ const BillingPage = ({
                                     <div className="relative" ref={monthPickerReportRef}>
                                         <button
                                             onClick={() => { setReportPickerYear(new Date().getFullYear()); setShowMonthPickerReport(v => !v); }}
-                                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${periodPreset === 'specificMonth' ? 'bg-yellow-500 text-white border-yellow-500' : 'bg-white text-gray-600 border-gray-300 hover:border-yellow-400 hover:text-yellow-700'}`}>
+                                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition flex items-center gap-1 ${periodPreset === 'specificMonth' ? 'bg-[#9E7A42] text-white border-yellow-500' : 'bg-white text-gray-600 border-gray-300 hover:border-[#9E7A42] hover:text-[#9E7A42]'}`}>
                                             <Calendar size={12}/> Mês específico
                                         </button>
                                         {showMonthPickerReport && (
-                                            <div className="absolute z-40 top-full mt-1 left-0 bg-white border border-gray-200 rounded-xl shadow-2xl p-3 w-64">
+                                            <div className="absolute z-40 top-full mt-1 left-0 bg-white rounded-xl shadow-2xl p-3 w-64" style={{ border: "1px solid #f0ebe3" }}>
                                                 <div className="flex items-center justify-between mb-2">
                                                     <button onClick={() => setReportPickerYear(y => y - 1)} className="p-1 rounded hover:bg-gray-100"><ChevronLeft size={16}/></button>
                                                     <span className="font-bold text-sm text-gray-700">{reportPickerYear}</span>
@@ -1323,7 +1323,7 @@ const BillingPage = ({
                                                             reportStartDate === `${reportPickerYear}-${String(i+1).padStart(2,'0')}-01`;
                                                         return (
                                                             <button key={i} onClick={() => applyMonthToReport(reportPickerYear, i)}
-                                                                className={`py-1.5 rounded text-xs font-semibold transition ${isSelected ? 'bg-yellow-500 text-white' : 'hover:bg-yellow-50 text-gray-700'}`}>
+                                                                className={`py-1.5 rounded text-xs font-semibold transition ${isSelected ? 'bg-[#9E7A42] text-white' : 'hover:bg-[#fdf8f0] text-gray-700'}`}>
                                                                 {m}
                                                             </button>
                                                         );
@@ -1396,7 +1396,7 @@ const BillingPage = ({
                                         <button onClick={generateDetailedPDF} disabled={!reportData.length} className="flex-1 py-2 px-3 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-gray-300 flex items-center justify-center gap-2 text-xs font-bold">
                                             <Printer size={16}/> Detalhado
                                         </button>
-                                        <button onClick={generateSummaryPDF} disabled={!reportData.length} className="flex-1 py-2 px-3 bg-yellow-500 text-white rounded hover:bg-yellow-600 disabled:bg-gray-300 flex items-center justify-center gap-2 text-xs font-bold">
+                                        <button onClick={generateSummaryPDF} disabled={!reportData.length} className="flex-1 py-2 px-3 bg-[#9E7A42] text-white rounded hover:bg-yellow-600 disabled:bg-gray-300 flex items-center justify-center gap-2 text-xs font-bold">
                                             <Printer size={16}/> Resumo
                                         </button>
                                     </div>
@@ -1493,3 +1493,5 @@ const BillingPage = ({
 };
 
 export default BillingPage;
+
+

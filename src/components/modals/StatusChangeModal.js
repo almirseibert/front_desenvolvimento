@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, AlertTriangle, Calendar } from 'lucide-react';
 
 const StatusChangeModal = ({ employee, onClose, onConfirm }) => {
@@ -9,7 +9,7 @@ const StatusChangeModal = ({ employee, onClose, onConfirm }) => {
     const colorClass = isDeactivating ? 'red' : 'green';
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+        <div className="mak-modal-backdrop">
             <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden animate-scale-in">
                 <div className={`p-4 bg-${colorClass}-50 border-b border-${colorClass}-100 flex items-center gap-3`}>
                     <div className={`p-2 bg-${colorClass}-100 rounded-full text-${colorClass}-600`}>

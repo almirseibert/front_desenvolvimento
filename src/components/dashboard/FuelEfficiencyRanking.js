@@ -97,10 +97,10 @@ const FuelEfficiencyRanking = ({ vehicles = [], refuelings = [] }) => {
     );
 
     return (
-        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
+        <div className="bg-white p-4 rounded-xl h-full flex flex-col" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.06)' }}>
             <div className="flex justify-between items-center mb-4">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    <Activity size={18} className="text-purple-600"/> Eficiência
+                <h3 className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 700, color: '#1e1a14' }}>
+                    <Activity size={16} style={{ color: '#8b5cf6' }}/> Eficiência
                 </h3>
                 <div className="relative">
                     <Filter size={12} className="absolute left-2 top-2 text-gray-400"/>

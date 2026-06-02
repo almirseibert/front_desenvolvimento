@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
     Check, X, AlertTriangle, MapPin, Eye, Fuel, 
     Calendar, Loader, Search, RefreshCw, Smartphone, DollarSign, Image as ImageIcon,
@@ -802,7 +802,7 @@ const AdminSolicitacoesPage = ({
 
                             {/* --- SEÇÃO READ ONLY: DADOS DA CONFIRMAÇÃO SE EXISTIR (Para Histórico) --- */}
                             {isReadOnly && (
-                                <div className="bg-gray-100 p-3 rounded-lg border border-gray-200 shadow-inner">
+                                <div className="bg-gray-100 p-3 rounded-lg shadow-inner" style={{ border: "1px solid #f0ebe3" }}>
                                     <h5 className="text-xs font-bold text-gray-700 mb-2 flex items-center gap-1">
                                         <Clock size={14}/> Informações de Processamento
                                     </h5>
@@ -934,8 +934,8 @@ const AdminSolicitacoesPage = ({
                                             <p className="font-bold text-yellow-800 mb-1 flex items-center gap-1"><AlertTriangle size={12}/> Preço diferente do cadastro!</p>
                                             <p className="text-yellow-700 mb-2">Deseja atualizar o preço no cadastro do posto?</p>
                                             <div className="flex gap-2">
-                                                <button onClick={() => handleFinalizeBaixa(false)} className="flex-1 bg-white border border-yellow-300 py-1 rounded hover:bg-yellow-50 font-bold">Não, manter antigo</button>
-                                                <button onClick={() => handleFinalizeBaixa(true)} className="flex-1 bg-yellow-400 text-yellow-900 py-1 rounded hover:bg-yellow-500 font-bold shadow-sm">Sim, atualizar</button>
+                                                <button onClick={() => handleFinalizeBaixa(false)} className="flex-1 bg-white border border-yellow-300 py-1 rounded hover:bg-[#fdf8f0] font-bold">Não, manter antigo</button>
+                                                <button onClick={() => handleFinalizeBaixa(true)} className="flex-1 bg-yellow-400 text-yellow-900 py-1 rounded hover:bg-[#fdf8f0]0 font-bold shadow-sm">Sim, atualizar</button>
                                             </div>
                                         </div>
                                     )}
@@ -944,7 +944,7 @@ const AdminSolicitacoesPage = ({
 
                             {/* INFO GERAL DE RODAPÉ (COMUM PARA AMBOS) */}
                             <div className="space-y-1.5 pt-1">
-                                <div className="bg-gray-100 p-2 rounded border border-gray-200">
+                                <div className="bg-gray-100 p-2 rounded " style={{ border: "1px solid #f0ebe3" }}>
                                     <p className="text-[9px] text-gray-500 uppercase font-bold mb-0.5 flex items-center gap-1"><Clock size={10}/> Último Abastecimento Informado</p>
                                     <p className="text-[10px] text-gray-800 font-mono leading-tight whitespace-pre-wrap">
                                         {getLastFuelingInfo(s.veiculo_id)}
@@ -1032,31 +1032,31 @@ const AdminSolicitacoesPage = ({
 
     return (
         <div className="container mx-auto p-4 md:p-6 space-y-6 animate-fadeIn">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-sm " style={{ border: "1px solid #f0ebe3" }}>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" flex items-center gap-2">
                         <Smartphone className="text-purple-600" /> Gestão de Solicitações (App)
                     </h1>
                     <p className="text-gray-500 text-sm">Central de aprovação de abastecimentos via Mobile.</p>
                 </div>
                 
                 <div className="flex flex-wrap gap-2 justify-center md:justify-end">
-                    <button onClick={() => setFilterStatus('PENDENTE')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${filterStatus === 'PENDENTE' ? 'bg-yellow-400 text-gray-900 shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <button onClick={() => setFilterStatus('PENDENTE')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${filterStatus === 'PENDENTE' ? 'shadow-md' : ''}`} style={filterStatus === 'PENDENTE' ? { background: '#9E7A42', color: '#fff' } : { background: '#f5f2ed', color: '#6a5e4e' }}>
                         Pendentes
                         {solicitacoes.filter(s => s.status === 'PENDENTE').length > 0 && (
                             <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">{solicitacoes.filter(s => s.status === 'PENDENTE').length}</span>
                         )}
                     </button>
-                    <button onClick={() => setFilterStatus('AGUARDANDO_BAIXA')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${filterStatus === 'AGUARDANDO_BAIXA' ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <button onClick={() => setFilterStatus('AGUARDANDO_BAIXA')} className={`px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2 ${filterStatus === 'AGUARDANDO_BAIXA' ? 'shadow-md' : ''}`} style={filterStatus === 'AGUARDANDO_BAIXA' ? { background: '#1c4d7a', color: '#fff' } : { background: '#f5f2ed', color: '#6a5e4e' }}>
                         Baixas
                         {solicitacoes.filter(s => s.status === 'AGUARDANDO_BAIXA').length > 0 && (
                             <span className="bg-blue-800 text-white text-[10px] px-1.5 py-0.5 rounded-full">{solicitacoes.filter(s => s.status === 'AGUARDANDO_BAIXA').length}</span>
                         )}
                     </button>
-                    <button onClick={() => setFilterStatus('TODOS')} className={`px-4 py-2 rounded-lg font-bold text-sm transition ${filterStatus === 'TODOS' ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                    <button onClick={() => setFilterStatus('TODOS')} className={`px-4 py-2 rounded-lg font-bold text-sm transition`} style={filterStatus === 'TODOS' ? { background: '#1c1a17', color: '#f0ebe3' } : { background: '#f5f2ed', color: '#6a5e4e' }}>
                         Histórico
                     </button>
-                    <button onClick={fetchSolicitacoes} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 border border-gray-200">
+                    <button onClick={fetchSolicitacoes} className="p-2 bg-gray-100 rounded-lg hover:bg-gray-200 " style={{ border: "1px solid #f0ebe3" }}>
                         <RefreshCw size={20} className={loading ? "animate-spin text-blue-600" : "text-gray-600"}/>
                     </button>
                 </div>
@@ -1068,7 +1068,7 @@ const AdminSolicitacoesPage = ({
                     placeholder="Buscar por placa, veículo ou solicitante..." 
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 outline-none shadow-sm"
+                    className="w-full pl-10 pr-4 py-3 rounded-xl focus:ring-2 focus:ring-[#9E7A42]/30 outline-none" style={{ border: "1px solid #e8e0d4", background: "#faf9f7" }}
                 />
                 <Search className="absolute left-3 top-3.5 text-gray-400" size={18} />
             </div>
@@ -1080,7 +1080,7 @@ const AdminSolicitacoesPage = ({
                     </div>
                 )}
                 {!loading && filteredSolicitacoes.length === 0 && (
-                    <div className="col-span-full py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-center text-gray-400">
+                    <div className="col-span-full py-10 bg-gray-50 rounded-xl border border-dashed text-center text-gray-400">
                         Nenhuma solicitação encontrada com os filtros atuais.
                     </div>
                 )}
@@ -1134,7 +1134,7 @@ const AdminSolicitacoesPage = ({
                                 </div>
                             </div>
                             <div className="mt-2 pt-2 border-t">
-                                <div className="w-full bg-gray-50 text-gray-600 border border-gray-200 group-hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition">
+                                <div className="w-full bg-gray-50 text-gray-600 group-hover:bg-gray-100 px-3 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 transition" style={{ border: "1px solid #f0ebe3" }}>
                                     <Eye size={16}/> VER DETALHES
                                 </div>
                             </div>
@@ -1179,3 +1179,6 @@ const AdminSolicitacoesPage = ({
 };
 
 export default AdminSolicitacoesPage;
+
+
+

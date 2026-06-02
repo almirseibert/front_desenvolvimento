@@ -88,20 +88,59 @@ const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
 // Fallback de Carregamento de Página
 // ==========================================
 const PageFallback = () => (
-    <div className="flex items-center justify-center h-full text-lg font-semibold text-gray-500">
-        <Loader size={32} className="animate-spin mr-3 text-yellow-500" /> Carregando...
+    <div className="flex items-center justify-center h-full text-lg font-semibold" style={{ color: '#9a8a78' }}>
+        <Loader size={28} className="animate-spin mr-3" style={{ color: '#9E7A42' }} /> Carregando...
     </div>
 );
+
+// ==========================================
+// Botões utilitários para modais
+// ==========================================
+
+const BtnPrimary = ({ onClick, children, disabled }) => {
+    const [h, setH] = React.useState(false);
+    return (
+        <button onClick={onClick} disabled={disabled} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, background: h ? '#8a6a34' : '#9E7A42', color: '#fff', opacity: disabled ? 0.6 : 1, transition: 'background 0.15s' }}>
+            {children}
+        </button>
+    );
+};
+const BtnCancel = ({ onClick, children }) => {
+    const [h, setH] = React.useState(false);
+    return (
+        <button onClick={onClick} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+            style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #e8e0d4', fontSize: 13, fontWeight: 600, cursor: 'pointer', background: h ? '#f5f2ed' : '#fff', color: '#6a5e4e', transition: 'background 0.15s' }}>
+            {children}
+        </button>
+    );
+};
+const BtnDanger = ({ onClick, children, disabled }) => {
+    const [h, setH] = React.useState(false);
+    return (
+        <button onClick={onClick} disabled={disabled} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+            style={{ padding: '8px 16px', borderRadius: 8, border: 'none', fontSize: 13, fontWeight: 600, cursor: disabled ? 'not-allowed' : 'pointer', display: 'inline-flex', alignItems: 'center', gap: 6, background: h ? '#9a2e20' : '#b03828', color: '#fff', opacity: disabled ? 0.6 : 1, transition: 'background 0.15s' }}>
+            {children}
+        </button>
+    );
+};
 
 // ==========================================
 // Modais Globais
 // ==========================================
 
 const CustomAlert = React.memo(({ message, onClose }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[99999]">
-        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md text-center">
-            <pre className="text-base mb-6 whitespace-pre-wrap text-left font-sans text-gray-700">{message}</pre>
-            <button onClick={onClose} className="py-2 px-6 bg-yellow-400 text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition-colors">OK</button>
+    <div className="fixed inset-0 flex items-center justify-center z-[99999] p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', width: '100%', maxWidth: 420, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #f0ebe3' }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: '#1e1a14' }}>Aviso</span>
+            </div>
+            <div style={{ padding: '16px 18px' }}>
+                <pre style={{ fontSize: 13, color: '#6a5e4e', lineHeight: 1.6, whiteSpace: 'pre-wrap', fontFamily: 'inherit', margin: 0 }}>{message}</pre>
+            </div>
+            <div style={{ padding: '12px 18px', borderTop: '1px solid #f0ebe3', display: 'flex', justifyContent: 'flex-end' }}>
+                <BtnPrimary onClick={onClose}>OK</BtnPrimary>
+            </div>
         </div>
     </div>
 ));
@@ -109,15 +148,23 @@ const CustomAlert = React.memo(({ message, onClose }) => (
 const ConfirmationModal = React.memo(({
     title, message, onConfirm, onClose,
     confirmText = 'Confirmar', cancelText = 'Cancelar',
-    confirmColor = 'bg-yellow-400 hover:bg-yellow-500 text-gray-900',
+    confirmColor,
+    danger = false,
 }) => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[90]">
-        <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-            <h3 className="text-lg font-bold mb-3 text-gray-800">{title}</h3>
-            <p className="text-gray-600 mb-6 text-sm">{message}</p>
-            <div className="flex justify-end gap-3">
-                <button onClick={onClose} className="py-2 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm font-medium">{cancelText}</button>
-                <button onClick={onConfirm} className={`px-4 py-2 rounded-lg text-sm font-semibold ${confirmColor}`}>{confirmText}</button>
+    <div className="fixed inset-0 flex items-center justify-center z-[90] p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
+        <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', width: '100%', maxWidth: 420, overflow: 'hidden' }}>
+            <div style={{ padding: '16px 18px 12px', borderBottom: `1px solid ${danger ? '#fdf0ec' : '#f0ebe3'}` }}>
+                <span style={{ fontSize: 15, fontWeight: 700, color: danger ? '#b03828' : '#1e1a14' }}>{title}</span>
+            </div>
+            <div style={{ padding: '16px 18px' }}>
+                <p style={{ fontSize: 13, color: '#6a5e4e', lineHeight: 1.6 }}>{message}</p>
+            </div>
+            <div style={{ padding: '12px 18px', borderTop: '1px solid #f0ebe3', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <BtnCancel onClick={onClose}>{cancelText}</BtnCancel>
+                {danger
+                    ? <BtnDanger onClick={onConfirm}>{confirmText}</BtnDanger>
+                    : <BtnPrimary onClick={onConfirm}>{confirmText}</BtnPrimary>
+                }
             </div>
         </div>
     </div>
@@ -144,31 +191,31 @@ const PasswordConfirmationModalRaw = ({ onConfirm, onClose, message, apiClient: 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[90]">
-            <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md">
-                <h3 className="text-lg font-bold mb-3 text-gray-800">Confirmação de Segurança</h3>
-                <p className="text-gray-600 mb-4 text-sm">{message || 'Insira sua senha para confirmar esta operação sensível.'}</p>
-                <div className="mb-4">
+        <div className="fixed inset-0 flex items-center justify-center z-[90] p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
+            <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.35)', width: '100%', maxWidth: 380, overflow: 'hidden' }}>
+                <div style={{ padding: '16px 18px 12px', borderBottom: '1px solid #fdf0ec' }}>
+                    <div style={{ fontSize: 15, fontWeight: 700, color: '#b03828' }}>Confirmação de Segurança</div>
+                    <div style={{ fontSize: 11, color: '#9a8a78', marginTop: 2 }}>Insira sua senha para continuar</div>
+                </div>
+                <div style={{ padding: '16px 18px' }}>
+                    <p style={{ fontSize: 13, color: '#6a5e4e', lineHeight: 1.5, marginBottom: 12 }}>{message || 'Esta operação requer confirmação de identidade.'}</p>
                     <input
                         type="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                        onKeyDown={e => e.key === 'Enter' && handleConfirm()}
                         placeholder="Sua senha"
                         autoFocus
+                        style={{ width: '100%' }}
                     />
+                    {error && <p style={{ fontSize: 11, color: '#b03828', marginTop: 6, fontWeight: 600 }}>{error}</p>}
                 </div>
-                {error && <p className="text-xs text-red-600 mb-3 font-medium">{error}</p>}
-                <div className="flex justify-end gap-3">
-                    <button onClick={onClose} className="py-2 px-4 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 text-sm">Cancelar</button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={isVerifying}
-                        className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-red-400 flex items-center gap-2 text-sm font-semibold"
-                    >
-                        {isVerifying && <Loader size={14} className="animate-spin" />}
+                <div style={{ padding: '12px 18px', borderTop: '1px solid #f0ebe3', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                    <BtnCancel onClick={onClose}>Cancelar</BtnCancel>
+                    <BtnDanger onClick={handleConfirm} disabled={isVerifying}>
+                        {isVerifying && <Loader size={13} className="animate-spin" style={{ marginRight: 6 }} />}
                         Confirmar
-                    </button>
+                    </BtnDanger>
                 </div>
             </div>
         </div>
@@ -537,8 +584,8 @@ const AppContent = () => {
     if (user && user.user_type === 'operador') {
         if (bootstrapLoading) {
             return (
-                <div className="flex justify-center items-center h-screen">
-                    <Loader className="animate-spin text-yellow-500" size={40} />
+                <div className="flex justify-center items-center h-screen" style={{ background: '#f5f3ef' }}>
+                    <Loader className="animate-spin" size={36} style={{ color: '#9E7A42' }} />
                 </div>
             );
         }
@@ -621,7 +668,7 @@ const AppContent = () => {
     };
 
     return (
-        <div className="flex h-screen bg-slate-100 text-gray-800 font-sans overflow-hidden">
+        <div className="flex h-screen overflow-hidden" style={{ background: '#f5f3ef', fontFamily: "'Roboto', sans-serif", color: '#3d3528' }}>
             {showUpdateModal && updateMessage && (
                 <UpdateMessageModal message={updateMessage} onClose={() => setShowUpdateModal(false)} />
             )}
@@ -671,22 +718,14 @@ const AppContent = () => {
             />
 
             <main className="flex-1 flex flex-col relative overflow-hidden">
-                <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 bg-slate-100 scroll-smooth">
+                <div className="flex-1 overflow-x-hidden overflow-y-auto p-4 sm:p-6 scroll-smooth mak-scrollbar" style={{ background: '#f5f3ef' }}>
                     {alertMessage && (
                         <CustomAlert message={alertMessage} onClose={() => setAlertMessage('')} />
                     )}
 
-                    {/* Indicador discreto de sync em background */}
-                    {syncing && (
-                        <div className="fixed bottom-4 left-4 bg-white shadow-lg rounded-full px-3 py-1.5 flex items-center gap-2 text-xs font-medium text-gray-600 border border-gray-200 z-[80]">
-                            <Loader size={12} className="animate-spin text-yellow-500" />
-                            Sincronizando...
-                        </div>
-                    )}
-
                     {bootstrapLoading ? (
-                        <div className="flex items-center justify-center h-full text-lg font-semibold text-gray-500">
-                            <Loader size={32} className="animate-spin mr-3 text-yellow-500" />
+                        <div className="flex items-center justify-center h-full text-lg font-semibold" style={{ color: '#9a8a78' }}>
+                            <Loader size={28} className="animate-spin mr-3" style={{ color: '#9E7A42' }} />
                             Carregando dados iniciais...
                         </div>
                     ) : (
@@ -708,8 +747,8 @@ const AppRouter = () => {
     const { user, loading } = useAuth();
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-100">
-                <Loader size={40} className="animate-spin text-yellow-500" />
+            <div className="flex items-center justify-center min-h-screen" style={{ background: '#f5f3ef' }}>
+                <Loader size={36} className="animate-spin" style={{ color: '#9E7A42' }} />
             </div>
         );
     }

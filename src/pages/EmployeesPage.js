@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import {
     PlusCircle,
     ChevronsUpDown,
@@ -301,70 +301,58 @@ const EmployeesPage = ({
         <div className="container mx-auto p-4 md:p-6 lg:p-8 animate-fadeIn space-y-6">
             
             {/* Cabeçalho */}
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-white p-5 rounded-xl" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <Users className="text-yellow-500" /> Gestão de Funcionários
+                    <h1 className="flex items-center gap-2" style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14' }}>
+                        <Users size={20} style={{ color: '#9E7A42' }}/> Gestão de Funcionários
                     </h1>
-                    <p className="text-gray-500 text-sm">Gerencie cadastros, alocações e documentos.</p>
+                    <p style={{ fontSize: 13, color: '#9a8a78', marginTop: 2 }}>Gerencie cadastros, alocações e documentos.</p>
                 </div>
-                
+
                 <div className="flex flex-wrap gap-2 w-full lg:w-auto">
                     <ProtectedComponent requiredPermission="admin" user={user}>
-                        <button 
-                            onClick={handleSyncUsers}
-                            disabled={isSyncing}
-                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700 transition disabled:opacity-50 text-sm"
-                        >
-                            {isSyncing ? <Loader className="animate-spin" size={16}/> : <RefreshCw size={16} />}
+                        <button onClick={handleSyncUsers} disabled={isSyncing}
+                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 mak-btn mak-btn-dark text-sm">
+                            {isSyncing ? <Loader className="animate-spin" size={14}/> : <RefreshCw size={14}/>}
                             Sincronizar Acessos
                         </button>
                     </ProtectedComponent>
-
                     <ProtectedComponent requiredPermission="editor" user={user}>
-                        <button 
-                            onClick={() => { setEditingEmployee(null); setIsModalOpen(true); }}
-                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg shadow hover:bg-yellow-500 transition active:scale-95 text-sm"
-                        >
-                            <PlusCircle size={18} /> Novo Funcionário
+                        <button onClick={() => { setEditingEmployee(null); setIsModalOpen(true); }}
+                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 mak-btn mak-btn-primary text-sm">
+                            <PlusCircle size={16}/> Novo Funcionário
                         </button>
                     </ProtectedComponent>
                 </div>
             </div>
 
             {/* Abas e Busca */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="flex flex-col md:flex-row border-b border-gray-100">
+            <div className="bg-white rounded-xl overflow-hidden" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
+                <div className="flex flex-col md:flex-row" style={{ borderBottom: '1px solid #f0ebe3' }}>
                     <div className="flex w-full md:w-auto">
-                        <button
-                            onClick={() => setActiveTab('ativos')}
-                            className={`flex-1 md:flex-none px-6 py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
-                                activeTab === 'ativos' ? 'border-yellow-400 text-gray-900 bg-yellow-50' : 'border-transparent text-gray-500 hover:bg-gray-50'
-                            }`}
-                        >
+                        <button onClick={() => setActiveTab('ativos')}
+                            className="flex-1 md:flex-none px-6 py-3.5 text-sm font-bold flex items-center gap-2 transition-colors"
+                            style={{ borderBottom: activeTab === 'ativos' ? '2px solid #9E7A42' : '2px solid transparent', color: activeTab === 'ativos' ? '#9E7A42' : '#9a8a78', background: activeTab === 'ativos' ? '#fdf8f0' : 'transparent', border: 'none', borderBottom: activeTab === 'ativos' ? '2px solid #9E7A42' : '2px solid transparent', cursor: 'pointer' }}>
                             Ativos
-                            <span className="bg-green-100 text-green-800 text-xs py-0.5 px-2 rounded-full">{counts.ativos}</span>
+                            <span style={{ background: '#d1fae5', color: '#065f46', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 9999 }}>{counts.ativos}</span>
                         </button>
-                        <button
-                            onClick={() => setActiveTab('inativos')}
-                            className={`flex-1 md:flex-none px-6 py-4 text-sm font-bold border-b-2 transition-colors flex items-center gap-2 ${
-                                activeTab === 'inativos' ? 'border-red-400 text-red-900 bg-red-50' : 'border-transparent text-gray-500 hover:bg-gray-50'
-                            }`}
-                        >
+                        <button onClick={() => setActiveTab('inativos')}
+                            className="flex-1 md:flex-none px-6 py-3.5 text-sm font-bold flex items-center gap-2 transition-colors"
+                            style={{ borderBottom: activeTab === 'inativos' ? '2px solid #b03828' : '2px solid transparent', color: activeTab === 'inativos' ? '#b03828' : '#9a8a78', background: activeTab === 'inativos' ? '#fdf0ec' : 'transparent', border: 'none', borderBottom: activeTab === 'inativos' ? '2px solid #b03828' : '2px solid transparent', cursor: 'pointer' }}>
                             Inativos
-                            <span className="bg-red-100 text-red-800 text-xs py-0.5 px-2 rounded-full">{counts.inativos}</span>
+                            <span style={{ background: '#fdf0ec', color: '#b03828', fontSize: 10, fontWeight: 700, padding: '1px 7px', borderRadius: 9999 }}>{counts.inativos}</span>
                         </button>
                     </div>
 
-                    <div className="flex-1 p-3 md:border-l border-gray-100 flex items-center">
+                    <div className="flex-1 p-3 flex items-center" style={{ borderLeft: '1px solid #f0ebe3' }}>
                         <div className="relative w-full max-w-md mx-auto md:mr-auto md:ml-4">
-                            <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
-                            <input 
-                                type="text" 
-                                placeholder="Buscar: Nome, Vulgo, Função, Cidade, Registro..." 
+                            <Search className="absolute left-3 top-2.5" size={15} style={{ color: '#b0a090' }} />
+                            <input
+                                type="text"
+                                placeholder="Buscar: Nome, Vulgo, Função, Cidade, Registro..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm transition-all"
+                                className="w-full pl-9 pr-4 py-2 text-sm"
                             />
                         </div>
                     </div>
@@ -475,7 +463,7 @@ const EmployeesPage = ({
                                                                 Disponível
                                                             </span>
                                                             {daysAvailable > 0 ? (
-                                                                <span className="flex items-center gap-1 text-[10px] text-gray-500 font-medium bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                                                <span className="flex items-center gap-1 text-[10px] text-gray-500 font-medium bg-gray-50 px-1.5 py-0.5 rounded " style={{ border: "1px solid #f0ebe3" }}>
                                                                     <CalendarCheck size={10}/> +{daysAvailable} dias
                                                                 </span>
                                                             ) : (
@@ -518,7 +506,7 @@ const EmployeesPage = ({
                                                 <ProtectedComponent requiredPermission="editor" user={user}>
                                                     <button 
                                                         onClick={() => { setEditingEmployee(emp); setIsModalOpen(true); }} 
-                                                        className="p-2 text-yellow-600 hover:bg-yellow-50 rounded-lg transition-colors" 
+                                                        className="p-2 text-yellow-600 hover:bg-[#fdf8f0] rounded-lg transition-colors" 
                                                         title="Editar Cadastro"
                                                     >
                                                         <Edit size={18}/>
@@ -621,3 +609,5 @@ const EmployeesPage = ({
 };
 
 export default EmployeesPage;
+
+

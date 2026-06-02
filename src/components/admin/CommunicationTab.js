@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { MessageSquare, Mail, Users, FileText, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
 import WhatsAppStatusPanel from '../WhatsAppStatusPanel';
 import apiClient from '../../services/apiClient';
@@ -221,7 +221,7 @@ const CommunicationTab = ({ socket, users = [] }) => {
             {emailMsg === 'ok' && <p className="text-sm text-green-600 bg-green-50 border border-green-200 rounded px-3 py-2">Configuração salva com sucesso!</p>}
             {emailMsg && emailMsg !== 'ok' && <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded px-3 py-2">Erro ao salvar: {emailMsg}</p>}
 
-            <button type="submit" disabled={savingEmail} className="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
+            <button type="submit" disabled={savingEmail} className="px-5 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
               {savingEmail ? 'Salvando...' : 'Salvar Configuração'}
             </button>
           </form>
@@ -261,7 +261,7 @@ const CommunicationTab = ({ socket, users = [] }) => {
             <button
               onClick={handleSaveRouting}
               disabled={savingRouting}
-              className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors"
             >
               {savingRouting ? 'Salvando...' : 'Salvar Configuração'}
             </button>
@@ -375,7 +375,7 @@ const CommunicationTab = ({ socket, users = [] }) => {
                   <code className="bg-gray-100 px-1 rounded">{'{{valor}}'}</code>
                 </p>
               </div>
-              <button type="submit" disabled={savingTpl} className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
+              <button type="submit" disabled={savingTpl} className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
                 {savingTpl ? 'Adicionando...' : 'Adicionar Template'}
               </button>
             </form>
@@ -411,3 +411,4 @@ const CommunicationTab = ({ socket, users = [] }) => {
 };
 
 export default CommunicationTab;
+

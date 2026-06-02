@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Loader, MapPin, Clock, Truck, Plus, Trash2, DollarSign, User, ClipboardList } from 'lucide-react';
 
 const ObraModal = ({
@@ -192,10 +192,10 @@ const ObraModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+        <div className="mak-modal-backdrop backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-                <div className="p-6 border-b flex justify-between items-center bg-gray-50 rounded-t-lg sticky top-0 z-10">
-                    <h2 className="text-xl font-bold text-gray-800">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">
                         {obra
                             ? (tipoRegistro === 'centro_custo' ? 'Editar Centro de Custo' : 'Editar Obra')
                             : (tipoRegistro === 'centro_custo' ? 'Novo Centro de Custo' : 'Nova Obra')}
@@ -540,7 +540,7 @@ const ObraModal = ({
                     {/* Footer */}
                     <div className="flex justify-end gap-3 pt-4 border-t">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded hover:bg-gray-200 transition" disabled={isSubmitting}>Cancelar</button>
-                        <button type="submit" className="px-6 py-2 bg-yellow-400 text-gray-900 font-bold rounded hover:bg-yellow-500 transition shadow-lg flex items-center gap-2" disabled={isSubmitting}>
+                        <button type="submit" className="px-6 py-2 bg-yellow-400 text-gray-900 font-bold rounded hover:bg-[#fdf8f0]0 transition shadow-lg flex items-center gap-2" disabled={isSubmitting}>
                             {isSubmitting ? <><Loader className="animate-spin" size={18}/> Salvando...</> : (tipoRegistro === 'centro_custo' ? 'Salvar Centro de Custo' : 'Salvar Obra')}
                         </button>
                     </div>
@@ -551,3 +551,6 @@ const ObraModal = ({
 };
 
 export default ObraModal;
+
+
+

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import {
     PlusCircle, Edit, Trash2, FileText, X, Loader, 
     Droplet, Truck, Fuel, Printer, ChevronDown, ChevronUp,
@@ -120,9 +120,9 @@ const PartnersPage = ({
         <div className="container mx-auto p-4 md:p-6 lg:p-8 animate-fade-in">
             {/* Cabeçalho */}
             <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">Postos & Fornecedores</h1>
+                <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Postos & Fornecedores</h1>
                 <ProtectedComponent requiredPermission="editor">
-                    <button onClick={() => openModal()} className="flex items-center gap-2 px-3 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg shadow hover:bg-yellow-500 transition text-sm">
+                    <button onClick={() => openModal()} className="flex items-center gap-2 px-3 py-2 mak-btn mak-btn-primary">
                         <PlusCircle size={18} /> Cadastrar {activeTab === 'posto' ? 'Posto' : 'Fornecedor'}
                     </button>
                 </ProtectedComponent>
@@ -132,13 +132,13 @@ const PartnersPage = ({
             <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg pt-2 px-2 overflow-x-auto shadow-sm">
                 <button 
                     onClick={() => setActiveTab('posto')} 
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'posto' ? 'border-b-2 border-yellow-500 text-yellow-600 bg-yellow-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'posto' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42] bg-yellow-50' : 'text-[#9a8a78] hover:text-[#6a5e4e] hover:bg-gray-50'}`}
                 >
                     <Droplet size={16} /> Postos de Combustível
                 </button>
                 <button 
                     onClick={() => setActiveTab('fornecedor')} 
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'fornecedor' ? 'border-b-2 border-yellow-500 text-yellow-600 bg-yellow-50' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'fornecedor' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42] bg-yellow-50' : 'text-[#9a8a78] hover:text-[#6a5e4e] hover:bg-gray-50'}`}
                 >
                     <PackageOpen size={16} /> Peças & Serviços (Fornecedores)
                 </button>
@@ -156,7 +156,7 @@ const PartnersPage = ({
             </div>
 
             {/* Lista */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden " style={{ border: "1px solid #f0ebe3" }}>
                 <div className="hidden md:grid grid-cols-8 gap-4 p-4 font-semibold text-xs text-gray-600 border-b bg-gray-50 uppercase tracking-wider">
                     <div className="col-span-2 cursor-pointer flex items-center" onClick={() => requestSort('razaoSocial')}>
                         Razão Social / Endereço {getSortIcon('razaoSocial')}
@@ -208,7 +208,7 @@ const PartnersPage = ({
                                 {activeTab === 'posto' && (
                                     <button onClick={() => openPriceModal(partner)} className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-gray-100 rounded-full" title="Valores Combustíveis"><Fuel size={14} /></button>
                                 )}
-                                <button onClick={() => openModal(partner)} className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-gray-100 rounded-full" title="Editar"><Edit size={14} /></button>
+                                <button onClick={() => openModal(partner)} className="p-1.5 text-gray-400 hover:text-[#9E7A42] hover:bg-[#f5f2ed] rounded-full" title="Editar"><Edit size={14} /></button>
                             </ProtectedComponent>
                             <ProtectedComponent requiredPermission="admin">
                                 <button onClick={() => openDeleteModal(partner.id)} title="Excluir" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full"><Trash2 size={14}/></button>
@@ -332,7 +332,7 @@ const PartnerModal = ({ user, partner, defaultTipo, onClose, setAlertMessage, ap
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-2 sticky bottom-0 z-10">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm font-medium w-full sm:w-auto" disabled={isSaving}>Cancelar</button>
-                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 disabled:bg-yellow-300 flex items-center justify-center gap-2 text-sm w-full sm:w-auto">
+                        <button type="submit" disabled={isSaving} className="px-4 py-2 mak-btn mak-btn-primary">
                             {isSaving ? <><Loader className="animate-spin" size={18}/> Salvando...</> : 'Salvar'}
                         </button>
                     </div>
@@ -405,7 +405,7 @@ const FuelPriceModal = ({ user, partner, onClose, setAlertMessage, apiClient, re
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium" disabled={isSaving}>Cancelar</button>
-                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 disabled:bg-yellow-300 flex items-center justify-center gap-2 text-sm">
+                        <button type="submit" disabled={isSaving} className="px-4 py-2 mak-btn mak-btn-primary">
                             {isSaving ? <><Loader className="animate-spin" size={18}/> Salvando...</> : 'Salvar Preços'}
                         </button>
                     </div>
@@ -707,3 +707,6 @@ const RefuelingReportModal = ({ partner, vehicles = [], refuelings = [], comboio
 };
 
 export default PartnersPage;
+
+
+

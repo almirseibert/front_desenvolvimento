@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Loader, X, AlertTriangle, FileText } from 'lucide-react';
 
 const ComboioEntradaModal = ({ 
@@ -167,10 +167,10 @@ const ComboioEntradaModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[95vh] flex flex-col relative overflow-hidden">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-                    <h2 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar Entrada' : 'Entrada de Combustível'}</h2>
+        <div className="mak-modal-backdrop p-2 sm:p-4">
+            <div className="mak-modal max-w-2xl">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">{isEditing ? 'Editar Entrada' : 'Entrada de Combustível'}</h2>
                     <button onClick={onClose} disabled={isSaving}><X size={20}/></button>
                 </div>
                 
@@ -241,9 +241,9 @@ const ComboioEntradaModal = ({
                     </div>
                 </form>
 
-                <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-lg">
+                <div className="mak-modal-footer">
                     <button onClick={onClose} disabled={isSaving} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancelar</button>
-                    <button onClick={handlePreSubmit} disabled={isSaving} className="px-4 py-2 bg-yellow-400 font-bold rounded hover:bg-yellow-500 flex items-center gap-2">
+                    <button onClick={handlePreSubmit} disabled={isSaving} className="px-4 py-2 bg-yellow-400 font-bold rounded hover:bg-[#fdf8f0]0 flex items-center gap-2">
                         {isSaving ? <Loader className="animate-spin" size={16}/> : <FileText size={16}/>} {isEditing ? 'Salvar' : 'Salvar & PDF'}
                     </button>
                 </div>
@@ -268,7 +268,7 @@ const ComboioEntradaModal = ({
                             </button>
                             <button 
                                 onClick={() => executeSubmit(true)}
-                                className="flex-1 py-2 px-3 bg-yellow-400 text-gray-900 font-bold rounded text-xs hover:bg-yellow-500 shadow-sm"
+                                className="flex-1 py-2 px-3 bg-yellow-400 text-gray-900 font-bold rounded text-xs hover:bg-[#fdf8f0]0 shadow-sm"
                             >
                                 Sim, atualizar
                             </button>
@@ -281,3 +281,5 @@ const ComboioEntradaModal = ({
 };
 
 export default ComboioEntradaModal;
+
+

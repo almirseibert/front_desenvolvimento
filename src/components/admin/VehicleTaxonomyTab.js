@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { Truck, Plus, Edit2, Trash2, Loader, ChevronDown, ChevronRight, Fuel, Check, X, AlertTriangle, RefreshCw } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 import VehicleTypeConfigModal from '../modals/VehicleTypeConfigModal';
@@ -164,7 +164,7 @@ const VehicleTaxonomyTab = () => {
                         </button>
                         <button
                             onClick={() => setShowConfigModal(true)}
-                            className="flex items-center gap-2 px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors"
+                            className="flex items-center gap-2 px-3 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors"
                         >
                             <Fuel size={15} /> Configuração de Consumo
                         </button>
@@ -455,3 +455,4 @@ const TypeRow = ({
 };
 
 export default VehicleTaxonomyTab;
+

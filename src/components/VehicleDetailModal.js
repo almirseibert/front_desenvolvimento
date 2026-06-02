@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ImageOff, X, MapPin } from 'lucide-react';
 import { getGroupUnit, getReadingSourceForUnit } from '../utils/vehicleRules';
 
@@ -45,8 +45,8 @@ const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) 
     const chassi = resolveValue(vehicle, ['chassi', 'Chassi']);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[95vh] flex flex-col my-auto">
+        <div className="mak-modal-backdrop overflow-y-auto">
+            <div className="mak-modal max-w-lg">
                 {/* Cabeçalho Fixo */}
                 <div className="p-4 sm:p-6 border-b flex justify-between items-center sticky top-0 bg-white z-10">
                     <h2 className="text-xl sm:text-2xl font-bold">{vehicle.marca} {vehicle.modelo}</h2>
@@ -167,3 +167,5 @@ const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) 
 };
 
 export default VehicleDetailModal;
+
+

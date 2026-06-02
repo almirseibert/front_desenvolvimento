@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { Edit, Clock, CheckCircle, X, Loader, History, FileText, Wrench, Calendar } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import { checkReadingConsistency, checkVehicleRestrictions, getVehicleMainReading } from '../../utils/vehicleRules';
@@ -196,7 +196,7 @@ const RevisionsTab = ({
                             <div className="md:col-span-2 text-gray-600 truncate text-[11px]" title={typeof description === 'string' ? description : ''}>{description}</div>
                             <div className="md:col-span-1 flex items-center justify-end md:justify-center gap-1 mt-1 md:mt-0">
                                 <ProtectedComponent requiredPermission="editor">
-                                    <button onClick={() => setEditingRevision(item)} className="p-1 text-gray-500 hover:text-yellow-600 hover:bg-white rounded border border-transparent hover:border-gray-200" title="Agendar">
+                                    <button onClick={() => setEditingRevision(item)} className="p-1 text-gray-500 hover:text-[#9E7A42] hover:bg-white rounded border border-transparent hover:border-gray-200" title="Agendar">
                                         <Edit size={14} />
                                     </button>
                                     <button onClick={() => setCompletingRevision(item)} className="p-1 text-gray-500 hover:text-green-600 hover:bg-white rounded border border-transparent hover:border-gray-200" title="Concluir">
@@ -295,7 +295,7 @@ const ScheduleRevisionModal = ({ vehicle, onClose, setAlertMessage, apiClient, r
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-fadeInUp">
+            <div className="mak-modal max-w-sm">
                 <div className="px-4 py-3 border-b bg-yellow-50 flex justify-between items-center">
                     <h2 className="text-base font-bold text-yellow-800 flex items-center gap-2">
                         <Calendar size={18} className="text-yellow-600"/> Agendar Manutenção
@@ -337,7 +337,7 @@ const ScheduleRevisionModal = ({ vehicle, onClose, setAlertMessage, apiClient, r
                     </div>
                     <div className="flex justify-end pt-3 gap-2 border-t">
                         <button onClick={onClose} className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded">Cancelar</button>
-                        <button onClick={handleSave} disabled={isSaving} className="px-3 py-1.5 bg-yellow-500 text-white rounded text-xs font-bold hover:bg-yellow-600 flex items-center gap-1 shadow">
+                        <button onClick={handleSave} disabled={isSaving} className="px-3 py-1.5 bg-[#9E7A42] text-white rounded text-xs font-bold hover:bg-yellow-600 flex items-center gap-1 shadow">
                             {isSaving ? <Loader size={12} className="animate-spin"/> : <CheckCircle size={12}/>} Salvar
                         </button>
                     </div>
@@ -545,3 +545,4 @@ const RevisionHistoryModal = ({ vehicle, onClose }) => {
 };
 
 export default RevisionsTab;
+

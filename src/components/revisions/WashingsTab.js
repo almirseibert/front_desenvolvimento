@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { PlusCircle, Droplet, Users, X, Trash2, Edit2, CheckCircle, Loader } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableObraSelect from '../SearchableObraSelect';
@@ -64,7 +64,7 @@ const WashingsTab = ({ vehicles = [], obras = [], setAlertMessage, apiClient }) 
             <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
                     <div>
-                        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <h3 className="mak-modal-title">
                             <Droplet size={18} className="text-blue-600"/> Histórico de Lavagens
                         </h3>
                         <p className="text-xs text-gray-500">Controle de higienização, com custos alocados por obra.</p>
@@ -159,7 +159,7 @@ const NovaLavagemModal = ({ vehicles, obras, washingPartners, onClose, onSave })
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-sm overflow-hidden animate-fadeInUp">
+            <div className="mak-modal max-w-sm">
                 <div className="px-4 py-3 border-b bg-blue-50 flex justify-between items-center">
                     <h2 className="text-sm font-bold text-blue-800">Registrar Lavagem</h2>
                     <button onClick={onClose} className="text-gray-500"><X size={16}/></button>
@@ -269,7 +269,7 @@ const WashingPartnersModal = ({ partners, apiClient, fetchData, setAlertMessage,
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md overflow-hidden animate-fadeInUp">
+            <div className="mak-modal max-w-md">
                 <div className="px-4 py-3 border-b bg-gray-100 flex justify-between items-center">
                     <h2 className="text-sm font-bold text-gray-800">Parceiros de Lavagem (Lava-Jatos)</h2>
                     <button onClick={onClose} className="text-gray-500"><X size={16}/></button>

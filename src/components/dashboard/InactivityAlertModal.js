@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { X, Clock, CheckCircle, Loader, AlertTriangle, ShieldCheck, Fuel } from 'lucide-react';
 
 const InactivityAlertModal = ({ 
@@ -190,9 +190,9 @@ const InactivityAlertModal = ({
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[10] p-4 backdrop-blur-sm animate-fadeIn">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 border border-gray-200">
                 {/* Header */}
-                <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+                <div className="mak-modal-header">
                     <div>
-                        <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="mak-modal-title">
                             <Clock className="text-orange-600" size={20}/>
                             Detalhes de Inatividade
                         </h2>
@@ -200,7 +200,7 @@ const InactivityAlertModal = ({
                             {alertData.vehicleCode} <span className="text-gray-400">|</span> {alertData.vehicleModel}
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-1.5 rounded-full hover:bg-gray-200 text-gray-500 transition-colors"><X size={20}/></button>
+                    <button onClick={onClose} className="mak-modal-close"><X size={20}/></button>
                 </div>
                 
                 <div className="p-6 space-y-5">

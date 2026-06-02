@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Loader, X, Wrench } from 'lucide-react';
 
 const MaintenanceModal = ({ user, vehicle, onClose, apiClient, setAlertMessage, reloadData }) => {
@@ -39,8 +39,8 @@ const MaintenanceModal = ({ user, vehicle, onClose, apiClient, setAlertMessage, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden">
+        <div className="mak-modal-backdrop ">
+            <div className="mak-modal max-w-lg">
                 <div className="p-6 border-b flex justify-between items-center bg-yellow-50">
                     <h2 className="text-xl font-bold text-yellow-800 flex items-center gap-2">
                         <Wrench size={24} /> Gerir Manutenção
@@ -112,7 +112,7 @@ const MaintenanceModal = ({ user, vehicle, onClose, apiClient, setAlertMessage, 
                         <button 
                             onClick={handleSubmit} 
                             disabled={isSaving || !status || !location} 
-                            className="px-4 py-2 bg-yellow-500 text-white font-semibold rounded-lg hover:bg-yellow-600 disabled:bg-yellow-300 flex items-center justify-center gap-2 text-sm shadow-sm"
+                            className="px-4 py-2 bg-[#9E7A42] text-white font-semibold rounded-lg hover:bg-yellow-600 disabled:bg-yellow-300 flex items-center justify-center gap-2 text-sm shadow-sm"
                         >
                             {isSaving ? <><Loader className="animate-spin" size={18}/> Confirmar...</> : "Iniciar Manutenção"}
                         </button>
@@ -124,3 +124,6 @@ const MaintenanceModal = ({ user, vehicle, onClose, apiClient, setAlertMessage, 
 };
 
 export default MaintenanceModal;
+
+
+

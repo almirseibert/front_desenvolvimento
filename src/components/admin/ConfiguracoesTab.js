@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   Bell, GitBranch, Calendar, Clock, Satellite,
   Plus, Trash2, ChevronDown, ChevronUp, Eye, EyeOff,
@@ -141,7 +141,7 @@ const ConfiguracoesTab = () => {
             <button
               onClick={handleSaveAlerts}
               disabled={savingAlerts}
-              className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors"
+              className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors"
             >
               {savingAlerts ? 'Salvando...' : 'Salvar Limites'}
             </button>
@@ -357,7 +357,7 @@ const ConfiguracoesTab = () => {
               <span className="text-sm font-medium text-gray-700">Habilitar integração GPS</span>
             </label>
             <div className="flex gap-3">
-              <button onClick={() => alert('Disponível em breve (backend pendente).')} className="px-4 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors">
+              <button onClick={() => alert('Disponível em breve (backend pendente).')} className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors">
                 Salvar Configuração
               </button>
               <button onClick={() => alert('Disponível em breve.')} className="px-4 py-2 bg-green-50 hover:bg-green-100 text-green-700 font-medium rounded-lg text-sm transition-colors">
@@ -372,3 +372,4 @@ const ConfiguracoesTab = () => {
 };
 
 export default ConfiguracoesTab;
+

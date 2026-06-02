@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/apiClient';
 
@@ -64,13 +64,13 @@ const LoginScreen = () => {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-indigo-200 font-sans">
+        <div className="flex items-center justify-center min-h-screen font-sans" style={{background:'#f5f3ef'}}>
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-2xl shadow-lg">
                 <div className="flex justify-center">
                     <img src="https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png" alt="Logo MAK" className="w-48"/>
                 </div>
                 <div className="flex justify-center">
-                    <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase">Desenvolvimento</span>
+                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase" style={{background:'#9E7A42'}}>Desenvolvimento</span>
                 </div>
                 <h2 className="text-2xl font-bold text-center text-gray-900">Sistema de Frotas</h2>
                 
@@ -88,13 +88,13 @@ const LoginScreen = () => {
                     
                     {(error || authError) && <p className="text-sm text-red-600 text-center">{error || authError}</p>}
                     
-                    <button type="submit" disabled={authLoading} className="w-full py-3 font-semibold text-gray-900 bg-yellow-400 rounded-lg hover:bg-yellow-500 disabled:bg-yellow-200">
+                    <button type="submit" disabled={authLoading} className="w-full py-3 font-semibold text-gray-900 bg-yellow-400 rounded-lg hover:bg-[#fdf8f0]0 disabled:bg-yellow-200">
                         {authLoading ? 'Entrando...' : 'Entrar'}
                     </button>
                 </form>
 
                 <div className="text-center">
-                    <button onClick={() => setIsRegistering(true)} className="text-sm text-yellow-600 hover:underline">
+                    <button onClick={() => setIsRegistering(true)} className="text-sm hover:underline" style={{color:'#9E7A42'}}>
                         Solicitar Cadastro (Novo Usuário)
                     </button>
                 </div>

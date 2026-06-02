@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertTriangle, Download } from 'lucide-react';
@@ -253,7 +253,7 @@ const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], ob
             </FilterSection>
 
             <div className="bg-white border rounded-lg shadow-sm mb-4">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                <div className="mak-modal-header">
                     <h4 className="font-bold text-gray-700">Pré-visualização ({filteredAlerts.length})</h4>
                     <button onClick={handleGeneratePDF} disabled={filteredAlerts.length === 0} className="text-red-600 hover:text-red-800 font-semibold text-sm flex items-center gap-1">
                         <Download size={16}/> Baixar PDF

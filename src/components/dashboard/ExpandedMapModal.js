@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { X, MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -157,11 +157,11 @@ const AllocationMap = ({ obras = [], vehicles = [], vehicleGroups = {}, isExpand
 
 export const ExpandedMapModal = ({ obras, vehicles, vehicleGroups, onClose }) => {
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[40] p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[9999] p-4">
             {/* Adicionado 'isolate' aqui também para garantir */}
             <div className="bg-white rounded-lg shadow-2xl w-full h-full max-w-7xl max-h-[90vh] flex flex-col isolate">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-                    <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">
                         <MapPin className="text-blue-600" /> Mapa de Alocação Expandido
                     </h2>
                     <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200"><X size={24} /></button>

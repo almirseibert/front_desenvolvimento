@@ -69,11 +69,20 @@ const SearchableSelect = ({
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
-            <div className={`flex items-center border rounded-md focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-yellow-500 bg-white ${disabled ? 'bg-gray-100 opacity-60 pointer-events-none' : 'border-gray-300'}`}>
-                <Search size={14} className="ml-2 text-gray-400 flex-shrink-0" />
+            <div
+                className={`flex items-center rounded-lg transition-all ${disabled ? 'opacity-60 pointer-events-none' : ''}`}
+                style={{
+                    border: '1px solid #e8e0d4',
+                    background: disabled ? '#f0ebe3' : '#faf9f7',
+                }}
+                onFocusCapture={e => { e.currentTarget.style.borderColor = '#9E7A42'; e.currentTarget.style.boxShadow = '0 0 0 3px rgba(158,122,66,0.18)'; e.currentTarget.style.background = '#fff'; }}
+                onBlurCapture={e => { e.currentTarget.style.borderColor = '#e8e0d4'; e.currentTarget.style.boxShadow = ''; e.currentTarget.style.background = disabled ? '#f0ebe3' : '#faf9f7'; }}
+            >
+                <Search size={14} className="ml-2 flex-shrink-0" style={{ color: '#b0a090' }} />
                 <input
                     type="text"
-                    className="flex-1 px-2 py-1.5 outline-none text-xs bg-transparent min-w-0"
+                    className="mak-bare-input flex-1 px-2 py-1.5 outline-none text-xs bg-transparent min-w-0"
+                    style={{ border: 'none', background: 'transparent', boxShadow: 'none', padding: '6px 8px', fontSize: 12, color: '#3d3528', width: '100%' }}
                     placeholder={placeholder}
                     value={open ? search : (selectedItem ? getLabel(selectedItem) : '')}
                     onFocus={() => { if (!disabled) { setSearch(''); setOpen(true); } }}
@@ -86,7 +95,10 @@ const SearchableSelect = ({
                     <button
                         type="button"
                         onClick={handleClear}
-                        className="p-1.5 text-gray-400 hover:text-red-500 transition flex-shrink-0"
+                        className="mak-bare-input p-1.5 flex-shrink-0 transition"
+                        style={{ border: 'none', background: 'transparent', color: '#b0a090', cursor: 'pointer', lineHeight: 0 }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#b03828'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#b0a090'}
                         title="Limpar"
                     >
                         <X size={13} />
@@ -95,9 +107,9 @@ const SearchableSelect = ({
             </div>
 
             {open && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                <div className="absolute z-50 w-full mt-1 bg-white rounded-lg shadow-xl max-h-60 overflow-y-auto mak-scrollbar" style={{ border: '1px solid #e8e0d4' }}>
                     {filtered.length === 0 && (
-                        <p className="p-3 text-xs text-gray-500 text-center">Nenhum resultado.</p>
+                        <p className="p-3 text-xs text-center" style={{ color: '#9a8a78' }}>Nenhum resultado.</p>
                     )}
                     {filtered.map(item => {
                         const id = getId(item);
@@ -110,11 +122,18 @@ const SearchableSelect = ({
                                 key={id}
                                 type="button"
                                 onClick={() => handleSelect(item)}
-                                className={`w-full text-left px-3 py-2 text-xs hover:bg-yellow-50 hover:text-yellow-800 transition flex items-center justify-between gap-2 ${isSelected ? 'bg-yellow-50 font-semibold text-yellow-800' : 'text-gray-800'}`}
+                                className="mak-bare-input w-full text-left px-3 py-2 transition flex items-center justify-between gap-2"
+                                style={{
+                                    fontSize: 12, border: 'none', background: isSelected ? '#fdf8f0' : 'transparent',
+                                    color: isSelected ? '#9E7A42' : '#3d3528', fontWeight: isSelected ? 600 : 400,
+                                    cursor: 'pointer',
+                                }}
+                                onMouseEnter={e => { if (!isSelected) { e.currentTarget.style.background = '#faf9f7'; } }}
+                                onMouseLeave={e => { if (!isSelected) { e.currentTarget.style.background = 'transparent'; } }}
                             >
                                 <span className="flex flex-col min-w-0">
                                     <span className="truncate">{label}</span>
-                                    {sub && <span className="text-[10px] text-gray-400 truncate">{sub}</span>}
+                                    {sub && <span className="truncate" style={{ fontSize: 10, color: '#b0a090' }}>{sub}</span>}
                                 </span>
                                 {badge && (
                                     <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0 ${badge.color}`}>

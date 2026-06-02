@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, TrendingUp, Mail, Send } from 'lucide-react';
 
 import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
@@ -661,8 +661,8 @@ ${readingMsg}`;
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-2 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[98vh] flex flex-col overflow-hidden">
+        <div className="mak-modal-backdrop p-2 backdrop-blur-sm">
+            <div className="mak-modal max-w-4xl">
                 <div className="p-3 border-b flex justify-between items-center bg-gray-50 rounded-t-xl shrink-0">
                     <h2 className="text-base font-bold text-gray-800 flex items-center gap-2">
                         {isEditing ? <Edit size={16}/> : <FileText size={16}/>}
@@ -867,7 +867,7 @@ ${readingMsg}`;
                         <button
                             onClick={handleSaveClick}
                             disabled={isSaving}
-                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 flex items-center gap-1 ${(blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'}`}
+                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 flex items-center gap-1 ${(blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-[#fdf8f0]0'}`}
                         >
                             {isSaving ? <Loader className="animate-spin" size={12}/> : (
                                 <><Send size={12} /> {(blockReason || requiresBudgetOverride) ? 'Salvar Bloqueado' : 'Salvar & Enviar'}</>
@@ -882,3 +882,5 @@ ${readingMsg}`;
 };
 
 export default RefuelingOrderModal;
+
+

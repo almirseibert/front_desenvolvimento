@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 // REMOVIDO: Imports do Firebase (firestore, auth) e Dexie
 import { useAuth } from '../contexts/AuthContext';
 // REMOVIDO: useOfflineContext
@@ -525,8 +525,8 @@ const DiarioDeBordoPage = ({
                         </div>
                      )}
                      {/* Lista de Veículos */}
-                    <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-4">Selecione o veículo/equipamento</h2>
+                    <div className="bg-white p-6 rounded-lg shadow-lg " style={{ border: "1px solid #f0ebe3" }}>
+                        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" mb-4">Selecione o veículo/equipamento</h2>
                         <div className="space-y-3">
                             {allocatedVehicles.map(vehicle => {
                                 const obra = vehicle.obraAtualId ? obras?.find(o => o.id === vehicle.obraAtualId) : null;
@@ -534,7 +534,7 @@ const DiarioDeBordoPage = ({
                                     <button
                                         key={vehicle.id}
                                         onClick={() => setSelectedVehicle(vehicle)}
-                                        className="w-full text-left p-4 border rounded-lg hover:bg-yellow-50 hover:border-yellow-400 transition flex items-center gap-4 shadow-sm bg-gray-50 border-gray-200"
+                                        className="w-full text-left p-4 border rounded-lg hover:bg-[#fdf8f0] hover:border-[#9E7A42] transition flex items-center gap-4 shadow-sm bg-gray-50 border-gray-200"
                                     >
                                         <Truck size={40} className="text-gray-500 flex-shrink-0"/>
                                         <div className="overflow-hidden">
@@ -589,7 +589,7 @@ const DiarioDeBordoPage = ({
                             <div>
                                 <h2 className="text-2xl font-bold text-yellow-600 mb-4 flex items-center gap-2"><Coffee /> Em Intervalo</h2>
                                 <p className="text-sm text-gray-600 mb-4"><strong>Início do Intervalo:</strong> {formatTime(activeLog.lunchStartTime)}</p>
-                                <button onClick={handleEndLunch} disabled={isProcessing} className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow hover:shadow-md">
+                                <button onClick={handleEndLunch} disabled={isProcessing} className="mt-4 w-full flex items-center justify-center gap-2 py-3 px-4 mak-btn mak-btn-dark">
                                     {isProcessing ? <Loader className="animate-spin" size={20} /> : <Play size={20} />}
                                     Retornar do Intervalo
                                 </button>
@@ -597,7 +597,7 @@ const DiarioDeBordoPage = ({
                         ) : (
                             // --- JORNADA ABERTA ---
                             <div>
-                                <h2 className="text-2xl font-bold text-gray-800 mb-4">Jornada em Andamento</h2>
+                                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" mb-4">Jornada em Andamento</h2>
                                 <div className="space-y-2 mb-6 border-b pb-4">
                                     <p className="text-sm"><strong>Veículo:</strong> {selectedVehicle.registroInterno} - {selectedVehicle.modelo}</p>
                                     <p className="text-sm"><strong>Obra/Local:</strong> {activeLog.obraName || 'N/A'}</p>
@@ -605,12 +605,12 @@ const DiarioDeBordoPage = ({
                                     {renderStartReadings()}
                                 </div>
 
-                                <button onClick={handleStartLunch} disabled={isProcessing} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-yellow-500 text-white font-bold rounded-lg hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed mb-6 shadow hover:shadow-md">
+                                <button onClick={handleStartLunch} disabled={isProcessing} className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-[#9E7A42] text-white font-bold rounded-lg hover:bg-yellow-600 transition disabled:opacity-50 disabled:cursor-not-allowed mb-6 shadow hover:shadow-md">
                                     {isProcessing ? <Loader className="animate-spin" size={20}/> : <Coffee size={20} />}
                                     Iniciar Intervalo
                                 </button>
 
-                                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                <div className="bg-gray-50 p-4 rounded-lg " style={{ border: "1px solid #f0ebe3" }}>
                                     <h3 className="font-bold mb-3 text-gray-700">Finalizar Jornada</h3>
                                     {renderEndReadingFields()}
                                     <div className="mt-4">
@@ -635,7 +635,7 @@ const DiarioDeBordoPage = ({
                     // --- INICIAR NOVA JORNADA ---
                     !isFetchingLog && ( // Só mostra se não estiver buscando log
                         <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-blue-500">
-                             <h2 className="text-2xl font-bold text-gray-800 mb-4">Iniciar Nova Jornada</h2>
+                             <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" mb-4">Iniciar Nova Jornada</h2>
                              <div className="space-y-2 mb-6 border-b pb-4">
                                 <p className="text-sm"><strong>Veículo:</strong> {selectedVehicle.registroInterno} - {selectedVehicle.modelo}</p>
                                 <p className="text-sm"><strong>Obra/Local Atual:</strong> {myObra?.nome || 'Pátio/Operacional'}</p>
@@ -650,8 +650,8 @@ const DiarioDeBordoPage = ({
                 )}
 
                 {/* Histórico Recente */}
-                <div className="bg-white p-6 rounded-lg shadow-lg border border-gray-200">
-                    <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><History /> Histórico Recente (Últimas 5)</h2>
+                <div className="bg-white p-6 rounded-lg shadow-lg " style={{ border: "1px solid #f0ebe3" }}>
+                    <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className=" mb-4 flex items-center gap-2"><History /> Histórico Recente (Últimas 5)</h2>
                     <div className="space-y-3 max-h-60 overflow-y-auto pr-2 custom-scrollbar">
                         {recentLogs.length > 0 ? recentLogs.map(log => {
                              const vehicle = vehicles?.find(v => v.id === log.vehicleId);
@@ -680,7 +680,7 @@ const DiarioDeBordoPage = ({
 
 
                             return (
-                                <div key={log.id} className="bg-gray-50 p-3 rounded-md border border-gray-200">
+                                <div key={log.id} className="bg-gray-50 p-3 rounded-md " style={{ border: "1px solid #f0ebe3" }}>
                                     <p className="font-semibold text-sm">{formatDate(log.logDate)} - {log.obraName || 'N/A'}</p>
                                     <p className="text-xs text-gray-600">
                                          {readingLabel}: {readingValue}
@@ -697,3 +697,6 @@ const DiarioDeBordoPage = ({
 };
 
 export default DiarioDeBordoPage;
+
+
+

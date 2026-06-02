@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X, Lock, TrendingUp, AlertTriangle } from 'lucide-react';
 import { getAllowedReadingTypes } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
@@ -280,10 +280,10 @@ const ComboioSaidaModal = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-2 sm:p-4">
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[95vh] flex flex-col">
-                <div className="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
-                    <h2 className="text-xl font-bold text-gray-800">{isEditing ? 'Editar Distribuição' : 'Distribuição (Saída)'}</h2>
+        <div className="mak-modal-backdrop p-2 sm:p-4">
+            <div className="mak-modal max-w-lg">
+                <div className="mak-modal-header">
+                    <h2 className="mak-modal-title">{isEditing ? 'Editar Distribuição' : 'Distribuição (Saída)'}</h2>
                     <button onClick={onClose} disabled={isSaving}><X size={20}/></button>
                 </div>
 
@@ -378,7 +378,7 @@ const ComboioSaidaModal = ({
                     </div>
                 </form>
 
-                <div className="p-4 border-t bg-gray-50 flex justify-end gap-2 rounded-b-lg">
+                <div className="mak-modal-footer">
                     <button onClick={onClose} disabled={isSaving} className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300">Cancelar</button>
                     
                     {blockReason ? (
@@ -386,7 +386,7 @@ const ComboioSaidaModal = ({
                             <Lock size={14}/> Liberar
                         </button>
                     ) : (
-                        <button onClick={handleSubmit} disabled={isSaving || !selectedVehicle} className="px-4 py-2 bg-yellow-400 font-bold rounded hover:bg-yellow-500 flex items-center gap-2">
+                        <button onClick={handleSubmit} disabled={isSaving || !selectedVehicle} className="px-4 py-2 bg-yellow-400 font-bold rounded hover:bg-[#fdf8f0]0 flex items-center gap-2">
                             {isSaving && <Loader className="animate-spin" size={16}/>} {isEditing ? 'Salvar' : 'Registrar'}
                         </button>
                     )}
@@ -406,3 +406,5 @@ const ComboioSaidaModal = ({
 };
 
 export default ComboioSaidaModal;
+
+

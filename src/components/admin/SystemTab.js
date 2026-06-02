@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   Activity, AlertTriangle, Megaphone, List, Monitor,
   Download, LogOut, RefreshCw, CheckCircle, XCircle, HelpCircle,
@@ -348,7 +348,7 @@ const SystemTab = () => {
           />
           <button
             onClick={fetchAuditLog}
-            className="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors"
+            className="px-3 py-1.5 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors"
           >
             Filtrar
           </button>
@@ -473,3 +473,4 @@ const SystemTab = () => {
 };
 
 export default SystemTab;
+

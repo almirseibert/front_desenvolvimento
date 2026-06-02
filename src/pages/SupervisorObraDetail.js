@@ -287,7 +287,7 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
                 </div>
                 <button 
                     onClick={generateRealPDF}
-                    className="flex items-center gap-2 bg-slate-800 text-white px-4 py-2 rounded-lg hover:bg-slate-900 transition-colors text-sm font-bold shadow-sm"
+                    className="flex items-center gap-2 text-white px-4 py-2 rounded-lg transition-colors text-sm font-bold shadow-sm" style={{background:'#1c1a17'}} onMouseEnter={e=>e.currentTarget.style.background='#2e2820'} onMouseLeave={e=>e.currentTarget.style.background='#1c1a17'}
                 >
                     <FileDown size={16} /> Baixar Relatório PDF
                 </button>

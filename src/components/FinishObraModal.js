@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 
 // --- Modal para perguntar se deseja finalizar a obra ---
 // Extraído de VehiclePage.js (usado por ObraAllocationModal)
@@ -7,7 +7,7 @@ const FinishObraModal = ({ obra, onClose, onConfirm }) => {
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[70] p-4"> {/* Aumenta z-index */}
-            <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+            <div className="mak-modal max-w-md">
                 <div className="p-6 border-b">
                     <h2 className="text-xl font-bold">Finalizar Obra?</h2>
                 </div>

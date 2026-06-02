@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, Edit2, Save, Loader, AlertTriangle, ChevronDown, ChevronUp, Fuel } from 'lucide-react';
 import { vehicleGroups, vehicleSubTypes, getGroupUnit, getReadingSourceForUnit } from '../../utils/vehicleRules';
 
@@ -126,13 +126,13 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
     }, [configs]);
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col border border-gray-100">
+        <div className="mak-modal-backdrop backdrop-blur-sm">
+            <div className="mak-modal">
 
                 {/* Cabeçalho */}
-                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                <div className="mak-modal-header">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="mak-modal-title">
                             <Fuel size={20} className="text-yellow-500"/>
                             Configuração de Grupos de Equipamento
                         </h2>
@@ -140,7 +140,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                             Defina a média de consumo padrão e a tolerância por grupo e subgrupo.
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
+                    <button onClick={onClose} className="mak-modal-close">
                         <X size={20}/>
                     </button>
                 </div>
@@ -151,7 +151,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                     {!showForm && (
                         <button
                             onClick={() => { setShowForm(true); setEditingId(null); setForm(EMPTY_FORM); setError(''); }}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg transition-colors text-sm"
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg transition-colors text-sm"
                         >
                             <Plus size={16}/> Nova Configuração
                         </button>
@@ -266,7 +266,7 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                 <button
                                     onClick={handleSave}
                                     disabled={saving}
-                                    className="px-5 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
+                                    className="px-5 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm flex items-center gap-2 disabled:opacity-70 transition-colors"
                                 >
                                     {saving ? <Loader size={14} className="animate-spin"/> : <Save size={14}/>}
                                     {saving ? 'Salvando…' : 'Salvar'}
@@ -377,3 +377,6 @@ const TipoGroup = ({ tipo, items, onEdit, onDelete, deleting }) => {
 };
 
 export default VehicleTypeConfigModal;
+
+
+

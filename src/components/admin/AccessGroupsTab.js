@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Shield, Plus, Edit, Trash2, Layers, Loader } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 import AccessGroupModal, { MODULES } from '../modals/AccessGroupModal';
@@ -64,7 +64,7 @@ const AccessGroupsTab = ({ groups = [], onGroupsChange }) => {
           </div>
           <button
             onClick={() => { setEditGroup(null); setShowModal(true); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors"
           >
             <Plus size={14} /> Novo Grupo
           </button>
@@ -155,3 +155,4 @@ const AccessGroupsTab = ({ groups = [], onGroupsChange }) => {
 };
 
 export default AccessGroupsTab;
+

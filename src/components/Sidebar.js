@@ -18,8 +18,8 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
     const navGroups = [
         {
             id: 'dashboard',
-            label: 'Dashboard',
-            icon: <Building size={16} />,
+            label: 'Principal',
+            icon: <Building size={14} />,
             hidden: !canAccess('dashboard'),
             items: [
                 { id: 'dashboard', label: 'Painel Geral' },
@@ -28,7 +28,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'obras',
             label: 'Obras',
-            icon: <HardHat size={16} />,
+            icon: <HardHat size={14} />,
             hidden: !canAccessAny(['obras', 'expenses', 'supervisor_dashboard']),
             items: [
                 { id: 'obras',                label: 'Obras' },
@@ -39,7 +39,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'faturamento',
             label: 'Faturamento',
-            icon: <ClipboardCheck size={16} />,
+            icon: <ClipboardCheck size={14} />,
             hidden: !canAccessAny(['operacional', 'billing']),
             items: [
                 { id: 'operacional', label: 'Central Operacional', hidden: !canAccess('operacional') },
@@ -49,7 +49,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'relatorios',
             label: 'Relatórios',
-            icon: <FileText size={16} />,
+            icon: <FileText size={14} />,
             hidden: !canAccess('reports'),
             items: [
                 { id: 'reports', label: 'Relatórios' },
@@ -58,7 +58,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'operacoes',
             label: 'Operações',
-            icon: <Fuel size={16} />,
+            icon: <Fuel size={14} />,
             hidden: !canAccessAny(['refueling', 'comboio', 'admin_solicitacoes']),
             items: [
                 { id: 'refueling',          label: 'Abastecimento',     hidden: !canAccess('refueling') },
@@ -69,7 +69,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'oficina',
             label: 'Oficina',
-            icon: <Wrench size={16} />,
+            icon: <Wrench size={14} />,
             hidden: !canAccessAny(['revisions', 'tires', 'orders']),
             items: [
                 { id: 'revisions', label: 'Revisões & Manutenções', hidden: !canAccess('revisions') },
@@ -80,7 +80,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'cadastros',
             label: 'Cadastros',
-            icon: <User size={16} />,
+            icon: <User size={14} />,
             hidden: !canAccessAny(['vehicles', 'employees', 'partners', 'inventory', 'fines']),
             items: [
                 { id: 'vehicles',  label: 'Veículos',        hidden: !canAccess('vehicles') },
@@ -93,7 +93,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'rastreamento',
             label: 'Rastreamento',
-            icon: <Radio size={16} />,
+            icon: <Radio size={14} />,
             hidden: !canAccess('sigasul'),
             items: [
                 { id: 'sigasul', label: 'SigaSul GPS' },
@@ -102,7 +102,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         {
             id: 'admin',
             label: 'Administração',
-            icon: <Shield size={16} />,
+            icon: <Shield size={14} />,
             hidden: !canAccess('admin'),
             items: [
                 { id: 'admin', label: 'Admin' },
@@ -116,7 +116,6 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         for (const g of navGroups) {
             if (g.items.some(item => item.id === pageId)) return g.id;
         }
-        // supervisor_detail é subpágina de supervisor_dashboard
         if (pageId === 'supervisor_detail') return 'obras';
         return null;
     };
@@ -143,22 +142,60 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         group.items.some(item => item.id === currentPage) ||
         (group.id === 'obras' && currentPage === 'supervisor_detail');
 
+    const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
+    const userRole = (() => {
+        const t = user?.user_type || '';
+        if (t === 'admin') return 'Administrador';
+        if (t === 'editor') return 'Editor';
+        if (t === 'operador') return 'Operador';
+        return 'Visualizador';
+    })();
+
+    /* ── Item de navegação (modo expandido) ── */
     const renderItem = (item, inFlyout = false) => {
         if (item.hidden) return null;
         const isActive = currentPage === item.id;
-        const base = inFlyout
-            ? `flex items-center w-full px-3 py-1.5 text-xs transition-colors ${item.dimmed && !isActive ? 'opacity-50' : ''}`
-            : `flex items-center w-full px-2 py-1.5 rounded-md text-xs transition-all duration-200 group relative ${item.dimmed && !isActive ? 'opacity-50 hover:opacity-100' : ''}`;
-        const active = isActive
-            ? inFlyout ? 'bg-yellow-500 text-slate-900 font-bold' : 'bg-yellow-500 text-slate-900 shadow-md font-bold'
-            : inFlyout ? 'text-indigo-200 hover:bg-indigo-800 hover:text-white' : 'text-indigo-300 hover:bg-indigo-800 hover:text-white';
+
+        if (inFlyout) {
+            return (
+                <li key={item.id}>
+                    <button
+                        onClick={() => setCurrentPage(item.id)}
+                        className={`flex items-center w-full px-3 py-1.5 transition-colors ${
+                            isActive
+                                ? 'text-white font-bold'
+                                : 'hover:text-[#f0ebe3]'
+                        }`}
+                        style={{ fontSize: 13, color: isActive ? '#ffffff' : '#c4b8a8' }}
+                    >
+                        <span className="flex-1 text-left truncate">{item.label}</span>
+                        {item.badge > 0 && (
+                            <span className="bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
+                                {item.badge}
+                            </span>
+                        )}
+                    </button>
+                </li>
+            );
+        }
 
         return (
             <li key={item.id}>
-                <button onClick={() => setCurrentPage(item.id)} className={`${base} ${active}`}>
-                    <span className="flex-1 text-left truncate">{item.label}</span>
+                <button
+                    onClick={() => setCurrentPage(item.id)}
+                    className="flex items-center w-full px-2 py-1.5 rounded-md transition-all duration-150 relative"
+                    style={isActive
+                        ? { fontSize: 13, background: '#9E7A42', color: '#ffffff', fontWeight: 700, boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }
+                        : { fontSize: 13, color: '#c4b8a8' }
+                    }
+                    onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = '#2e2820'; e.currentTarget.style.color = '#f0ebe3'; } }}
+                    onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#c4b8a8'; } }}
+                >
+                    <span className="flex-1 text-left truncate" style={{ fontWeight: isActive ? 700 : 500 }}>
+                        {item.label}
+                    </span>
                     {item.badge > 0 && (
-                        <span className={`${inFlyout ? '' : 'absolute right-2'} bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-pulse`}>
+                        <span className="absolute right-2 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full animate-pulse">
                             {item.badge}
                         </span>
                     )}
@@ -168,116 +205,184 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
     };
 
     return (
-        <div className={`bg-indigo-950 text-indigo-200 shadow-xl transition-all duration-300 ease-in-out flex flex-col ${isCollapsed ? 'w-14' : 'w-56'} h-full z-20`}>
-
-            {/* Header */}
-            <div className="h-14 flex items-center justify-between px-3 border-b border-indigo-800 bg-indigo-950 shrink-0">
-                {!isCollapsed ? (
-                    <img src="https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png" alt="MAK" className="h-8 object-contain" />
-                ) : (
+        <div
+            className="flex flex-col h-full z-20 transition-all duration-300 ease-in-out shrink-0"
+            style={{
+                width: isCollapsed ? 56 : 224,
+                background: '#1c1a17',
+                color: '#8a7a68',
+            }}
+        >
+            {/* ── Logo / Header ── */}
+            <div
+                className="flex items-center shrink-0 px-3"
+                style={{
+                    height: 50,
+                    borderBottom: '1px solid #3d3528',
+                    background: '#1c1a17',
+                    gap: 8,
+                }}
+            >
+                {!isCollapsed && (
+                    <>
+                        <div
+                            className="flex items-center justify-center rounded-lg shrink-0"
+                            style={{ background: '#252018', padding: '5px 8px' }}
+                        >
+                            <span style={{ fontSize: 14, fontWeight: 900, color: '#9E7A42', letterSpacing: '-0.02em' }}>MAK</span>
+                        </div>
+                        <span style={{ fontSize: 10, fontWeight: 500, color: '#5a4e3a', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+                            Serviços
+                        </span>
+                    </>
+                )}
+                {isCollapsed && (
                     <div className="w-full flex justify-center">
-                        <span className="font-bold text-yellow-500 text-xs">MAK</span>
+                        <span style={{ fontSize: 13, fontWeight: 900, color: '#9E7A42' }}>M</span>
                     </div>
                 )}
                 <button
                     onClick={() => setIsCollapsed(!isCollapsed)}
-                    className="p-1 rounded text-indigo-300 hover:bg-indigo-800 hover:text-white transition-colors"
+                    className="ml-auto p-1 rounded transition-colors"
+                    style={{ color: '#5a4e3a' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = '#2e2820'; e.currentTarget.style.color = '#f0ebe3'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#5a4e3a'; }}
+                    title={isCollapsed ? 'Expandir' : 'Recolher'}
                 >
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    {isCollapsed ? <ChevronRight size={15} /> : <ChevronLeft size={15} />}
                 </button>
             </div>
 
-            {/* Nav */}
-            <nav className="flex-1 overflow-y-auto custom-scrollbar py-2">
+            {/* ── Nav ── */}
+            <nav className="flex-1 overflow-y-auto mak-scrollbar py-2">
                 {isCollapsed ? (
-                    /* ── Modo recolhido: ícone do grupo + flyout ao hover ── */
-                    <ul className="space-y-1 px-2">
-                        {visibleGroups.map(group => (
-                            <li key={group.id} className="relative group/flyout">
-                                <button
-                                    className={`flex items-center justify-center w-full p-2 rounded-md transition-all duration-200 ${
-                                        isGroupActive(group)
-                                            ? 'bg-yellow-500 text-slate-900 shadow-md'
-                                            : 'text-indigo-300 hover:bg-indigo-800 hover:text-white'
-                                    }`}
-                                    title={group.label}
-                                >
-                                    {group.icon}
-                                    {/* badge no ícone do grupo se algum item tiver */}
-                                    {group.items.some(i => i.badge > 0) && (
-                                        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full animate-pulse" />
-                                    )}
-                                </button>
-                                {/* Flyout */}
-                                <div className="hidden group-hover/flyout:block absolute left-full top-0 ml-1 z-50 w-52 bg-indigo-950 border border-indigo-800 rounded-lg shadow-2xl py-2 pointer-events-auto">
-                                    <div className="px-3 pb-1.5 mb-1 border-b border-indigo-800">
-                                        <p className="text-[10px] font-bold text-yellow-500 uppercase tracking-widest">{group.label}</p>
+                    /* Modo recolhido: ícone do grupo + flyout ao hover */
+                    <ul className="space-y-0.5 px-1.5">
+                        {visibleGroups.map(group => {
+                            const active = isGroupActive(group);
+                            const hasBadge = group.items.some(i => i.badge > 0);
+                            return (
+                                <li key={group.id} className="relative group/flyout">
+                                    <button
+                                        className="flex items-center justify-center w-full p-2 rounded-md transition-all duration-150 relative"
+                                        style={active
+                                            ? { background: '#9E7A42', color: '#ffffff', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }
+                                            : { color: '#8a7a68' }
+                                        }
+                                        onMouseEnter={e => { if (!active) { e.currentTarget.style.background = '#2e2820'; e.currentTarget.style.color = '#f0ebe3'; } }}
+                                        onMouseLeave={e => { if (!active) { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#8a7a68'; } }}
+                                        title={group.label}
+                                    >
+                                        {group.icon}
+                                        {hasBadge && (
+                                            <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+                                        )}
+                                    </button>
+                                    {/* Flyout */}
+                                    <div
+                                        className="hidden group-hover/flyout:block absolute left-full top-0 ml-1 z-50 w-48 rounded-lg py-2 pointer-events-auto"
+                                        style={{ background: '#252018', border: '1px solid #3d3528', boxShadow: '0 10px 25px rgba(0,0,0,0.4)' }}
+                                    >
+                                        <div className="px-3 pb-1.5 mb-1" style={{ borderBottom: '1px solid #3d3528' }}>
+                                            <p style={{ fontSize: 9, fontWeight: 700, color: '#9E7A42', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
+                                                {group.label}
+                                            </p>
+                                        </div>
+                                        <ul>
+                                            {group.items.map(item => renderItem(item, true))}
+                                        </ul>
                                     </div>
-                                    <ul>
-                                        {group.items.map(item => renderItem(item, true))}
-                                    </ul>
-                                </div>
-                            </li>
-                        ))}
+                                </li>
+                            );
+                        })}
                     </ul>
                 ) : (
-                    /* ── Modo expandido: accordion por grupo ── */
+                    /* Modo expandido: accordion por grupo */
                     <ul className="space-y-0.5 px-2">
-                        {visibleGroups.map(group => (
-                            <li key={group.id}>
-                                {/* Header do grupo */}
-                                <button
-                                    onClick={() => toggleGroup(group.id)}
-                                    className={`flex items-center w-full px-2 py-1.5 rounded-md transition-colors text-xs font-bold uppercase tracking-wide group/gh ${
-                                        isGroupActive(group)
-                                            ? 'text-yellow-500'
-                                            : 'text-indigo-400 hover:text-indigo-200 hover:bg-indigo-800'
-                                    }`}
-                                >
-                                    <span className="mr-2">{group.icon}</span>
-                                    <span className="flex-1 text-left">{group.label}</span>
-                                    <span className="text-indigo-500 group-hover/gh:text-indigo-300 transition-colors">
-                                        {expandedGroups.has(group.id) ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
-                                    </span>
-                                </button>
+                        {visibleGroups.map(group => {
+                            const active = isGroupActive(group);
+                            const expanded = expandedGroups.has(group.id);
+                            return (
+                                <li key={group.id}>
+                                    {/* Header do grupo */}
+                                    <button
+                                        onClick={() => toggleGroup(group.id)}
+                                        className="flex items-center w-full px-2 py-1.5 rounded-md transition-colors"
+                                        style={{ color: active ? '#9E7A42' : '#7a6e60' }}
+                                        onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#c4b8a8'; } }}
+                                        onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#7a6e60'; } }}
+                                    >
+                                        <span className="mr-2 shrink-0" style={{ color: active ? '#9E7A42' : '#7a6e60' }}>
+                                            {group.icon}
+                                        </span>
+                                        <span
+                                            className="flex-1 text-left uppercase"
+                                            style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em' }}
+                                        >
+                                            {group.label}
+                                        </span>
+                                        <span style={{ color: '#3d3528' }}>
+                                            {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                        </span>
+                                    </button>
 
-                                {/* Itens do grupo — animação por max-height */}
-                                <div
-                                    className="overflow-hidden transition-all duration-200 ease-in-out"
-                                    style={{ maxHeight: expandedGroups.has(group.id) ? '600px' : '0px' }}
-                                >
-                                    <ul className="ml-3 pl-2 border-l border-indigo-800 mt-0.5 mb-1 space-y-0.5">
-                                        {group.items.map(item => renderItem(item))}
-                                    </ul>
-                                </div>
-                            </li>
-                        ))}
+                                    {/* Itens do grupo */}
+                                    <div
+                                        className="overflow-hidden transition-all duration-200 ease-in-out"
+                                        style={{ maxHeight: expanded ? '600px' : '0px' }}
+                                    >
+                                        <ul className="ml-3 pl-2 mt-0.5 mb-1 space-y-0.5" style={{ borderLeft: '1px solid #3d3528' }}>
+                                            {group.items.map(item => renderItem(item))}
+                                        </ul>
+                                    </div>
+                                </li>
+                            );
+                        })}
                     </ul>
                 )}
             </nav>
 
-            {/* Footer */}
-            <div className="p-2 border-t border-indigo-800 bg-indigo-950 shrink-0">
-                <div className={`mb-2 px-2 flex items-center ${isCollapsed ? 'justify-center' : ''}`}>
-                    <div className="w-6 h-6 rounded-full bg-yellow-500 text-slate-900 flex items-center justify-center font-bold text-xs shrink-0">
-                        {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+            {/* ── Footer ── */}
+            <div className="shrink-0 p-2" style={{ borderTop: '1px solid #3d3528' }}>
+                {/* Usuário */}
+                <div className={`flex items-center gap-2 px-2 py-1.5 rounded-md mb-1 ${isCollapsed ? 'justify-center' : ''}`}>
+                    <div
+                        className="flex items-center justify-center rounded-full shrink-0 text-white font-bold"
+                        style={{ width: 26, height: 26, background: '#9E7A42', fontSize: 10, fontWeight: 700 }}
+                    >
+                        {userInitial}
                     </div>
                     {!isCollapsed && (
-                        <div className="ml-2 overflow-hidden">
-                            <p className="text-xs text-white truncate font-medium">{user?.name}</p>
-                            <button onClick={onChangePassword} className="text-[10px] text-blue-400 hover:text-blue-300 flex items-center gap-1">
-                                <Key size={10} /> Trocar Senha
-                            </button>
+                        <div className="overflow-hidden">
+                            <p style={{ fontSize: 11, fontWeight: 600, color: '#f0ebe3' }} className="truncate">{user?.name}</p>
+                            <div className="flex items-center gap-1">
+                                <span style={{ fontSize: 9, color: '#5a4e3a' }}>{userRole}</span>
+                                <button
+                                    onClick={onChangePassword}
+                                    className="flex items-center gap-0.5 transition-colors"
+                                    style={{ fontSize: 9, color: '#5a4e3a' }}
+                                    onMouseEnter={e => e.currentTarget.style.color = '#9E7A42'}
+                                    onMouseLeave={e => e.currentTarget.style.color = '#5a4e3a'}
+                                    title="Trocar senha"
+                                >
+                                    · <Key size={9} /> Trocar Senha
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>
+
+                {/* Sair */}
                 <button
                     onClick={logout}
-                    className="flex items-center w-full px-2 py-1.5 rounded-md transition-colors duration-200 hover:bg-red-900/50 text-indigo-300 hover:text-red-400"
+                    className={`flex items-center w-full px-2 py-1.5 rounded-md transition-all duration-150 ${isCollapsed ? 'justify-center' : 'gap-2'}`}
+                    style={{ color: '#5a4e3a' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(176,56,40,0.15)'; e.currentTarget.style.color = '#b03828'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ''; e.currentTarget.style.color = '#5a4e3a'; }}
                     title="Sair"
                 >
-                    <LogOut size={16} />
-                    {!isCollapsed && <span className="ml-3 text-xs font-bold">Sair</span>}
+                    <LogOut size={14} />
+                    {!isCollapsed && <span style={{ fontSize: 12, fontWeight: 600 }}>Sair</span>}
                 </button>
             </div>
         </div>

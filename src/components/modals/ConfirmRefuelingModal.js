@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { X, Loader, TrendingDown, TrendingUp, Lock, AlertTriangle } from 'lucide-react';
 import { getAllowedReadingTypes } from '../../utils/vehicleRules';
 
@@ -351,7 +351,7 @@ const ConfirmRefuelingModal = ({
                             </button>
                             <button 
                                 onClick={() => executeConfirm(true)}
-                                className="flex-1 py-2 px-3 bg-yellow-400 text-gray-900 font-bold rounded text-xs hover:bg-yellow-500 shadow-sm"
+                                className="flex-1 py-2 px-3 bg-yellow-400 text-gray-900 font-bold rounded text-xs hover:bg-[#fdf8f0]0 shadow-sm"
                             >
                                 Sim, atualizar
                             </button>

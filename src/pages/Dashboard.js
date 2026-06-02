@@ -117,43 +117,63 @@ const Dashboard = ({
         };
     }, [vehicles, obras, fines]);
 
-    const StatCard = ({ title, value, subValue, icon: Icon, color, onClick }) => (
-        <div onClick={onClick} className={`bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-md cursor-pointer transition-all hover:-translate-y-0.5 border-l-4 border-l-${color}-500 flex flex-col h-full`}>
-            <div className="flex justify-between items-start flex-1">
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{title}</p>
-                    <h3 className="text-2xl font-bold text-gray-800 mt-1 leading-none">{value}</h3>
-                    {/* Renderiza o valor financeiro ou detalhe adicional caso exista */}
-                    {subValue && (
-                        <div className="mt-1.5">
-                            <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded border border-red-100">
-                                {subValue}
-                            </span>
-                        </div>
-                    )}
-                </div>
-                <div className={`p-2 rounded-lg bg-${color}-50 text-${color}-600 shrink-0`}>
-                    <Icon size={20} />
+    const StatCard = ({ title, value, subValue, icon: Icon, iconBg, iconColor, accentColor, onClick }) => {
+        const [hov, setHov] = React.useState(false);
+        return (
+            <div
+                onClick={onClick}
+                onMouseEnter={() => setHov(true)}
+                onMouseLeave={() => setHov(false)}
+                style={{
+                    background: 'white',
+                    borderRadius: 12,
+                    border: '1px solid #f0ebe3',
+                    borderLeft: `4px solid ${accentColor || '#e8e0d4'}`,
+                    boxShadow: hov ? '0 4px 12px 0 rgb(0 0 0 / 0.09)' : '0 1px 3px 0 rgb(0 0 0 / 0.06)',
+                    transform: hov ? 'translateY(-2px)' : 'none',
+                    transition: 'box-shadow 0.15s, transform 0.15s',
+                    cursor: 'pointer',
+                    padding: '14px 16px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                }}
+            >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flex: 1 }}>
+                    <div>
+                        <p style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: '#9a8a78', lineHeight: 1.25 }}>{title}</p>
+                        <p style={{ fontSize: 24, fontWeight: 700, color: '#3d3528', lineHeight: 1, marginTop: 6 }}>{value}</p>
+                        {subValue && (
+                            <div style={{ marginTop: 6 }}>
+                                <span style={{ fontSize: 10, fontWeight: 700, color: '#b03828', background: '#fdf0ec', border: '1px solid #e8c8bc', borderRadius: 4, padding: '2px 6px' }}>
+                                    {subValue}
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                    <div style={{ width: 40, height: 40, borderRadius: 10, background: iconBg || '#f5f2ed', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        <Icon size={20} color={iconColor || '#9a8a78'} />
+                    </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     return (
         <div className="space-y-6 pb-10">
             {/* Header */}
             <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                        <Activity className="text-yellow-500" /> Painel de Controle
+                    <h1 className="flex items-center gap-2" style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14', lineHeight: 1.25 }}>
+                        <Activity size={20} style={{ color: '#9E7A42' }} /> Painel de Controle
                     </h1>
-                    <p className="text-sm text-gray-500">Visão Geral da Frota • {new Date().toLocaleDateString()}</p>
+                    <p style={{ fontSize: 12, color: '#9a8a78', marginTop: 2 }}>Visão Geral da Frota · {new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
                 
                 {/* --- BOTÃO DA AGENDA (Substituindo o "Gerenciar Obras") --- */}
                 <button 
                     onClick={() => setShowAgenda(true)} 
-                    className="relative bg-slate-800 text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:bg-slate-700 transition-colors shadow-sm flex items-center gap-2"
+                    className="relative text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-sm flex items-center gap-2" style={{background:'#1c1a17'}} onMouseEnter={e=>e.currentTarget.style.background='#2e2820'} onMouseLeave={e=>e.currentTarget.style.background='#1c1a17'}
                 >
                     <Calendar size={18}/> Agenda / Avisos
                     
@@ -168,21 +188,19 @@ const Dashboard = ({
 
             {/* Grid de Estatísticas (KPIs) */}
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-                <StatCard title="Total Frota" value={stats.total} icon={Truck} color="slate" onClick={() => navigate('vehicles')} />
-                <StatCard title="Obras Ativas" value={stats.obrasAtivas} icon={Building} color="indigo" onClick={() => navigate('obras', { state: { filter: 'ativa' } })} />
-                <StatCard title="Em Obra" value={stats.emObra} icon={Truck} color="blue" onClick={() => navigate('vehicles', { state: { status: 'Em Obra' } })} />
-                <StatCard title="Em Operação" value={stats.operacao} icon={Users} color="cyan" onClick={() => navigate('vehicles', { state: { status: 'Em Operação' } })} />
-                <StatCard title="Disponíveis" value={stats.disponivel} icon={CheckCircle} color="green" onClick={() => navigate('vehicles', { state: { status: 'Disponível' } })} />
-                <StatCard title="Manutenção" value={stats.manutencao} icon={Wrench} color="red" onClick={() => navigate('vehicles', { state: { status: 'Em Manutenção' } })} />
-                
-                <StatCard 
-                    title="Multas Pen." 
-                    value={stats.multas} 
-                    // Exibe o valor formatado em Reais se houver multas pendentes
+                <StatCard title="Total Frota"   value={stats.total}      icon={Truck}       iconBg="#fdf8f0" iconColor="#9E7A42" accentColor="#9E7A42" onClick={() => navigate('vehicles')} />
+                <StatCard title="Obras Ativas"  value={stats.obrasAtivas} icon={Building}   iconBg="#eff5fc" iconColor="#2d5a8a" accentColor="#2d5a8a" onClick={() => navigate('obras', { state: { filter: 'ativa' } })} />
+                <StatCard title="Em Obra"       value={stats.emObra}     icon={Truck}       iconBg="#e0f2fe" iconColor="#0c4a6e" accentColor="#0ea5e9" onClick={() => navigate('vehicles', { state: { status: 'Em Obra' } })} />
+                <StatCard title="Em Operação"   value={stats.operacao}   icon={Users}       iconBg="#ede9fe" iconColor="#3730a3" accentColor="#8b5cf6" onClick={() => navigate('vehicles', { state: { status: 'Em Operação' } })} />
+                <StatCard title="Disponíveis"   value={stats.disponivel} icon={CheckCircle} iconBg="#d1fae5" iconColor="#065f46" accentColor="#10b981" onClick={() => navigate('vehicles', { state: { status: 'Disponível' } })} />
+                <StatCard title="Manutenção"    value={stats.manutencao} icon={Wrench}      iconBg="#ffedd5" iconColor="#9a3412" accentColor="#f97316" onClick={() => navigate('vehicles', { state: { status: 'Em Manutenção' } })} />
+                <StatCard
+                    title="Multas Pen."
+                    value={stats.multas}
                     subValue={stats.multas > 0 ? stats.valorMultas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : undefined}
-                    icon={ShieldAlert} 
-                    color="orange" 
-                    onClick={() => navigate('fines')} 
+                    icon={ShieldAlert}
+                    iconBg="#fdf0ec" iconColor="#b03828" accentColor="#b03828"
+                    onClick={() => navigate('fines')}
                 />
             </div>
 
@@ -192,12 +210,12 @@ const Dashboard = ({
                 {/* --- LINHA 1: MAPA + PROGRESSO --- */}
                 {/* Coluna Esquerda: Mapa (6/12) */}
                 <div className="lg:col-span-6 h-[350px]">
-                    <section className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
-                        <div className="p-4 border-b bg-gray-50 flex justify-between items-center shrink-0">
-                            <h2 className="font-bold text-gray-800">Geolocalização da Frota</h2>
-                            <button onClick={() => setIsMapExpanded(true)} className="text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors"><Maximize2 size={18}/></button>
+                    <section className="bg-white rounded-xl overflow-hidden h-full flex flex-col" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.06)' }}>
+                        <div className="p-4 flex justify-between items-center shrink-0" style={{ borderBottom: '1px solid #f0ebe3', background: '#faf9f7' }}>
+                            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#1e1a14' }}>Geolocalização da Frota</h2>
+                            <button onClick={() => setIsMapExpanded(true)} style={{ color: '#9a8a78', background: 'transparent', border: 'none', borderRadius: 6, padding: 4, cursor: 'pointer', lineHeight: 0 }} onMouseEnter={e => { e.currentTarget.style.background = '#f5f2ed'; }} onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}><Maximize2 size={16}/></button>
                         </div>
-                        <div className="flex-1 bg-gray-100 relative">
+                        <div className="flex-1 relative" style={{ background: '#f5f3ef' }}>
                             {/* Passamos vehicleGroups para permitir o cálculo correto do progresso no mapa */}
                             <AllocationMap 
                                 obras={obras} 

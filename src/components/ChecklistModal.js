@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { X, FileText, Calendar, Download, Loader, AlertCircle } from 'lucide-react';
 
 const ChecklistModal = ({ vehicle, onClose, apiClient }) => {
@@ -45,20 +45,20 @@ const ChecklistModal = ({ vehicle, onClose, apiClient }) => {
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 backdrop-blur-sm animate-fade-in">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] flex flex-col border border-gray-100">
+        <div className="mak-modal-backdrop backdrop-blur-sm animate-fade-in">
+            <div className="mak-modal">
                 
                 {/* Header */}
                 <div className="p-5 border-b bg-gray-50 rounded-t-xl flex justify-between items-center sticky top-0 z-10">
                     <div>
-                        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <h2 className="mak-modal-title">
                             <FileText className="text-purple-600" size={24}/> Checklists Realizados
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">
                             Veículo: <span className="font-semibold text-gray-700">{vehicle.registroInterno} - {vehicle.placa}</span>
                         </p>
                     </div>
-                    <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-200 text-gray-500 transition-colors">
+                    <button onClick={onClose} className="mak-modal-close">
                         <X size={20} />
                     </button>
                 </div>
@@ -125,3 +125,5 @@ const ChecklistModal = ({ vehicle, onClose, apiClient }) => {
 };
 
 export default ChecklistModal;
+
+

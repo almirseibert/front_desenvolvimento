@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Loader } from 'lucide-react';
 
 const ManualFinishObraModal = ({ obra, onClose, apiClient, reloadData, setAlertMessage }) => {
@@ -21,8 +21,8 @@ const ManualFinishObraModal = ({ obra, onClose, apiClient, reloadData, setAlertM
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-             <div className="bg-white rounded-lg shadow-xl w-full max-w-md">
+        <div className="mak-modal-backdrop ">
+             <div className="mak-modal max-w-md">
                 <div className="p-6 border-b flex justify-between items-center">
                     <h3 className="text-xl font-bold">Finalizar Obra</h3>
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200" disabled={isSubmitting}><X size={20}/></button>
@@ -46,3 +46,5 @@ const ManualFinishObraModal = ({ obra, onClose, apiClient, reloadData, setAlertM
 };
 
 export default ManualFinishObraModal;
+
+

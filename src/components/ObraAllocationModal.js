@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+﻿import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Loader, X, AlertTriangle, Shield, Calendar, Gauge, MapPin, ChevronDown, Search, User, Building2 } from 'lucide-react';
 import FinishObraModal from './FinishObraModal';
 import { getAllowedReadingTypes, getVehicleMainReading, checkVehicleRestrictions, checkReadingConsistency } from '../utils/vehicleRules';
@@ -306,8 +306,8 @@ const ObraAllocationModal = ({
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-                <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[92vh] animate-scale-in overflow-hidden">
+            <div className="mak-modal-backdrop backdrop-blur-sm">
+                <div className="mak-modal max-w-lg">
 
                     {/* Cabeçalho colorido */}
                     <div className={`p-4 flex justify-between items-start ${headerBg} text-white rounded-t-xl`}>
@@ -539,3 +539,5 @@ const ObraAllocationModal = ({
 };
 
 export default ObraAllocationModal;
+
+

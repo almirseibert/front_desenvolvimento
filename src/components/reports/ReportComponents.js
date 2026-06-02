@@ -1,9 +1,9 @@
-import React from 'react';
+﻿import React from 'react';
 import { Filter } from 'lucide-react';
 
 export const SectionHeader = ({ icon: Icon, title, description }) => (
     <div className="mb-6 border-b pb-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <h2 className="mak-modal-title">
             <Icon className="text-yellow-500" size={24} />
             {title}
         </h2>

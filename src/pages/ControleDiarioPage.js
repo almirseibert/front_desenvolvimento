@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Eye, Edit, Trash2,
     Clock, HardHat, Loader, X, Truck
@@ -206,7 +206,7 @@ const LogEditModal = ({
                     <div className="p-4 bg-gray-50 border-t flex justify-end gap-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm">Cancelar</button>
                         {/* Botão de salvar abre o modal de senha */}
-                        <button type="submit" disabled={isSaving} className="px-4 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 disabled:bg-yellow-200 flex items-center gap-1 text-sm">
+                        <button type="submit" disabled={isSaving} className="px-4 py-2 mak-btn mak-btn-primary">
                              {isSaving ? <><Loader size={16} className="animate-spin" /> Salvando...</> : 'Salvar Alterações'}
                         </button>
                     </div>
@@ -382,7 +382,7 @@ const ControleDiarioPage = ({
     // Renderização Principal (ajustes nos cálculos de exibição)
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8 space-y-6 font-sans">
-            <h1 className="text-3xl font-bold text-gray-800">Análise de Diário de Bordo</h1>
+            <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Análise de Diário de Bordo</h1>
 
             {/* Filtros */}
             <div className="bg-white p-4 rounded-lg shadow-md grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end text-sm">
@@ -459,7 +459,7 @@ const ControleDiarioPage = ({
             </div>
 
             {/* Tabela de Registros */}
-            <div className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200">
+            <div className="bg-white rounded-lg shadow-md overflow-hidden " style={{ border: "1px solid #f0ebe3" }}>
                 <div className="p-4 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold text-gray-700">Registros Detalhados</h2>
                     {/* Adicionar botão de exportar CSV aqui se necessário */}
@@ -522,7 +522,7 @@ const ControleDiarioPage = ({
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex justify-center items-center gap-2">
                                                     <button onClick={() => setDetailModalLog(log)} title="Ver Detalhes" className="p-1 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded-full transition"><Eye size={16}/></button>
-                                                    <button onClick={() => setEditModalLog({ log, vehicle })} title="Editar" className="p-1 text-gray-400 hover:text-yellow-600 hover:bg-gray-100 rounded-full transition"><Edit size={16}/></button>
+                                                    <button onClick={() => setEditModalLog({ log, vehicle })} title="Editar" className="p-1 text-gray-400 hover:text-[#9E7A42] hover:bg-[#f5f2ed] rounded-full transition"><Edit size={16}/></button>
                                                     <button onClick={() => setDeleteModalLogId(log.id)} title="Excluir" className="p-1 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded-full transition"><Trash2 size={16}/></button>
 
                                                 </div>
@@ -564,3 +564,6 @@ const ControleDiarioPage = ({
 };
 
 export default ControleDiarioPage;
+
+
+

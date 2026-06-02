@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+﻿import React, { useState, useMemo } from 'react';
 import { PlusCircle, Printer, Edit, Trash2, CheckCircle, Search, History, Loader, Smartphone } from 'lucide-react';
 import ProtectedComponent from '../components/ProtectedComponent'; 
 import { jsPDF } from 'jspdf'; 
@@ -272,26 +272,21 @@ const RefuelingPage = ({
 
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8 animate-fadeIn space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-5 rounded-xl" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <CheckCircle className="text-yellow-500" /> Controle de Abastecimento
+                    <h1 className="flex items-center gap-2" style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14' }}>
+                        <CheckCircle size={20} style={{ color: '#9E7A42' }}/> Controle de Abastecimento
                     </h1>
                 </div>
                 <ProtectedComponent requiredPermission="editor">
                     <div className="flex gap-2 w-full md:w-auto">
-                        <button 
-                            onClick={() => navigate('admin_solicitacoes')} 
-                            className="flex-1 md:flex-none flex items-center gap-2 px-4 py-3 bg-gray-900 text-white font-bold rounded-lg shadow hover:bg-gray-800 transition active:scale-95 justify-center"
-                        >
-                            <Smartphone size={20} /> Solicitações App
+                        <button onClick={() => navigate('admin_solicitacoes')}
+                            className="flex-1 md:flex-none flex items-center gap-2 px-4 py-2.5 justify-center mak-btn mak-btn-dark text-sm font-bold">
+                            <Smartphone size={16}/> Solicitações App
                         </button>
-                        
-                        <button 
-                            onClick={() => { setEditingOrder(null); setIsOrderModalOpen(true); }} 
-                            className="flex-1 md:flex-none flex items-center gap-2 px-6 py-3 bg-yellow-400 text-gray-900 font-bold rounded-lg shadow hover:bg-yellow-500 transition active:scale-95 justify-center"
-                        >
-                            <PlusCircle size={20} /> Emitir Nova Ordem
+                        <button onClick={() => { setEditingOrder(null); setIsOrderModalOpen(true); }}
+                            className="flex-1 md:flex-none flex items-center gap-2 px-5 py-2.5 justify-center mak-btn mak-btn-primary text-sm font-bold">
+                            <PlusCircle size={16}/> Emitir Nova Ordem
                         </button>
                     </div>
                 </ProtectedComponent>
@@ -299,10 +294,10 @@ const RefuelingPage = ({
 
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 <div className="xl:col-span-4 space-y-4">
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
-                        <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex justify-between">
+                    <div className="bg-white p-5 rounded-xl h-full flex flex-col" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
+                        <h2 className="mb-4 pb-2 flex justify-between items-center" style={{ fontSize: 14, fontWeight: 700, color: '#1e1a14', borderBottom: '1px solid #f0ebe3' }}>
                             Ordens Pendentes
-                            <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">{openRefuelings.length}</span>
+                            <span style={{ background: '#fdf8f0', color: '#9E7A42', border: '1px solid #e8d8b8', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 9999 }}>{openRefuelings.length}</span>
                         </h2>
                         
                         <div className="relative mb-3">
@@ -329,18 +324,16 @@ const RefuelingPage = ({
                                 .map(order => {
                                 const vehicle = vehicles.find(v => v.id === order.vehicleId);
                                 const isBloqueada = order.status === 'BloqueadoLeitura' || order.status === 'BloqueadoOrcamento';
-                                const borderCor = isBloqueada ? 'border-l-red-500' : 'border-l-yellow-400';
-                                const bgCor = isBloqueada ? 'bg-red-50' : 'bg-gray-50';
                                 return (
-                                    <div key={order.id} className={`p-4 border border-l-4 ${borderCor} rounded-lg ${bgCor}`}>
+                                    <div key={order.id} className="p-4 rounded-lg" style={{ border: '1px solid #f0ebe3', borderLeft: `4px solid ${isBloqueada ? '#b03828' : '#9E7A42'}`, background: isBloqueada ? '#fdf0ec' : '#faf9f7' }}>
                                         <div className="flex justify-between items-start">
                                             <div>
-                                                <div className="font-bold text-gray-900 text-lg">#{String(order.authNumber).padStart(6, '0')}</div>
-                                                <p className="text-sm font-bold text-gray-700">{vehicle?.registroInterno} - {vehicle?.placa}</p>
-                                                <p className="text-xs text-gray-600 mb-1">{formatDateSafe(order.data || order.date)}</p>
-                                                <p className="text-xs text-gray-500">{order.partnerName || partners.find(p => p.id === order.partnerId)?.razaoSocial || '...'}</p>
+                                                <div style={{ fontWeight: 700, fontSize: 16, color: '#3d3528' }}>#{String(order.authNumber).padStart(6, '0')}</div>
+                                                <p style={{ fontSize: 13, fontWeight: 600, color: '#6a5e4e' }}>{vehicle?.registroInterno} — {vehicle?.placa}</p>
+                                                <p style={{ fontSize: 11, color: '#9a8a78', marginBottom: 2 }}>{formatDateSafe(order.data || order.date)}</p>
+                                                <p style={{ fontSize: 11, color: '#b0a090' }}>{order.partnerName || partners.find(p => p.id === order.partnerId)?.razaoSocial || '...'}</p>
                                                 {isBloqueada && (
-                                                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                    <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 9999, background: '#fdf0ec', color: '#b03828', border: '1px solid #e8c8bc', display: 'inline-block', marginTop: 4 }}>
                                                         ⛔ Aguardando Administrador
                                                     </span>
                                                 )}
@@ -349,19 +342,19 @@ const RefuelingPage = ({
                                                 {!isBloqueada && (
                                                     <ProtectedComponent requiredPermission="editor">
                                                         <div className="flex gap-1 mb-1">
-                                                            <button onClick={() => { setOrderToConfirm(order); setIsConfirmModalOpen(true); }} className="p-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200" title="Confirmar"><CheckCircle size={16}/></button>
-                                                            <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} className="p-1.5 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" title="Editar"><Edit size={16}/></button>
-                                                            <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} className="p-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Excluir"><Trash2 size={16}/></button>
+                                                            <button onClick={() => { setOrderToConfirm(order); setIsConfirmModalOpen(true); }} style={{ padding: 5, background: '#d1fae5', color: '#065f46', border: 'none', borderRadius: 6, cursor: 'pointer', lineHeight: 0 }} title="Confirmar"><CheckCircle size={14}/></button>
+                                                            <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} style={{ padding: 5, background: '#fdf8f0', color: '#9E7A42', border: 'none', borderRadius: 6, cursor: 'pointer', lineHeight: 0 }} title="Editar"><Edit size={14}/></button>
+                                                            <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} style={{ padding: 5, background: '#fdf0ec', color: '#b03828', border: 'none', borderRadius: 6, cursor: 'pointer', lineHeight: 0 }} title="Excluir"><Trash2 size={14}/></button>
                                                         </div>
                                                     </ProtectedComponent>
                                                 )}
                                                 {isBloqueada && (
                                                     <ProtectedComponent requiredPermission="editor">
-                                                        <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} className="p-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Excluir"><Trash2 size={16}/></button>
+                                                        <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} style={{ padding: 5, background: '#fdf0ec', color: '#b03828', border: 'none', borderRadius: 6, cursor: 'pointer', lineHeight: 0 }} title="Excluir"><Trash2 size={14}/></button>
                                                     </ProtectedComponent>
                                                 )}
-                                                <button onClick={() => generateAuthorizationPDF(order)} disabled={isGeneratingPdf} className="p-1.5 bg-white border text-gray-600 rounded hover:bg-gray-50 w-full flex justify-center" title="PDF">
-                                                    {isGeneratingPdf ? <Loader size={16} className="animate-spin"/> : <Printer size={16}/>}
+                                                <button onClick={() => generateAuthorizationPDF(order)} disabled={isGeneratingPdf} style={{ padding: 5, background: '#fff', border: '1px solid #e8e0d4', color: '#9a8a78', borderRadius: 6, cursor: 'pointer', lineHeight: 0, display: 'flex', justifyContent: 'center' }} title="PDF">
+                                                    {isGeneratingPdf ? <Loader size={14} className="animate-spin"/> : <Printer size={14}/>}
                                                 </button>
                                             </div>
                                         </div>
@@ -374,10 +367,10 @@ const RefuelingPage = ({
                 </div>
 
                 <div className="xl:col-span-8 space-y-6">
-                    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 pb-2 border-b gap-4">
-                            <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                                <History size={20} className="text-blue-500"/> Últimas Ordens Emitidas
+                    <div className="bg-white p-5 rounded-xl" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.05)' }}>
+                        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 pb-2 gap-4" style={{ borderBottom: '1px solid #f0ebe3' }}>
+                            <h2 className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 700, color: '#1e1a14' }}>
+                                <History size={16} style={{ color: '#2d5a8a' }}/> Últimas Ordens Emitidas
                             </h2>
                             <div className="relative w-full sm:w-64">
                                 <input 
@@ -393,14 +386,14 @@ const RefuelingPage = ({
 
                         <div className="overflow-x-auto max-h-80 overflow-y-auto custom-scrollbar">
                             <table className="w-full text-sm text-left">
-                                <thead className="bg-gray-50 text-gray-600 font-bold uppercase text-xs sticky top-0 z-10">
+                                <thead className="sticky top-0 z-10" style={{ background: '#faf9f7', borderBottom: '1px solid #f0ebe3' }}>
                                     <tr>
-                                        <th className="p-3">Nº</th>
-                                        <th className="p-3">Status</th>
-                                        <th className="p-3">Data</th>
-                                        <th className="p-3">Veículo</th>
-                                        <th className="p-3">Posto</th>
-                                        <th className="p-3 text-right">Ações</th>
+                                        <th className="p-3" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Nº</th>
+                                        <th className="p-3" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Status</th>
+                                        <th className="p-3" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Data</th>
+                                        <th className="p-3" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Veículo</th>
+                                        <th className="p-3" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Posto</th>
+                                        <th className="p-3 text-right" style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.07em', color: '#9a8a78' }}>Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y">
@@ -424,7 +417,7 @@ const RefuelingPage = ({
                                                         {isGeneratingPdf ? <Loader size={16} className="animate-spin"/> : <Printer size={16}/>}
                                                     </button>
                                                     <ProtectedComponent requiredPermission="editor">
-                                                        <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} title="Editar" className="p-1.5 text-gray-400 hover:text-yellow-600 rounded hover:bg-yellow-50"><Edit size={16}/></button>
+                                                        <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} title="Editar" className="p-1.5 text-gray-400 hover:text-[#9E7A42] rounded hover:bg-[#fdf8f0]"><Edit size={16}/></button>
                                                         <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} title="Excluir" className="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50"><Trash2 size={16}/></button>
                                                     </ProtectedComponent>
                                                 </td>
@@ -439,7 +432,7 @@ const RefuelingPage = ({
                         </div>
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <div className="bg-white p-6 rounded-xl shadow-sm " style={{ border: "1px solid #f0ebe3" }}>
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
                             <h2 className="text-lg font-bold text-gray-800">Análise Detalhada por Veículo</h2>
                             <select 
@@ -518,3 +511,5 @@ const RefuelingPage = ({
 };
 
 export default RefuelingPage;
+
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
 
 const ROLES = [
@@ -45,10 +45,10 @@ const UserEditModal = ({ user, groups = [], onClose, onSave }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="mak-modal-backdrop ">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="mak-modal-title">
             <User size={18} className="text-yellow-500" />
             {isNew ? 'Novo Usuário' : 'Editar Usuário'}
           </h2>
@@ -157,7 +157,7 @@ const UserEditModal = ({ user, groups = [], onClose, onSave }) => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors disabled:opacity-50"
+              className="flex-1 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors disabled:opacity-50"
             >
               {saving ? 'Salvando...' : 'Salvar'}
             </button>
@@ -169,3 +169,7 @@ const UserEditModal = ({ user, groups = [], onClose, onSave }) => {
 };
 
 export default UserEditModal;
+
+
+
+

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { X, ShieldAlert } from 'lucide-react';
 
 const EmployeeFinesModal = ({ employee, fines = [], onClose }) => {
@@ -9,8 +9,8 @@ const EmployeeFinesModal = ({ employee, fines = [], onClose }) => {
     );
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        <div className="mak-modal-backdrop">
+            <div className="mak-modal w-full max-w-$3 max-h-[80vh] flex flex-col">
                 <div className="p-4 border-b flex justify-between items-center bg-red-50 rounded-t-xl">
                     <h2 className="text-lg font-bold text-red-800 flex items-center gap-2">
                         <ShieldAlert size={20}/> Multas Associadas
@@ -58,3 +58,4 @@ const EmployeeFinesModal = ({ employee, fines = [], onClose }) => {
 };
 
 export default EmployeeFinesModal;
+

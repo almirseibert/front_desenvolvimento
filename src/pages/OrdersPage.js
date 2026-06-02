@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import apiClient from '../services/apiClient';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -300,7 +300,7 @@ const SearchableSupplierSelect = ({ partners = [], value, onChange }) => {
                         {filtered.map(p => (
                             <div
                                 key={p.id}
-                                className="p-2 hover:bg-yellow-50 cursor-pointer text-sm border-b last:border-b-0 transition-colors"
+                                className="p-2 hover:bg-[#fdf8f0] cursor-pointer text-sm border-b last:border-b-0 transition-colors"
                                 onClick={() => { onChange(p.id, p.razaoSocial); setIsOpen(false); setSearch(''); }}
                             >
                                 <div className="font-semibold text-gray-800">{p.razaoSocial}</div>
@@ -622,45 +622,45 @@ const OrdersPage = ({
     return (
         <div className="container mx-auto space-y-6 p-4 md:p-6 lg:p-8 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <h1 className="text-3xl font-bold text-gray-800">Ordens de Compra/Serviço</h1>
+                <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Ordens de Compra/Serviço</h1>
                 <ProtectedComponent requiredPermission="editor">
                     <div className="flex w-full sm:w-auto gap-2">
-                        <button onClick={handleReloadData} className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg shadow hover:bg-gray-300 transition text-sm">
+                        <button onClick={handleReloadData} className="flex items-center gap-2 mak-btn mak-btn-cancel">
                             <RefreshCw size={18} className={isFetching ? "animate-spin" : ""} />
                         </button>
-                        <button onClick={() => { setEditingOrder(null); setIsModalOpen(true); }} className="flex-1 sm:flex-none flex items-center gap-2 px-4 py-2 bg-yellow-400 text-gray-900 font-semibold rounded-lg shadow hover:bg-yellow-500 transition justify-center text-sm">
+                        <button onClick={() => { setEditingOrder(null); setIsModalOpen(true); }} className="flex-1 sm:flex-none flex items-center gap-2 px-4 py-2 mak-btn mak-btn-primary">
                             <PlusCircle size={18} />Nova Ordem
                         </button>
                     </div>
                 </ProtectedComponent>
             </div>
 
-            <div className="bg-white p-4 rounded-lg shadow grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-center text-sm">
-                <input type="text" placeholder="Nº Ordem" value={filters.number} onChange={e => setFilters({...filters, number: e.target.value})} className="p-2 border rounded-lg w-full bg-gray-50"/>
-                <input type="date" value={filters.date} onChange={e => setFilters({...filters, date: e.target.value})} className="p-2 border rounded-lg w-full bg-gray-50"/>
-                <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="p-2 border rounded-lg w-full bg-white outline-none">
+            <div className="bg-white p-4 rounded-xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-3 items-center text-sm" style={{ border: "1px solid #f0ebe3" }}>
+                <input type="text" placeholder="Nº Ordem" value={filters.number} onChange={e => setFilters({...filters, number: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}/>
+                <input type="date" value={filters.date} onChange={e => setFilters({...filters, date: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}/>
+                <select value={filters.status} onChange={e => setFilters({...filters, status: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm outline-none" style={{ border: "1px solid #e8e0d4" }}>
                     <option value="">Status (Todos)</option>
                     <option value="Pendente de Valor">A Cotar (Pendente)</option>
                     <option value="Ativa">Ativa (Liberada)</option>
                     <option value="Concluída">Concluída</option>
                     <option value="Cancelada">Cancelada</option>
                 </select>
-                <select value={filters.obra} onChange={e => setFilters({...filters, obra: e.target.value})} className="p-2 border rounded-lg w-full bg-white">
+                <select value={filters.obra} onChange={e => setFilters({...filters, obra: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}>
                     <option value="">Todas as Obras</option>
                     {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                     <option value="Administração">Administração</option>
                     <option value="Oficina">Oficina Central</option>
                 </select>
-                <select value={filters.vehicle} onChange={e => setFilters({...filters, vehicle: e.target.value})} className="p-2 border rounded-lg w-full bg-white">
+                <select value={filters.vehicle} onChange={e => setFilters({...filters, vehicle: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}>
                     <option value="">Todos os Veículos</option>
                     {sortedVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>)}
                 </select>
-                <input type="text" placeholder="Emissor (email)" value={filters.emitter} onChange={e => setFilters({...filters, emitter: e.target.value})} className="p-2 border rounded-lg w-full bg-gray-50"/>
+                <input type="text" placeholder="Emissor (email)" value={filters.emitter} onChange={e => setFilters({...filters, emitter: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}/>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-x-auto">
+            <div className="bg-white rounded-xl overflow-x-auto" style={{ border: "1px solid #f0ebe3" }}>
                 <table className="w-full text-sm text-left min-w-[1100px]">
-                    <thead className="bg-gray-100 text-xs uppercase text-gray-700">
+                    <thead className="text-xs uppercase" style={{ background: "#faf9f7", borderBottom: "1px solid #f0ebe3", color: "#9a8a78" }}>
                         <tr>
                             <th className="p-3">Nº Ordem</th>
                             <th className="p-3">Obra/Local</th>
@@ -738,7 +738,7 @@ const OrdersPage = ({
                                                     <button
                                                         onClick={() => openEditModal(order)}
                                                         title={order.status === 'Concluída' ? 'Editar ordem concluída (desbloqueado)' : 'Editar Ordem'}
-                                                        className={`p-1.5 rounded-md transition ${order.status === 'Concluída' ? 'text-orange-500 hover:bg-orange-50 border border-dashed border-orange-300' : 'text-gray-400 hover:text-yellow-600 hover:bg-yellow-50'}`}
+                                                        className={`p-1.5 rounded-md transition ${order.status === 'Concluída' ? 'text-orange-500 hover:bg-orange-50 border border-dashed border-orange-300' : 'text-gray-400 hover:text-[#9E7A42] hover:bg-[#fdf8f0]'}`}
                                                     >
                                                         {order.status === 'Concluída' ? <Unlock size={16}/> : <Edit size={16}/>}
                                                     </button>
@@ -1388,7 +1388,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                     <div className="flex-1 overflow-y-auto p-4 sm:p-6 text-sm">
 
                         {/* 1. Informações Base */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 bg-gray-50 p-4 rounded border border-gray-200 mb-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 bg-gray-50 p-4 rounded mb-6" style={{ border: "1px solid #f0ebe3" }}>
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Fornecedor *</label>
                                 <SearchableSupplierSelect
@@ -1608,7 +1608,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                     <div className="p-4 bg-white border-t flex flex-col sm:flex-row justify-end gap-3 sticky bottom-0 z-10 rounded-b-lg shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <button type="button" onClick={onClose} className="px-5 py-2 bg-gray-100 rounded-lg hover:bg-gray-200 text-sm font-bold text-gray-700 w-full sm:w-auto" disabled={isSaving}>Cancelar</button>
                         {!isReadOnly && (
-                            <button type="submit" disabled={isSaving} className="px-5 py-2 bg-yellow-400 text-gray-900 font-bold rounded-lg shadow hover:bg-yellow-500 disabled:opacity-50 flex items-center justify-center gap-2 text-sm w-full sm:w-auto">
+                            <button type="submit" disabled={isSaving} className="px-5 py-2 mak-btn mak-btn-primary">
                                 {isSaving ? <><Loader className="animate-spin" size={18}/> Salvando e Gerando...</> : 'Salvar e Gerar PDF'}
                             </button>
                         )}
@@ -1619,3 +1619,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
     );
 };
 export default OrdersPage;
+
+
+
+

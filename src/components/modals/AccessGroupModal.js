@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { X, Shield } from 'lucide-react';
 
 export const MODULES = [
@@ -45,10 +45,10 @@ const AccessGroupModal = ({ group, onClose, onSave, saving = false }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="mak-modal-backdrop ">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
         <div className="flex items-center justify-between p-5 border-b border-gray-100">
-          <h2 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+          <h2 className="mak-modal-title">
             <Shield size={18} className="text-yellow-500" />
             {isNew ? 'Novo Grupo de Acesso' : 'Editar Grupo'}
           </h2>
@@ -115,7 +115,7 @@ const AccessGroupModal = ({ group, onClose, onSave, saving = false }) => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors disabled:opacity-50"
+              className="flex-1 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors disabled:opacity-50"
             >
               {saving ? 'Salvando...' : 'Salvar Grupo'}
             </button>
@@ -127,3 +127,7 @@ const AccessGroupModal = ({ group, onClose, onSave, saving = false }) => {
 };
 
 export default AccessGroupModal;
+
+
+
+

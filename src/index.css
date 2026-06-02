@@ -2,27 +2,438 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Adicione aqui quaisquer estilos CSS personalizados ou @layer se precisar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px; /* Largura da barra */
+/* ─── CSS Custom Properties — Tema Terroso Mineral ───────────── */
+:root {
+
+  /* ── Brand / Accent ─────────────────────────────────────────── */
+  --brand-amber:        #9E7A42;
+  --brand-amber-hover:  #8a6a34;
+  --brand-gold:         #facc15;
+  --brand-gold-hover:   #eab308;
+
+  /* ── Sidebar ────────────────────────────────────────────────── */
+  --sidebar-bg:         #1c1a17;
+  --sidebar-surface:    #252018;
+  --sidebar-hover:      #2e2820;
+  --sidebar-border:     #3d3528;
+  --sidebar-text:       #8a7a68;
+  --sidebar-text-dim:   #5a4e3a;
+  --sidebar-text-hi:    #f0ebe3;
+  --sidebar-active-bg:  #9E7A42;
+  --sidebar-active-text:#ffffff;
+
+  /* ── App Shell ──────────────────────────────────────────────── */
+  --app-bg:             #f5f3ef;
+  --surface:            #ffffff;
+  --surface-subtle:     #faf9f7;
+  --surface-muted:      #f5f2ed;
+
+  /* ── Foreground / Text ──────────────────────────────────────── */
+  --fg1:                #1e1a14;
+  --fg2:                #3d3528;
+  --fg3:                #6a5e4e;
+  --fg4:                #9a8a78;
+  --fg5:                #b0a090;
+  --fg-inverse:         #ffffff;
+
+  /* ── Borders ────────────────────────────────────────────────── */
+  --border:             #e8e0d4;
+  --border-subtle:      #f0ebe3;
+  --border-strong:      #d4c8b8;
+
+  /* ── Status: Veículos ───────────────────────────────────────── */
+  --status-available-bg:    #d1fae5;
+  --status-available-text:  #065f46;
+  --status-available-dot:   #10b981;
+  --status-available-border:#a7f3d0;
+
+  --status-in-obra-bg:      #e0f2fe;
+  --status-in-obra-text:    #0c4a6e;
+  --status-in-obra-dot:     #0ea5e9;
+  --status-in-obra-border:  #bae6fd;
+
+  --status-in-op-bg:        #ede9fe;
+  --status-in-op-text:      #3730a3;
+  --status-in-op-dot:       #8b5cf6;
+  --status-in-op-border:    #ddd6fe;
+
+  --status-maint-bg:        #ffedd5;
+  --status-maint-text:      #9a3412;
+  --status-maint-dot:       #f97316;
+  --status-maint-border:    #fed7aa;
+
+  --status-waiting-bg:      #fef3c7;
+  --status-waiting-text:    #78350f;
+  --status-waiting-dot:     #fbbf24;
+  --status-waiting-border:  #fde68a;
+
+  --status-scrap-bg:        #f4f4f5;
+  --status-scrap-text:      #3f3f46;
+  --status-scrap-dot:       #71717a;
+  --status-scrap-border:    #d4d4d8;
+
+  --status-inactive-bg:     #f3f4f6;
+  --status-inactive-text:   #6b7280;
+  --status-inactive-dot:    #9ca3af;
+  --status-inactive-border: #e5e7eb;
+
+  --status-outsourced-bg:   #f3e8ff;
+  --status-outsourced-text: #6b21a8;
+  --status-outsourced-dot:  #a855f7;
+  --status-outsourced-border:#e9d5ff;
+
+  /* ── Semântico: Alertas / Feedback ──────────────────────────── */
+  --color-success:        #3d5a44;
+  --color-success-bg:     #f3f8f4;
+  --color-success-border: #b8d4bc;
+  --color-warning:        #a06828;
+  --color-warning-bg:     #fdf8ec;
+  --color-warning-border: #e8d8bc;
+  --color-danger:         #b03828;
+  --color-danger-bg:      #fdf0ec;
+  --color-danger-border:  #e8c8bc;
+  --color-info:           #2d5a8a;
+  --color-info-bg:        #eff5fc;
+  --color-info-border:    #c0d4e8;
+
+  /* ── Shadow System ──────────────────────────────────────────── */
+  --shadow-xs:    0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:    0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+  --shadow-md:    0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  --shadow-lg:    0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.10);
+  --shadow-xl:    0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10);
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* ── Border Radius ──────────────────────────────────────────── */
+  --radius-sm:   0.375rem;
+  --radius-md:   0.5rem;
+  --radius-lg:   0.75rem;
+  --radius-xl:   0.875rem;
+  --radius-2xl:  1rem;
+  --radius-full: 9999px;
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-sans:  'Roboto', system-ui, -apple-system, sans-serif;
+  --font-mono:  'Roboto Mono', 'Courier New', monospace;
+
+  --text-2xs:  0.625rem;
+  --text-xs:   0.75rem;
+  --text-sm:   0.875rem;
+  --text-base: 1rem;
+  --text-lg:   1.125rem;
+  --text-xl:   1.25rem;
+  --text-2xl:  1.5rem;
+  --text-3xl:  1.875rem;
+
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+  --font-extrabold:900;
+
+  --leading-tight:   1.25;
+  --leading-snug:    1.375;
+  --leading-normal:  1.5;
+  --leading-relaxed: 1.625;
+
+  --tracking-tight:   -0.025em;
+  --tracking-normal:   0;
+  --tracking-wide:     0.025em;
+  --tracking-wider:    0.05em;
+  --tracking-widest:   0.1em;
 }
 
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f1f1f1; /* Cor do fundo da trilha */
-  border-radius: 10px;
+/* ─── Base ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  background: var(--app-bg);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #c5c5c5; /* Cor da barra */
-  border-radius: 10px;
+/* ─── Semantic Type Styles ────────────────────────────────────── */
+.t-page-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--fg1);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
 }
 
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #a0a0a0; /* Cor da barra ao passar o mouse */
+.t-section-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--fg1);
+  line-height: var(--leading-tight);
 }
 
-/* Para Firefox */
-.custom-scrollbar {
-  scrollbar-width: thin; /* "auto" ou "thin" */
-  scrollbar-color: #c5c5c5 #f1f1f1; /* Cor da barra e cor da trilha */
+.t-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--fg2);
+  line-height: var(--leading-snug);
 }
+
+.t-subheading {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--fg3);
+  line-height: var(--leading-normal);
+}
+
+.t-body {
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  color: var(--fg3);
+  line-height: var(--leading-relaxed);
+}
+
+.t-support {
+  font-size: var(--text-xs);
+  color: var(--fg4);
+  line-height: var(--leading-normal);
+}
+
+.t-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-bold);
+  color: var(--fg3);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  line-height: var(--leading-tight);
+}
+
+.t-nav-group {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.t-kpi {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--fg2);
+  line-height: 1;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────────── */
+.custom-scrollbar::-webkit-scrollbar,
+.mak-scrollbar::-webkit-scrollbar { width: 5px; }
+
+.custom-scrollbar::-webkit-scrollbar-track,
+.mak-scrollbar::-webkit-scrollbar-track { background: #f5f2ed; border-radius: 10px; }
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.mak-scrollbar::-webkit-scrollbar-thumb { background: #c8b8a8; border-radius: 10px; }
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.mak-scrollbar::-webkit-scrollbar-thumb:hover { background: #b0a090; }
+
+.custom-scrollbar,
+.mak-scrollbar { scrollbar-width: thin; scrollbar-color: #c8b8a8 #f5f2ed; }
+
+/* ─── Inputs, Selects, Textareas — estilo global ─────────────── */
+/* :where() zera a especificidade → qualquer classe Tailwind sobrepõe */
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.mak-bare-input)),
+:where(select:not(.mak-bare-input)),
+:where(textarea:not(.mak-bare-input)) {
+  padding: 7px 10px;
+  border: 1px solid #e8e0d4;
+  border-radius: 8px;
+  background: #faf9f7;
+  font-family: 'Roboto', sans-serif;
+  font-size: 13px;
+  color: #3d3528;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  line-height: 1.5;
+}
+
+:where(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not(.mak-bare-input)):focus,
+:where(select:not(.mak-bare-input)):focus,
+:where(textarea:not(.mak-bare-input)):focus {
+  border-color: #9E7A42;
+  box-shadow: 0 0 0 3px rgba(158, 122, 66, 0.18);
+  background: #ffffff;
+}
+
+:where(input)::placeholder,
+:where(textarea)::placeholder {
+  color: #b0a090;
+}
+
+:where(input:disabled),
+:where(select:disabled),
+:where(textarea:disabled) {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: #f0ebe3;
+}
+
+/* Labels de formulário — padrão design system */
+.mak-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6a5e4e;
+  line-height: 1.25;
+}
+
+/* Input com ícone de busca */
+.mak-input-wrap {
+  position: relative;
+}
+.mak-input-icon {
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #b0a090;
+  pointer-events: none;
+}
+.mak-input-wrap input {
+  padding-left: 30px;
+}
+
+/* Input monospace (placa, hodômetro) */
+.mak-input-mono,
+input.mono,
+input[data-mono] {
+  font-family: 'Roboto Mono', monospace !important;
+  letter-spacing: 0.05em;
+}
+
+/* Estado de erro */
+.mak-input-error {
+  border-color: #b03828 !important;
+}
+.mak-error {
+  font-size: 11px;
+  color: #b03828;
+}
+
+/* ─── Focus ring legado (focus:ring-yellow-500 etc.) ─────────── */
+/* Garante que inputs com ring Tailwind também usem o amber       */
+.focus\:ring-yellow-500:focus,
+.focus\:ring-2:focus {
+  --tw-ring-color: rgba(158, 122, 66, 0.25);
+}
+
+/* ─── .input-field — usado nos relatórios ────────────────────── */
+.input-field {
+  padding: 6px 10px;
+  border: 1px solid #e8e0d4;
+  border-radius: 8px;
+  background: #faf9f7;
+  font-size: 13px;
+  color: #3d3528;
+  outline: none;
+}
+.input-field:focus {
+  border-color: #9E7A42;
+  box-shadow: 0 0 0 3px rgba(158, 122, 66, 0.18);
+  background: #ffffff;
+}
+
+/* ─── Labels de form existentes — unificar cor/tamanho ──────── */
+/* Cobre: "block text-xs font-bold text-gray-600 uppercase"      */
+/* e variações similares usadas nos modais do sistema            */
+label {
+  color: #6a5e4e;
+}
+
+/* ─── Botões CTA amber: forçar texto branco ──────────────────── */
+/* yellow-400/500 foi remapeado para #9E7A42/#8a6a34 — texto escuro
+   que existia no padrão antigo (text-gray-900) fica ilegível.    */
+button.bg-yellow-400,
+button.bg-yellow-500 {
+  color: #ffffff !important;
+}
+
+/* ─── Modal Shell — classes reutilizáveis ────────────────────── */
+.mak-modal-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 50; padding: 16px;
+}
+.mak-modal {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+  width: 100%;
+  display: flex; flex-direction: column;
+  max-height: 92vh;
+  overflow: hidden;
+}
+.mak-modal-header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #f0ebe3;
+  flex-shrink: 0;
+}
+.mak-modal-title {
+  font-size: 15px; font-weight: 700; color: #1e1a14; line-height: 1.3;
+}
+.mak-modal-subtitle {
+  font-size: 11px; color: #9a8a78; margin-top: 2px;
+}
+.mak-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  flex: 1;
+}
+.mak-modal-footer {
+  display: flex; justify-content: flex-end; gap: 8px;
+  padding: 12px 18px;
+  border-top: 1px solid #f0ebe3;
+  flex-shrink: 0;
+}
+.mak-modal-close {
+  background: transparent; border: none; color: #b0a090;
+  cursor: pointer; padding: 4px; border-radius: 5px;
+  line-height: 0; flex-shrink: 0; margin-left: 12px;
+  transition: background 0.12s, color 0.12s;
+}
+.mak-modal-close:hover { background: #f5f2ed; color: #6a5e4e; }
+
+/* Seção interna de formulário dentro de modal */
+.mak-form-section {
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.08em; color: #9a8a78;
+  border-bottom: 1px solid #f0ebe3;
+  padding-bottom: 6px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* Botões de modal */
+.mak-btn        { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; border: none; }
+.mak-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+.mak-btn-primary { background: #9E7A42; color: #ffffff; }
+.mak-btn-primary:hover:not(:disabled) { background: #8a6a34; }
+.mak-btn-cancel  { background: #ffffff; color: #6a5e4e; border: 1px solid #e8e0d4 !important; }
+.mak-btn-cancel:hover  { background: #f5f2ed; }
+.mak-btn-danger  { background: #b03828; color: #ffffff; }
+.mak-btn-danger:hover:not(:disabled)  { background: #9a2e20; }
+.mak-btn-dark    { background: #1c1a17; color: #ffffff; }
+.mak-btn-dark:hover    { background: #2e2820; }
+
+/* ─── Dot-pulse animation (status Aguardando Manutenção) ─────── */
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.85); }
+}
+.dot-pulse { animation: dot-pulse 1.4s ease-in-out infinite; }

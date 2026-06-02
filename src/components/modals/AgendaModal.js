@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import 'moment/locale/pt-br';
@@ -155,7 +155,7 @@ export default function AgendaModal({ isOpen, onClose, onEventUpdate }) {
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black bg-opacity-50 p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl h-[85vh] flex flex-col overflow-hidden relative">
+            <div className="mak-modal max-w-5xl">
                 
                 <div className="bg-blue-900 p-4 flex justify-between items-center text-white shrink-0">
                     <div className="flex items-center gap-2">
@@ -196,7 +196,7 @@ export default function AgendaModal({ isOpen, onClose, onEventUpdate }) {
                     <div className="fixed inset-0 z-[10000] flex items-center justify-center bg-black bg-opacity-40 p-4">
                         <div className="bg-white rounded-xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                             <div className="flex justify-between items-center p-4 border-b shrink-0">
-                                <h3 className="font-bold text-lg text-gray-800">Criar Novo Evento</h3>
+                                <h3 className="mak-modal-title">Criar Novo Evento</h3>
                                 <button onClick={() => setShowAddModal(false)}><X className="text-gray-500 hover:text-red-500" /></button>
                             </div>
                             <div className="p-4 overflow-y-auto custom-scrollbar flex-1">

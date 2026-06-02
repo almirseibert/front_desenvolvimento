@@ -365,7 +365,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                 <div className="flex gap-3 flex-wrap justify-center">
                     <button 
                         onClick={() => setViewMode('bi')}
-                        className="bg-slate-800 text-white hover:bg-slate-900 px-4 py-2 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all"
+                        className="text-white px-4 py-2 rounded-lg font-bold shadow-sm flex items-center gap-2 transition-all" style={{background:'#1c1a17'}} onMouseEnter={e=>e.currentTarget.style.background='#2e2820'} onMouseLeave={e=>e.currentTarget.style.background='#1c1a17'}
                     >
                         <BarChart2 size={18} /> Business Intelligence (BI)
                     </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import apiClient from '../services/apiClient';
 
 const ChangePasswordModal = ({ isOpen, onClose }) => {
@@ -46,7 +46,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
             <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm p-6">
-                <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Alterar Senha</h2>
+                <h2 className="mak-modal-title">Alterar Senha</h2>
                 
                 {message && (
                     <div className={`p-2 mb-3 rounded text-sm text-center ${message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
@@ -70,7 +70,7 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 
                     <div className="flex justify-end gap-2 mt-4">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 text-sm font-bold">Cancelar</button>
-                        <button type="submit" disabled={loading} className="px-4 py-2 bg-yellow-400 text-gray-900 rounded hover:bg-yellow-500 text-sm font-bold disabled:opacity-50">
+                        <button type="submit" disabled={loading} className="px-4 py-2 bg-yellow-400 text-gray-900 rounded hover:bg-[#fdf8f0]0 text-sm font-bold disabled:opacity-50">
                             {loading ? 'Salvando...' : 'Confirmar'}
                         </button>
                     </div>
@@ -81,3 +81,4 @@ const ChangePasswordModal = ({ isOpen, onClose }) => {
 };
 
 export default ChangePasswordModal;
+

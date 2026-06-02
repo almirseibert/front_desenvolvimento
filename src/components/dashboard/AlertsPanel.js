@@ -277,25 +277,30 @@ const AlertsPanel = ({ vehicles = [], employees = [], inactivityAlerts = [], obr
     };
 
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 h-full flex flex-col overflow-hidden">
-            <div className="p-4 border-b bg-gray-50 flex justify-between items-center shrink-0">
-                <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    <Bell size={18} className="text-yellow-600"/> Central de Alertas
+        <div className="bg-white rounded-xl h-full flex flex-col overflow-hidden" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.06)' }}>
+            <div className="p-4 flex justify-between items-center shrink-0" style={{ borderBottom: '1px solid #f0ebe3', background: '#faf9f7' }}>
+                <h3 className="flex items-center gap-2" style={{ fontSize: 14, fontWeight: 700, color: '#1e1a14' }}>
+                    <Bell size={16} style={{ color: '#9E7A42' }}/> Central de Alertas
                 </h3>
-                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded-full">{alerts.length}</span>
+                <span style={{ background: '#fdf0ec', color: '#b03828', border: '1px solid #e8c8bc', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 9999 }}>{alerts.length}</span>
             </div>
 
             {/* Abas */}
-            <div className="flex border-b shrink-0 overflow-x-auto">
+            <div className="flex shrink-0 overflow-x-auto" style={{ borderBottom: '1px solid #f0ebe3' }}>
                 {tabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 py-3 text-xs font-medium flex items-center justify-center gap-1 border-b-2 transition-colors whitespace-nowrap px-2
-                            ${activeTab === tab.id ? 'border-yellow-500 text-yellow-700 bg-yellow-50/50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                        className="flex-1 py-2.5 flex items-center justify-center gap-1 transition-colors whitespace-nowrap px-2"
+                        style={{
+                            fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer',
+                            borderBottom: activeTab === tab.id ? '2px solid #9E7A42' : '2px solid transparent',
+                            color: activeTab === tab.id ? '#9E7A42' : '#9a8a78',
+                            background: activeTab === tab.id ? '#fdf8f0' : 'transparent',
+                        }}
                     >
-                        {tab.icon} {tab.label} 
-                        {counts[tab.id] > 0 && <span className={`ml-1 text-[10px] px-1.5 rounded-full ${activeTab === tab.id ? 'bg-yellow-200' : 'bg-gray-200'}`}>{counts[tab.id]}</span>}
+                        {tab.icon} {tab.label}
+                        {counts[tab.id] > 0 && <span style={{ marginLeft: 4, fontSize: 10, padding: '1px 5px', borderRadius: 9999, background: activeTab === tab.id ? '#fde68a' : '#f0ebe3', color: activeTab === tab.id ? '#78350f' : '#9a8a78' }}>{counts[tab.id]}</span>}
                     </button>
                 ))}
             </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   Users, UserPlus, Check, Trash2, Edit, Key,
   ToggleLeft, ToggleRight, Search, Loader, ChevronDown, ChevronUp,
@@ -261,7 +261,7 @@ const UserManagementTab = ({ groups = [], onUsersChange }) => {
             </select>
             <button
               onClick={() => { setEditUser(null); setShowUserModal(true); }}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-bold rounded-lg text-sm transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm transition-colors"
             >
               <UserPlus size={14} /> Novo Usuário
             </button>
@@ -363,3 +363,4 @@ const UserManagementTab = ({ groups = [], onUsersChange }) => {
 };
 
 export default UserManagementTab;
+
