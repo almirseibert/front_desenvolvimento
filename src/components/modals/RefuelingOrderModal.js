@@ -192,7 +192,11 @@ const RefuelingOrderModal = ({
     }, [formData.obraId, obras, expenses, extraObraOptions]);
 
 
-    const sortedVehicles = useMemo(() => [...vehicles].sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')), [vehicles]);
+    const sortedVehicles = useMemo(() =>
+        [...vehicles]
+            .filter(v => v.status !== 'Inativo' && v.status !== 'Sucata')
+            .sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || ''))
+    , [vehicles]);
     const sortedEmployees = useMemo(() => [...employees].sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [employees]);
     const sortedPartners = useMemo(() =>
         [...partners]
