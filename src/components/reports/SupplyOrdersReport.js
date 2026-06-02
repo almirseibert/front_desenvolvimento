@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileText, Printer, Droplet, AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const SupplyOrdersReport = ({ 
     supplyOrders = [], 
@@ -193,10 +194,13 @@ const SupplyOrdersReport = ({
                     {sortedPartners.map(p => <option key={p.id} value={p.id}>{p.razaoSocial || p.nome || 'Sem Nome'}</option>)}
                 </select>
 
-                <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="input-field">
-                    <option value="">Todas as Obras</option>
-                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                </select>
+                <SearchableObraSelect
+                    obras={sortedObras}
+                    value={filters.obraId}
+                    onChange={(obra) => setFilters({...filters, obraId: obra?.id || ''})}
+                    placeholder="Todas as Obras"
+                    includeInactive={true}
+                />
             </FilterSection>
 
             <div className="border rounded-lg max-h-[500px] overflow-y-auto bg-white custom-scrollbar shadow-sm">

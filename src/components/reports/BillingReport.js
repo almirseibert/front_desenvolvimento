@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { ClipboardCheck, Printer, Loader } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
 import apiClient from '../../services/apiClient'; // Ajuste o caminho conforme necessidade
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const BillingReport = ({ obras, vehicles }) => {
     const [selectedObraId, setSelectedObraId] = useState('');
@@ -107,10 +108,13 @@ const BillingReport = ({ obras, vehicles }) => {
              <div className="bg-white p-6 rounded-lg border shadow-sm max-w-2xl">
                 <label className="block text-sm font-bold text-gray-700 mb-2">Selecione a Obra</label>
                 <div className="flex gap-3">
-                    <select value={selectedObraId} onChange={e => setSelectedObraId(e.target.value)} className="flex-1 input-field">
-                        <option value="">-- Selecione --</option>
-                        {sortedObras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                    </select>
+                    <SearchableObraSelect
+                        obras={sortedObras.filter(o => o.status === 'ativa')}
+                        value={selectedObraId}
+                        onChange={(obra) => setSelectedObraId(obra?.id || '')}
+                        placeholder="Buscar obra pelo nome..."
+                        className="flex-1"
+                    />
                     <button onClick={generatePDF} disabled={!selectedObraId || loading} className="btn-primary bg-yellow-500 hover:bg-yellow-600 text-black border-none flex items-center gap-2 disabled:bg-gray-300">
                         {loading ? <Loader className="animate-spin" size={18}/> : <Printer size={18}/>} 
                         Gerar Comparativo

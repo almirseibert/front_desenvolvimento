@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { HardHat, DollarSign, Clock } from 'lucide-react';
 import { vehicleGroups } from '../../utils/vehicleRules';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
     const [selectedObraId, setSelectedObraId] = useState('');
@@ -122,14 +123,13 @@ const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
                 <h3 className="font-bold text-gray-800 flex items-center gap-2">
                     <HardHat size={18} className="text-yellow-600"/> Progresso da Obra
                 </h3>
-                <select 
-                    value={selectedObraId} 
-                    onChange={(e) => setSelectedObraId(e.target.value)} 
-                    className="text-xs p-1.5 border rounded bg-gray-50 max-w-[150px]"
-                >
-                    <option value="">Selecione...</option>
-                    {activeObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                </select>
+                <SearchableObraSelect
+                    obras={activeObras}
+                    value={selectedObraId}
+                    onChange={(obra) => setSelectedObraId(obra?.id || '')}
+                    placeholder="Buscar obra..."
+                    className="max-w-[200px]"
+                />
             </div>
 
             {obraData ? (

@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Activity, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import { getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 // Helper para ordenação alfanumérica
 const sortAlphaNum = (a, b) => (a || '').toString().localeCompare((b || '').toString(), 'pt-BR', { numeric: true, sensitivity: 'base' });
@@ -165,12 +166,13 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                 </div>
                 <div>
                     <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Filtrar por Obra</label>
-                    <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="w-full p-2 border rounded bg-white text-sm">
-                        <option value="">Todas as Obras</option>
-                        {[...obras].sort((a, b) => sortAlphaNum(a.nome, b.nome)).map(o => (
-                            <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
-                        ))}
-                    </select>
+                    <SearchableObraSelect
+                        obras={[...obras].sort((a, b) => sortAlphaNum(a.nome, b.nome))}
+                        value={filters.obraId}
+                        onChange={(obra) => setFilters({...filters, obraId: obra?.id || ''})}
+                        placeholder="Todas as Obras"
+                        includeInactive={true}
+                    />
                 </div>
                 <div>
                     <label className="block text-[10px] uppercase font-bold text-gray-500 mb-1">Tipo de Equipamento</label>
