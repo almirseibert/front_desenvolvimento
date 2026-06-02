@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X, Lock, TrendingUp, AlertTriangle } from 'lucide-react';
 import { getAllowedReadingTypes } from '../../utils/vehicleRules';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const ComboioSaidaModal = ({ 
     user, 
@@ -344,11 +345,13 @@ const ComboioSaidaModal = ({
                         {/* OBRA MANTIDA AQUI (Obrigatório) */}
                         <div className="md:col-span-2">
                             <label className="block font-medium mb-1">Obra (Centro de Custo) *</label>
-                            <select name="obraId" value={formData.obraId} onChange={handleChange} className="w-full p-2 border rounded" required>
-                                <option value="">Selecione...</option>
-                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                                {extraObraOptions.map(o => <option key={o} value={o}>{o}</option>)}
-                            </select>
+                            <SearchableObraSelect
+                                obras={sortedObras}
+                                value={formData.obraId}
+                                onChange={(obra) => setFormData(prev => ({...prev, obraId: obra?.id || ''}))}
+                                placeholder="Selecione..."
+                                includeInactive={true}
+                            />
                         </div>
 
                         <div>

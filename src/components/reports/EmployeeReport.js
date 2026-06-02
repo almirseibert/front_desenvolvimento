@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Users, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] }) => {
     // Filtros
@@ -253,11 +254,13 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                     {[...new Set(employees.map(e => e.funcao).filter(Boolean))].sort(sortAlphaNum).map(f => <option key={f} value={f}>{f}</option>)}
                 </select>
                 
-                <select value={filters.obraId} onChange={e => setFilters({...filters, obraId: e.target.value})} className="input-field">
-                    <option value="">Todas as Obras (Alocação)</option>
-                    <option value="N/A">Sem Alocação</option>
-                    {obras.filter(o => o.status === 'ativa').sort((a,b) => sortAlphaNum(a.nome, b.nome)).map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                </select>
+                <SearchableObraSelect
+                    obras={obras}
+                    value={filters.obraId}
+                    onChange={(obra) => setFilters({...filters, obraId: obra?.id || ''})}
+                    placeholder="Todas as Obras (Alocação)"
+                    includeInactive={true}
+                />
             </FilterSection>
 
             <div className="mb-4 bg-white p-3 rounded border">

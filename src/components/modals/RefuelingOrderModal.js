@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, TrendingUp, Mail, Send } from 'lucide-react';
 
 import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const RefuelingOrderModal = ({
     user,
@@ -728,12 +729,13 @@ ${readingMsg}`;
 
                          <div>
                             <label className="block font-bold text-gray-700 mb-0.5">Obra / Alocação *</label>
-                            <select name="obraId" value={formData.obraId} onChange={handleChange} className="w-full p-1 border border-gray-300 rounded" required>
-                                <option value="">Selecione...</option>
-                                <option value="Patio">Pátio</option>
-                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                                {extraObraOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                            </select>
+                            <SearchableObraSelect
+                                obras={sortedObras}
+                                value={formData.obraId}
+                                onChange={(obra) => setFormData(prev => ({...prev, obraId: obra?.id || ''}))}
+                                placeholder="Selecione..."
+                                includeInactive={true}
+                            />
                         </div>
 
                         {obraStatus && (

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Droplet, Users, X, Trash2, Edit2, CheckCircle, Loader } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
+import SearchableObraSelect from '../SearchableObraSelect';
 
 const getVehicleName = (id, vehicles) => {
     const v = vehicles.find(v => String(v.id) === String(id));
@@ -173,11 +174,13 @@ const NovaLavagemModal = ({ vehicles, obras, washingPartners, onClose, onSave })
                     </div>
                     <div>
                         <label className="block text-xs font-semibold mb-1">Centro de Custo (Obra) *</label>
-                        <select name="obraId" value={formData.obraId} onChange={handleChange} className="w-full p-2 border border-blue-300 bg-blue-50 text-blue-900 rounded text-sm outline-none" required>
-                            <option value="">Selecione a Obra...</option>
-                            <option value="Patio">Pátio / Não Alocado</option>
-                            {obras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                        </select>
+                        <SearchableObraSelect
+                            obras={obras}
+                            value={formData.obraId}
+                            onChange={(obra) => setFormData(prev => ({...prev, obraId: obra?.id || ''}))}
+                            placeholder="Selecione a Obra..."
+                            includeInactive={true}
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
