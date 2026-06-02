@@ -3,6 +3,7 @@ import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, Trendin
 
 import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const RefuelingOrderModal = ({
     user,
@@ -688,10 +689,16 @@ ${readingMsg}`;
                     <div className="space-y-2 col-span-2 sm:col-span-1">
                         <div>
                             <label className="block font-bold text-gray-700 mb-0.5">Veículo *</label>
-                            <select name="vehicleId" value={formData.vehicleId} onChange={e => setFormData(p => ({...p, vehicleId: e.target.value}))} className="w-full p-1 border border-gray-300 rounded focus:ring-1 focus:ring-yellow-400 outline-none" required>
-                                <option value="">Selecione...</option>
-                                {sortedVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa} ({v.tipo})</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={sortedVehicles}
+                                value={formData.vehicleId}
+                                onChange={(v) => setFormData(p => ({...p, vehicleId: v?.id || ''}))}
+                                getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                getSubLabel={(v) => v.tipo || ''}
+                                getBadge={(v) => v.naoPodeCircular ? { text: 'Não circula', color: 'bg-red-100 text-red-700' } : v.status === 'manutencao' ? { text: 'Manutenção', color: 'bg-yellow-100 text-yellow-700' } : null}
+                                placeholder="Buscar veículo..."
+                                required
+                            />
                         </div>
                         
                         {lastRefuelData && (
@@ -721,10 +728,15 @@ ${readingMsg}`;
 
                         <div>
                             <label className="block font-bold text-gray-700 mb-0.5">Motorista *</label>
-                            <select name="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full p-1 border border-gray-300 rounded" required>
-                                <option value="">Selecione...</option>
-                                {sortedEmployees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={sortedEmployees}
+                                value={formData.employeeId}
+                                onChange={(emp) => setFormData(prev => ({...prev, employeeId: emp?.id || ''}))}
+                                getLabel={(emp) => emp.nome}
+                                getSubLabel={(emp) => emp.funcao || ''}
+                                placeholder="Buscar motorista..."
+                                required
+                            />
                         </div>
 
                          <div>
@@ -767,10 +779,15 @@ ${readingMsg}`;
                     <div className="space-y-2 col-span-2 sm:col-span-1">
                         <div>
                             <label className="block font-bold text-gray-700 mb-0.5">Posto *</label>
-                            <select name="partnerId" value={formData.partnerId} onChange={handleChange} className="w-full p-1 border border-gray-300 rounded" required>
-                                <option value="">Selecione...</option>
-                                {sortedPartners.map(p => <option key={p.id} value={p.id}>{p.razaoSocial}</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={sortedPartners}
+                                value={formData.partnerId}
+                                onChange={(p) => setFormData(prev => ({...prev, partnerId: p?.id || ''}))}
+                                getLabel={(p) => p.razaoSocial || p.nome || ''}
+                                getSubLabel={(p) => [p.cidade, p.estado].filter(Boolean).join(' - ')}
+                                placeholder="Buscar posto..."
+                                required
+                            />
                         </div>
 
                         <div className="bg-blue-50 p-2 rounded border border-blue-100">
