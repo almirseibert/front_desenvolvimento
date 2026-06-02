@@ -401,7 +401,7 @@ const ControleDiarioPage = ({
                     <select value={filterType} onChange={e => setFilterType(e.target.value)} className="mt-1 w-full p-2 border rounded-md bg-white">
                         <option value="geral">Geral</option>
                         <option value="obra">Obra</option>
-                        <option value="vehicleType">Tipo de Veículo</option>
+                        <option value="vehicleType">Grupo de Veículo</option>
                         <option value="employee">Funcionário</option>
                     </select>
                 </div>

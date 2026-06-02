@@ -34,7 +34,7 @@ const AlertsPanel = ({ vehicles = [], employees = [], inactivityAlerts = [], obr
                     subtitle: issue.category.toUpperCase(),
                     message: issue.message,
                     date: 'Hoje',
-                    action: () => navigate('/revisions', { state: { searchTerm: v.registroInterno } })
+                    action: () => navigate('revisions')
                 });
             });
         });
@@ -167,25 +167,70 @@ const AlertsPanel = ({ vehicles = [], employees = [], inactivityAlerts = [], obr
 
                         if (validadeTime < nowTime) {
                             list.push({
-                                id: `emp-${emp.id}`,
-                                category: 'cnh', 
-                                type: 'danger', 
+                                id: `emp-cnh-${emp.id}`,
+                                category: 'cnh',
+                                type: 'danger',
                                 title: `CNH VENCIDA: ${emp.nome}`,
                                 subtitle: 'Habilitação',
                                 message: `Venceu em ${validade.toLocaleDateString('pt-BR')}.`,
                                 date: validade.toLocaleDateString('pt-BR'),
-                                action: () => navigate('/employees', { state: { searchTerm: emp.nome } })
+                                action: () => navigate('employees')
                             });
                         } else if (validadeTime <= thirtyDaysTime) {
                             list.push({
-                                id: `emp-${emp.id}`,
-                                category: 'cnh', 
-                                type: 'warning', 
+                                id: `emp-cnh-${emp.id}`,
+                                category: 'cnh',
+                                type: 'warning',
                                 title: `CNH a Vencer: ${emp.nome}`,
                                 subtitle: 'Habilitação',
                                 message: `Vence em ${validade.toLocaleDateString('pt-BR')}.`,
                                 date: validade.toLocaleDateString('pt-BR'),
-                                action: () => navigate('/employees', { state: { searchTerm: emp.nome } })
+                                action: () => navigate('employees')
+                            });
+                        }
+                    }
+                }
+
+                // Toxicológico
+                const toxRaw = emp.exameToxicologicoVencimento;
+                if (toxRaw) {
+                    let toxVenc;
+                    if (typeof toxRaw === 'string' && toxRaw.includes('-')) {
+                        const parts = toxRaw.split('T')[0].split('-');
+                        if (parts.length === 3) {
+                            toxVenc = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]), 12, 0, 0);
+                        } else {
+                            toxVenc = new Date(toxRaw);
+                        }
+                    } else {
+                        toxVenc = new Date(toxRaw);
+                    }
+
+                    if (!isNaN(toxVenc.getTime())) {
+                        toxVenc.setHours(0, 0, 0, 0);
+                        const toxTime = toxVenc.getTime();
+
+                        if (toxTime < now.getTime()) {
+                            list.push({
+                                id: `emp-tox-${emp.id}`,
+                                category: 'cnh',
+                                type: 'danger',
+                                title: `Toxicológico VENCIDO: ${emp.nome}`,
+                                subtitle: 'Exame Toxicológico',
+                                message: `Venceu em ${toxVenc.toLocaleDateString('pt-BR')}.`,
+                                date: toxVenc.toLocaleDateString('pt-BR'),
+                                action: () => navigate('employees')
+                            });
+                        } else if (toxTime <= thirtyDays.getTime()) {
+                            list.push({
+                                id: `emp-tox-${emp.id}`,
+                                category: 'cnh',
+                                type: 'warning',
+                                title: `Toxicológico a Vencer: ${emp.nome}`,
+                                subtitle: 'Exame Toxicológico',
+                                message: `Vence em ${toxVenc.toLocaleDateString('pt-BR')}.`,
+                                date: toxVenc.toLocaleDateString('pt-BR'),
+                                action: () => navigate('employees')
                             });
                         }
                     }

@@ -72,7 +72,7 @@ const BillingReport = ({ obras, vehicles }) => {
 
         autoTable(doc, {
             startY: 35,
-            head: [['Tipo de Equipamento', 'Hrs Contratadas', 'Hrs Faturadas', 'Saldo', '% Exec.']],
+            head: [['Grupo de Equipamento', 'Hrs Contratadas', 'Hrs Faturadas', 'Saldo', '% Exec.']],
             body: tableBody,
             theme: 'striped',
             headStyles: { fillColor: [234, 179, 8], textColor: [0,0,0] },

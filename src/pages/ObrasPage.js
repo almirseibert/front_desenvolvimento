@@ -24,6 +24,7 @@ const ObrasPage = ({
     // --- ESTADOS DA PÁGINA ---
     const [filter, setFilter] = useState('ativas'); // 'ativas' | 'finalizadas'
     const [tipoFilter, setTipoFilter] = useState('todos'); // 'todos' | 'obra' | 'centro_custo'
+    const [regiaoFilter, setRegiaoFilter] = useState('todas'); // 'todas' | 'Lajeado' | 'Santa Maria'
     const [searchTerm, setSearchTerm] = useState('');
     
     // --- ESTADOS DOS MODAIS ---
@@ -54,7 +55,12 @@ const ObrasPage = ({
     // --- HELPER: Cores do Card Baseado em Progresso ---
     const getCardStatusColor = (obra) => {
         if (obra.status === 'finalizada') return 'border-gray-400';
-        
+
+        // Campos obrigatórios não preenchidos para obras (não centros de custo)
+        if (obra.tipo_registro !== 'centro_custo' && (!obra.orgao_contratante || !obra.regiao)) {
+            return 'border-black';
+        }
+
         // Se for contrato por horas
         if (obra.contractType === 'horas') {
             const contratado = Object.values(obra.horasContratadasPorTipo || {}).reduce((s, h) => s + (parseFloat(h) || 0), 0);
@@ -123,9 +129,10 @@ const ObrasPage = ({
         return (obras || [])
             .filter(o => {
                 const statusMatch = filter === 'finalizadas' ? o.status === 'finalizada' : o.status !== 'finalizada';
-                const searchMatch = (o.nome || '').toLowerCase().includes(searchTerm.toLowerCase());
+                const searchMatch = (o.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) || (o.orgao_contratante || '').toLowerCase().includes(searchTerm.toLowerCase());
                 const tipoMatch = tipoFilter === 'todos' || (o.tipo_registro || 'obra') === tipoFilter;
-                return statusMatch && searchMatch && tipoMatch;
+                const regiaoMatch = regiaoFilter === 'todas' || o.regiao === regiaoFilter;
+                return statusMatch && searchMatch && tipoMatch && regiaoMatch;
             })
             .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
     }, [obras, filter, tipoFilter, searchTerm]);
@@ -222,6 +229,17 @@ const ObrasPage = ({
                             Centros de Custo
                         </button>
                     </div>
+                    <div className="flex bg-gray-100 p-1 rounded-lg">
+                        {['todas', 'Lajeado', 'Santa Maria'].map(r => (
+                            <button
+                                key={r}
+                                onClick={() => setRegiaoFilter(r)}
+                                className={`px-3 py-1.5 text-sm font-medium rounded-md transition-all ${regiaoFilter === r ? 'bg-white shadow text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                            >
+                                {r === 'todas' ? 'Todas Regiões' : r}
+                            </button>
+                        ))}
+                    </div>
                 </div>
 
                 <div className="relative w-full md:w-64">
@@ -261,7 +279,12 @@ const ObrasPage = ({
                                             Centro de Custo
                                         </span>
                                     )}
-                                    <h3 className="text-lg font-bold text-gray-800 line-clamp-1" title={obra.nome}>{obra.nome}</h3>
+                                    <h3 className="text-lg font-bold text-gray-800 line-clamp-1" title={obra.nome}>
+                                        {obra.orgao_contratante && (
+                                            <span className="text-gray-400 font-normal mr-1">[{obra.orgao_contratante}]</span>
+                                        )}
+                                        {obra.nome}
+                                    </h3>
                                     {obra.latitude && (
                                         <a 
                                             href={`https://www.google.com/maps/search/?api=1&query=${obra.latitude},${obra.longitude}`} 
@@ -274,7 +297,7 @@ const ObrasPage = ({
                                     )}
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <ProtectedComponent requiredPermission="editor">
+                                    <ProtectedComponent requiredPermission="obra-editor">
                                         <button onClick={() => openModal('createEdit', obra)} className="p-1.5 text-gray-400 hover:text-yellow-600 rounded-full hover:bg-gray-50 transition">
                                             <Edit size={16}/>
                                         </button>
@@ -324,10 +347,10 @@ const ObrasPage = ({
                                     Gerenciar
                                 </button>
                                 
-                                <ProtectedComponent requiredPermission="editor">
+                                <ProtectedComponent requiredPermission="obra-editor">
                                     {obra.status === 'ativa' ? (
-                                        <button 
-                                            onClick={() => openModal('finish', obra)} 
+                                        <button
+                                            onClick={() => openModal('finish', obra)}
                                             className="px-3 py-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition"
                                             title="Finalizar Obra"
                                         >

@@ -78,7 +78,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
             if (physicalBody.length > 0) {
                 autoTable(doc, {
                     startY: 40,
-                    head: [['Registro', 'Tipo', 'Leitura Inicial', 'Leitura Atual', 'Executado']],
+                    head: [['Registro', 'Grupo', 'Leitura Inicial', 'Leitura Atual', 'Executado']],
                     body: physicalBody,
                     theme: 'striped',
                     headStyles: { fillColor: [44, 62, 80] } 
@@ -128,7 +128,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
 
             autoTable(doc, {
                 startY: currentY + 5,
-                head: [['Tipo', 'Hrs Contratadas', 'Hrs Faturadas', 'Saldo', '%']],
+                head: [['Grupo', 'Hrs Contratadas', 'Hrs Faturadas', 'Saldo', '%']],
                 body: financialBody,
                 theme: 'grid',
                 headStyles: { fillColor: [39, 174, 96] },

@@ -82,7 +82,7 @@ const EditActiveVehicleAssignmentModal = ({ assignment, vehicle, employees = [],
                         <label className="block text-sm font-medium text-gray-700">Operador *</label>
                         <select name="employeeId" value={editedData.employeeId} onChange={handleInputChange} className="w-full p-2 border rounded mt-1 text-sm bg-white" required>
                              <option value="">Selecione...</option>
-                             {(employees || []).filter(e => e.status === 'ativo').sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).map(emp => (
+                             {(employees || []).filter(e => e.status === 'ativo' && !e.statusAfastamentoTipo).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).map(emp => (
                                 <option key={emp.id} value={emp.id}>{emp.nome}{emp.funcao ? ` · ${emp.funcao}` : ''}</option>
                              ))}
                         </select>
@@ -168,7 +168,7 @@ const EditPastVehicleAssignmentModal = ({ assignment, vehicle, employees = [], o
                         <label className="block text-sm font-medium text-gray-700">Operador</label>
                          <select name="employeeId" value={editedData.employeeId} onChange={handleInputChange} className="w-full p-2 border rounded mt-1 text-sm bg-white">
                              <option value="">Selecione...</option>
-                             {(employees || []).filter(e => e.status === 'ativo').sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).map(emp => (
+                             {(employees || []).filter(e => e.status === 'ativo' && !e.statusAfastamentoTipo).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).map(emp => (
                                 <option key={emp.id} value={emp.id}>{emp.nome}{emp.funcao ? ` · ${emp.funcao}` : ''}</option>
                              ))}
                         </select>

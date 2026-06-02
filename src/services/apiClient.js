@@ -204,8 +204,11 @@ const apiClient = {
     createRefuelingOrder: async (data) => apiFetch('/refuelings', { method: 'POST', body: JSON.stringify(data) }),
     updateRefuelingOrder: async (id, data) => apiFetch(`/refuelings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     updateRefueling: async (id, data) => apiFetch(`/refuelings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    confirmRefuelingOrder: async (id, data) => apiFetch(`/refuelings/${id}/confirm`, { method: 'PUT', body: JSON.stringify(data) }), 
+    confirmRefuelingOrder: async (id, data) => apiFetch(`/refuelings/${id}/confirm`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteRefuelingOrder: async (id) => apiFetch(`/refuelings/${id}`, { method: 'DELETE' }),
+    liberarOrdemBloqueada: async (id, data) => apiFetch(`/refuelings/${id}/liberar`, { method: 'PUT', body: JSON.stringify(data || {}) }),
+    negarOrdemBloqueada: async (id) => apiFetch(`/refuelings/${id}/negar`, { method: 'DELETE' }),
+    sendRefuelingEmail: async (payload) => apiFetch('/refuelings/send-email', { method: 'POST', body: JSON.stringify(payload) }),
     uploadRefuelingPdf: async (formData) => apiFetch('/refuelings/upload-pdf', { method: 'POST', body: formData }),
 
     // --- Transações do Comboio ---

@@ -72,8 +72,25 @@ const Dashboard = ({
 
     // Estatísticas Rápidas
     const stats = useMemo(() => {
-        const activeVehicles = vehicles.filter(v => v.status !== 'Inativo');
-        
+        // Mesma lógica da VehiclePage: frota própria = ativo + não-sucata + não-terceirizado
+        // computedStatus replica o override de status da VehiclePage (obraAtualId → 'Em Obra', etc.)
+        const activeVehicles = vehicles
+            .filter(v => {
+                const isSucata = v.status === 'Sucata';
+                const isAtivo = v.ativo === undefined ? v.status !== 'Inativo' : Boolean(v.ativo);
+                return isAtivo && !isSucata && !v.isOutsourced;
+            })
+            .map(v => {
+                let computedStatus = v.status;
+                if (!computedStatus || computedStatus === 'Disponível') {
+                    if (v.obraAtualId) computedStatus = 'Em Obra';
+                    else if (v.operationalAssignment) computedStatus = 'Em Operação';
+                    else if (v.maintenanceLocation) computedStatus = 'Em Manutenção';
+                    else computedStatus = 'Disponível';
+                }
+                return { ...v, computedStatus };
+            });
+
         // Filtra as multas pendentes de forma mais robusta (ignorando maiúsculas/minúsculas e checando outras colunas)
         const pendingFines = fines.filter(f => {
             const status = String(f.paymentStatus || f.status || f.statusPagamento || '').toLowerCase().trim();
@@ -91,11 +108,10 @@ const Dashboard = ({
         return {
             total: activeVehicles.length,
             obrasAtivas: obras.filter(o => o.status === 'ativa' && (o.tipo_registro || 'obra') !== 'centro_custo').length,
-            emObra: activeVehicles.filter(v => v.status === 'Em Obra').length,
-            operacao: activeVehicles.filter(v => v.status === 'Em Operação').length,
-            disponivel: activeVehicles.filter(v => v.status === 'Disponível').length,
-            // Conta os dois status referentes a manutenção
-            manutencao: activeVehicles.filter(v => ['Em Manutenção', 'Aguardando Manutenção'].includes(v.status)).length,
+            emObra: activeVehicles.filter(v => v.computedStatus === 'Em Obra').length,
+            operacao: activeVehicles.filter(v => v.computedStatus === 'Em Operação').length,
+            disponivel: activeVehicles.filter(v => v.computedStatus === 'Disponível').length,
+            manutencao: activeVehicles.filter(v => ['Em Manutenção', 'Aguardando Manutenção'].includes(v.computedStatus)).length,
             multas: pendingFines.length,
             valorMultas: totalFinesValue // Retorna a soma total financeira segura
         };

@@ -265,8 +265,6 @@ export const checkVehicleRestrictions = (vehicle, revisions = []) => {
             { name: 'Tacógrafo', date: vehicle.validadeTacografo },
             { name: 'AET DAER', date: vehicle.validadeAET_DAER },
             { name: 'AET DNIT', date: vehicle.validadeAET_DNIT },
-            // Mapeamento extra caso os nomes no banco sejam diferentes (como no seu exemplo anterior)
-            { name: 'Tacógrafo', date: vehicle.validadeTacografo }, 
             { name: 'Licenciamento', date: vehicle.validadeLicenciamento }
         ];
 

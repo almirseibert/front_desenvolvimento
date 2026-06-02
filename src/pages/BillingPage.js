@@ -847,20 +847,20 @@ const BillingPage = ({
 
         const groupTableData = Object.keys(groupSummary).map(group => [group, formatDecimalToTime(groupSummary[group].hours)]);
         doc.setFontSize(12);
-        doc.text("Resumo por Grupo de Veículos", 14, 30);
-        autoTable(doc, { startY: 32, head: [['Grupo', 'Horas Totais']], body: groupTableData, headStyles: { fillColor: [50, 50, 50], textColor: [255,255,255], fontStyle: 'bold' }, theme: 'grid' });
+        doc.text("Resumo por Tipo de Veículos", 14, 30);
+        autoTable(doc, { startY: 32, head: [['Tipo', 'Horas Totais']], body: groupTableData, headStyles: { fillColor: [50, 50, 50], textColor: [255,255,255], fontStyle: 'bold' }, theme: 'grid' });
 
         const typeTableData = Object.keys(typeSummary).map(type => [type, typeSummary[type].vehicles.size, formatDecimalToTime(typeSummary[type].hours)]);
         doc.setFontSize(12);
-        doc.text("Detalhamento por Tipo de Equipamento", 14, doc.lastAutoTable.finalY + 10);
-        autoTable(doc, { startY: doc.lastAutoTable.finalY + 12, head: [['Tipo de Equipamento', 'Qtd Veículos', 'Horas Totais']], body: typeTableData, headStyles: { fillColor: [250, 204, 21], textColor: [0,0,0], fontStyle: 'bold' } });
+        doc.text("Detalhamento por Grupo de Equipamento", 14, doc.lastAutoTable.finalY + 10);
+        autoTable(doc, { startY: doc.lastAutoTable.finalY + 12, head: [['Grupo de Equipamento', 'Qtd Veículos', 'Horas Totais']], body: typeTableData, headStyles: { fillColor: [250, 204, 21], textColor: [0,0,0], fontStyle: 'bold' } });
 
         const vehicleTableData = Object.values(vehicleSummary).sort((a, b) => a.label.localeCompare(b.label)).map(v => [v.label, v.type, formatDecimalToTime(v.hours)]);
         let finalY = doc.lastAutoTable.finalY; 
         if (finalY > 240) { doc.addPage(); finalY = 20; }
         doc.setFontSize(12);
         doc.text("Detalhamento por Equipamento", 14, finalY + 10);
-        autoTable(doc, { startY: finalY + 12, head: [['Equipamento', 'Tipo', 'Horas Totais']], body: vehicleTableData, headStyles: { fillColor: [250, 204, 21], textColor: [0,0,0], fontStyle: 'bold' } });
+        autoTable(doc, { startY: finalY + 12, head: [['Equipamento', 'Grupo', 'Horas Totais']], body: vehicleTableData, headStyles: { fillColor: [250, 204, 21], textColor: [0,0,0], fontStyle: 'bold' } });
 
         doc.save(`Resumo_${obra?.nome}_${reportStartDate}.pdf`);
     };

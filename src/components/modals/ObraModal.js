@@ -33,6 +33,9 @@ const ObraModal = ({
     // --- ESTADOS DE CONTRATO POR M² (Setores) ---
     const [sectors, setSectors] = useState([]);
 
+    const [orgaoContratante, setOrgaoContratante] = useState('');
+    const [regiao, setRegiao] = useState('');
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // --- INICIALIZAÇÃO (Modo Edição) ---
@@ -47,6 +50,8 @@ const ObraModal = ({
             setDataFim(obra.dataFim ? new Date(obra.dataFim).toISOString().split('T')[0] : '');
             setLatitude(obra.latitude || '');
             setLongitude(obra.longitude || '');
+            setOrgaoContratante(obra.orgao_contratante || '');
+            setRegiao(obra.regiao || '');
             
             // Restaura Contrato por Horas
             const horasParsed = typeof obra.horasContratadasPorTipo === 'string' 
@@ -139,7 +144,9 @@ const ObraModal = ({
             longitude,
             kmContratadoPrancha: parseFloat(kmContratadoPrancha) || 0,
             valorKmPrancha: parseFloat(valorKmPrancha) || 0,
-            valorTotalContrato: totalValue
+            valorTotalContrato: totalValue,
+            orgao_contratante: orgaoContratante || null,
+            regiao: regiao || null
         };
 
         if (contractType === 'horas') {
@@ -284,6 +291,35 @@ const ObraModal = ({
                             </div>
                         </div>
 
+                        {/* Órgão Contratante e Região */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Órgão Contratante</label>
+                                <select
+                                    value={orgaoContratante}
+                                    onChange={(e) => setOrgaoContratante(e.target.value)}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none"
+                                >
+                                    <option value="">Selecione...</option>
+                                    {['ALUGUEL','DOAÇÃO','INCRA','MUNICÍPIO','PARTICULAR','SEAPI','SEDUR'].map(o => (
+                                        <option key={o} value={o}>{o}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1">Região</label>
+                                <select
+                                    value={regiao}
+                                    onChange={(e) => setRegiao(e.target.value)}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none"
+                                >
+                                    <option value="">Selecione...</option>
+                                    <option value="Lajeado">Lajeado</option>
+                                    <option value="Santa Maria">Santa Maria</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1"><MapPin size={14}/> Latitude</label>
@@ -338,7 +374,7 @@ const ObraModal = ({
                                     {contractedItems.map((item, index) => (
                                         <div key={index} className="flex flex-col sm:flex-row gap-3 items-end bg-white p-3 rounded border shadow-sm">
                                             <div className="w-full sm:flex-1">
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Tipo de Veículo</label>
+                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Grupo de Veículo</label>
                                                 <select 
                                                     value={item.type} 
                                                     onChange={(e) => updateContractedItem(index, 'type', e.target.value)} 

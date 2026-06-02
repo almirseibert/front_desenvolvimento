@@ -62,9 +62,11 @@ const RefuelingPage = ({
         } catch { return 'Erro'; }
     };
 
+    const STATUSES_PENDENTES = ['Aberta', 'BloqueadoLeitura', 'BloqueadoOrcamento'];
+
     const openRefuelings = useMemo(() => {
         return refuelings
-            .filter(r => r.status === 'Aberta')
+            .filter(r => STATUSES_PENDENTES.includes(r.status))
             .sort((a,b) => (b.authNumber || 0) - (a.authNumber || 0));
     }, [refuelings]);
 
@@ -299,7 +301,7 @@ const RefuelingPage = ({
                 <div className="xl:col-span-4 space-y-4">
                     <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 h-full flex flex-col">
                         <h2 className="text-lg font-bold text-gray-800 mb-4 pb-2 border-b flex justify-between">
-                            Ordens Abertas
+                            Ordens Pendentes
                             <span className="bg-yellow-100 text-yellow-800 text-xs font-bold px-2 py-1 rounded-full">{openRefuelings.length}</span>
                         </h2>
                         
@@ -326,23 +328,38 @@ const RefuelingPage = ({
                                 })
                                 .map(order => {
                                 const vehicle = vehicles.find(v => v.id === order.vehicleId);
+                                const isBloqueada = order.status === 'BloqueadoLeitura' || order.status === 'BloqueadoOrcamento';
+                                const borderCor = isBloqueada ? 'border-l-red-500' : 'border-l-yellow-400';
+                                const bgCor = isBloqueada ? 'bg-red-50' : 'bg-gray-50';
                                 return (
-                                    <div key={order.id} className="p-4 border border-l-4 border-l-yellow-400 rounded-lg bg-gray-50">
+                                    <div key={order.id} className={`p-4 border border-l-4 ${borderCor} rounded-lg ${bgCor}`}>
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <div className="font-bold text-gray-900 text-lg">#{String(order.authNumber).padStart(6, '0')}</div>
                                                 <p className="text-sm font-bold text-gray-700">{vehicle?.registroInterno} - {vehicle?.placa}</p>
                                                 <p className="text-xs text-gray-600 mb-1">{formatDateSafe(order.data || order.date)}</p>
                                                 <p className="text-xs text-gray-500">{order.partnerName || partners.find(p => p.id === order.partnerId)?.razaoSocial || '...'}</p>
+                                                {isBloqueada && (
+                                                    <span className="inline-block mt-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-700">
+                                                        ⛔ Aguardando Administrador
+                                                    </span>
+                                                )}
                                             </div>
                                             <div className="flex flex-col gap-1">
-                                                <ProtectedComponent requiredPermission="editor">
-                                                    <div className="flex gap-1 mb-1">
-                                                        <button onClick={() => { setOrderToConfirm(order); setIsConfirmModalOpen(true); }} className="p-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200" title="Confirmar"><CheckCircle size={16}/></button>
-                                                        <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} className="p-1.5 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" title="Editar"><Edit size={16}/></button>
+                                                {!isBloqueada && (
+                                                    <ProtectedComponent requiredPermission="editor">
+                                                        <div className="flex gap-1 mb-1">
+                                                            <button onClick={() => { setOrderToConfirm(order); setIsConfirmModalOpen(true); }} className="p-1.5 bg-green-100 text-green-700 rounded hover:bg-green-200" title="Confirmar"><CheckCircle size={16}/></button>
+                                                            <button onClick={() => { setEditingOrder(order); setIsOrderModalOpen(true); }} className="p-1.5 bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200" title="Editar"><Edit size={16}/></button>
+                                                            <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} className="p-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Excluir"><Trash2 size={16}/></button>
+                                                        </div>
+                                                    </ProtectedComponent>
+                                                )}
+                                                {isBloqueada && (
+                                                    <ProtectedComponent requiredPermission="editor">
                                                         <button onClick={() => { setItemToDelete(order.id); setIsDeleteModalOpen(true); }} className="p-1.5 bg-red-100 text-red-700 rounded hover:bg-red-200" title="Excluir"><Trash2 size={16}/></button>
-                                                    </div>
-                                                </ProtectedComponent>
+                                                    </ProtectedComponent>
+                                                )}
                                                 <button onClick={() => generateAuthorizationPDF(order)} disabled={isGeneratingPdf} className="p-1.5 bg-white border text-gray-600 rounded hover:bg-gray-50 w-full flex justify-center" title="PDF">
                                                     {isGeneratingPdf ? <Loader size={16} className="animate-spin"/> : <Printer size={16}/>}
                                                 </button>

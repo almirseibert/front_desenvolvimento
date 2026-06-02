@@ -318,7 +318,7 @@ function TabTempoReal({ apiClient }) {
                                 <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
                                     <tr>
                                         <th className="px-4 py-2">Placa</th>
-                                        <th className="px-4 py-2">Tipo</th>
+                                        <th className="px-4 py-2">Grupo</th>
                                         <th className="px-4 py-2">Motorista</th>
                                         <th className="px-4 py-2 text-center">Ignição</th>
                                         <th className="px-4 py-2 text-right">Velocidade</th>
@@ -1099,7 +1099,7 @@ function TabConfrontoFaturamento({ apiClient, obras = [], vehicles = [] }) {
                                 <thead className="bg-gray-50 text-gray-500 text-xs font-bold uppercase">
                                     <tr>
                                         <th className="px-4 py-2">Placa</th>
-                                        <th className="px-4 py-2">Tipo</th>
+                                        <th className="px-4 py-2">Grupo</th>
                                         <th className="px-4 py-2 text-right">H. Faturadas</th>
                                         <th className="px-4 py-2 text-right">H. Motor Ligado</th>
                                         <th className="px-4 py-2 text-right">Δ Horas</th>

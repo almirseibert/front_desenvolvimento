@@ -38,6 +38,11 @@ const ProtectedComponent = ({ children, requiredPermission }) => {
         return EDITOR_ROLES.includes(user.user_type?.toLowerCase()) ? <>{children}</> : null;
     }
 
+    if (requiredPermission === 'obra-editor') {
+        // Apenas admin, gerencia e editor podem criar/editar/finalizar obras
+        return ['admin', 'gerencia', 'editor'].includes(user.user_type?.toLowerCase()) ? <>{children}</> : null;
+    }
+
     if (requiredPermission === 'viewer') {
         return user.user_type?.toLowerCase() !== 'operador' ? <>{children}</> : null;
     }

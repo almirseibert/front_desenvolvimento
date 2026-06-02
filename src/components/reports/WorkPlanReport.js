@@ -129,7 +129,7 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
 
                 autoTable(doc, {
                     startY: currentY,
-                    head: [['Tipo de Equipamento', 'Horas Contratadas', 'Horas Concluídas', 'Saldo']],
+                    head: [['Grupo de Equipamento', 'Horas Contratadas', 'Horas Concluídas', 'Saldo']],
                     body: progressBody,
                     foot: [['TOTAL', progressData.totalContratado.toFixed(1), progressData.totalConcluido.toFixed(1), (progressData.totalContratado - progressData.totalConcluido).toFixed(1)]],
                     theme: 'striped',
@@ -181,7 +181,7 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
                 if (vehicleHistoryBody.length > 0) {
                     autoTable(doc, { 
                         startY: finalY, 
-                        head: [['Registro', 'Tipo', 'Funcionário', 'Entrada', 'Saída', 'Leitura Inicial', 'Leitura Final', 'Total Trab.']], 
+                        head: [['Registro', 'Grupo', 'Funcionário', 'Entrada', 'Saída', 'Leitura Inicial', 'Leitura Final', 'Total Trab.']],
                         body: vehicleHistoryBody, 
                         theme: 'striped', 
                         headStyles: { fillColor: [60, 179, 113] } 

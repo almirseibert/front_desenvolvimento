@@ -151,9 +151,6 @@ const RefuelingOrderModal = ({
     const [budgetWarning, setBudgetWarning] = useState(null);
     const [requiresBudgetOverride, setRequiresBudgetOverride] = useState(false);
     
-    const [showPasswordModal, setShowPasswordModal] = useState(false);
-    const [passwordAction, setPasswordAction] = useState(null); 
-    
     const [warnings, setWarnings] = useState([]); 
     const [lastRefuelData, setLastRefuelData] = useState(null);
     const [lastAverage, setLastAverage] = useState(null); 
@@ -195,7 +192,11 @@ const RefuelingOrderModal = ({
 
     const sortedVehicles = useMemo(() => [...vehicles].sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')), [vehicles]);
     const sortedEmployees = useMemo(() => [...employees].sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [employees]);
-    const sortedPartners = useMemo(() => [...partners].sort((a,b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || '')), [partners]);
+    const sortedPartners = useMemo(() =>
+        [...partners]
+            .filter(p => p.tipo_parceiro === 'posto' && p.status_operacional !== 'Bloqueado')
+            .sort((a,b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''))
+    , [partners]);
     const sortedObras = useMemo(() => [...obras].filter(o => o.status === 'ativa').sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
 
     const selectedVehicle = useMemo(() => vehicles.find(v => v.id === formData.vehicleId), [formData.vehicleId, vehicles]);
@@ -439,6 +440,20 @@ const RefuelingOrderModal = ({
                 const arlaMsg = formData.needsArla ? `\nArla 32: ${formData.isFillUpArla ? 'COMPLETAR' : formData.litrosLiberadosArla + ' Litros'}` : '';
                 const outrosMsgEmail = finalData.outros ? `\nOutros/Obs: ${finalData.outros}` : '';
 
+                const allowedReadingsEmail = vehicle ? getAllowedReadingTypes(vehicle.tipo) : [];
+                const fOdoEmail = parseFloat(finalData.odometro);
+                const fHoriEmail = parseFloat(finalData.horimetro);
+                let leituraEmailMsg = 'N/A';
+                if (allowedReadingsEmail.includes('odometro') && fOdoEmail > 0) {
+                    leituraEmailMsg = `${fOdoEmail} Km`;
+                } else if (allowedReadingsEmail.includes('horimetro') && fHoriEmail > 0) {
+                    leituraEmailMsg = `${fHoriEmail} Hr`;
+                } else if (fOdoEmail > 0) {
+                    leituraEmailMsg = `${fOdoEmail} Km`;
+                } else if (fHoriEmail > 0) {
+                    leituraEmailMsg = `${fHoriEmail} Hr`;
+                }
+
                 const subject = `Autorização de Abastecimento #${finalData.authNumber} - ${vehicle?.registroInterno} - ${finalData.partnerName || 'Frotas MAK'}`;
                 const body = `Olá,
 
@@ -450,6 +465,7 @@ Nº Ordem: ${finalData.authNumber}
 Data: ${emissionDate}
 Posto: ${partner?.razaoSocial || 'N/A'}
 Veículo: ${vehicle?.marca || ''} ${vehicle?.modelo || ''} - ${vehicle?.placa} / ${vehicle?.registroInterno}
+Leitura Atual: ${leituraEmailMsg}
 Combustível: ${finalData.fuelType}
 Qtd: ${formData.isFillUp ? 'COMPLETAR TANQUE' : formData.litrosLiberados + ' Litros'}${arlaMsg}${outrosMsgEmail}
 Motorista: ${employee?.nome || 'N/A'}
@@ -536,22 +552,11 @@ ${readingMsg}`;
             return;
         }
 
-        if (blockReason) {
-            setPasswordAction('blockOverride');
-            setShowPasswordModal(true);
-            return;
-        }
-        if (requiresBudgetOverride) {
-            setPasswordAction('budgetOverride');
-            setShowPasswordModal(true);
-            return;
-        }
         executeSave();
     };
 
     const executeSave = async () => {
         setIsSaving(true);
-        setShowPasswordModal(false);
 
         const safeFloat = (val) => {
             if (val === null || val === undefined || val === '') return null;
@@ -597,14 +602,27 @@ ${readingMsg}`;
             }
             reloadData();
             
+            if (res?.bloqueadoLeitura || res?.bloqueadoOrcamento) {
+                setAlertMessage(res.message || `Ordem Nº ${res.authNumber} salva com bloqueio. Aguarde liberação do Administrador.`);
+                reloadData();
+                onClose();
+                return;
+            }
+            // Defesa: frontend detectou violação mas backend não bloqueou (ex.: veículo sem leitura prévia)
+            if (blockReason || requiresBudgetOverride) {
+                setAlertMessage(`Ordem salva com restrição. Aguarde avaliação do Administrador.`);
+                reloadData();
+                onClose();
+                return;
+            }
             if (res) {
-                 const fullOrderData = {
+                const fullOrderData = {
                     ...payload,
                     id: res.id || orderToEdit?.id,
                     authNumber: res.authNumber || orderToEdit?.authNumber,
-                    createdBy: user 
-                 };
-                 await processDistribution(fullOrderData);
+                    createdBy: user
+                };
+                await processDistribution(fullOrderData);
             }
             onClose();
         } catch (error) {
@@ -808,30 +826,32 @@ ${readingMsg}`;
                     </div>
                 </form>
 
-                <div className="p-2 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl shrink-0">
-                    <button onClick={onClose} className="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded transition">Cancelar</button>
-                    {blockReason || requiresBudgetOverride ? (
-                        <button onClick={handleSaveClick} className="px-3 py-1.5 bg-red-500 text-white font-bold text-xs rounded shadow hover:bg-red-600 transition flex items-center gap-1">
-                            <Lock size={12}/> Liberar
-                        </button>
-                    ) : (
-                        <button onClick={handleSaveClick} disabled={isSaving} className="px-3 py-1.5 bg-yellow-400 text-gray-900 font-bold text-xs rounded shadow hover:bg-yellow-500 transition disabled:opacity-50 flex items-center gap-1">
+                <div className="p-2 border-t bg-gray-50 flex justify-between items-center rounded-b-xl shrink-0">
+                    {blockReason && (
+                        <p className="text-[10px] font-bold text-red-600 flex items-center gap-1 max-w-xs">
+                            <Lock size={10}/> Salvo bloqueado — corrija ou aguarde liberação do Administrador
+                        </p>
+                    )}
+                    {requiresBudgetOverride && !blockReason && (
+                        <p className="text-[10px] font-bold text-orange-600 flex items-center gap-1">
+                            <Lock size={10}/> Orçamento atingido — aguarde liberação do Administrador
+                        </p>
+                    )}
+                    <div className="flex gap-2 ml-auto">
+                        <button onClick={onClose} className="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded transition">Cancelar</button>
+                        <button
+                            onClick={handleSaveClick}
+                            disabled={isSaving}
+                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 flex items-center gap-1 ${(blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-yellow-500'}`}
+                        >
                             {isSaving ? <Loader className="animate-spin" size={12}/> : (
-                                <><Send size={12} /> Salvar & Enviar</>
+                                <><Send size={12} /> {(blockReason || requiresBudgetOverride) ? 'Salvar Bloqueado' : 'Salvar & Enviar'}</>
                             )}
                         </button>
-                    )}
+                    </div>
                 </div>
             </div>
 
-            {showPasswordModal && (
-                <PasswordConfirmationModal
-                    message={passwordAction === 'blockOverride' ? `BLOQUEIO: ${blockReason}` : `BLOQUEIO FINANCEIRO: Orçamento excedido.`}
-                    onConfirm={executeSave}
-                    onClose={() => setShowPasswordModal(false)}
-                    apiClient={apiClient}
-                />
-            )}
         </div>
     );
 };

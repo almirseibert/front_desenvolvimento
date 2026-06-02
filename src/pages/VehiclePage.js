@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     HardHat, Users, Wrench, ShieldAlert, Edit, Clock, Trash2, PlusCircle,
     Download, ChevronsUpDown, AlertTriangle, Truck,
-    FileText, Ban, ClipboardCheck, Power, Package, Search, SlidersHorizontal,
+    FileText, Ban, ClipboardCheck, Power, Package, Search,
     CheckCircle2, Briefcase, Fuel
 } from 'lucide-react';
 
@@ -59,8 +59,6 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
     const [isChecklistModalOpen, setIsChecklistModalOpen] = useState(false);
     const [vehicleToToggleStatus, setVehicleToToggleStatus] = useState(null);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
-    const [showFilters, setShowFilters] = useState(false);
-
     const [filters, setFilters] = useState({
         type: 'todos', status: 'todos', search: '',
         group: 'todos', showInactive: false, showSucata: false
@@ -145,9 +143,15 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                 (v.marca || '').toLowerCase().includes(searchLower) ||
                 (v.modelo || '').toLowerCase().includes(searchLower);
 
-            const typeMatch   = filters.type   === 'todos' || v.tipo             === filters.type;
-            const statusMatch = filters.status  === 'todos' || v.computedStatus  === filters.status;
-            const groupMatch  = filters.group   === 'todos' || (groups[filters.group] && groups[filters.group].includes(v.tipo));
+            const typeMatch  = filters.type  === 'todos' || v.tipo === filters.type;
+            const groupMatch = filters.group === 'todos' || (groups[filters.group] && groups[filters.group].includes(v.tipo));
+
+            // '_manutencao' é valor especial que agrupa Em Manutenção + Aguardando Manutenção
+            const statusMatch = filters.status === 'todos' || (
+                filters.status === '_manutencao'
+                    ? ['Em Manutenção', 'Aguardando Manutenção'].includes(v.computedStatus)
+                    : v.computedStatus === filters.status
+            );
 
             if (v.isSucata   && !filters.showSucata)   return false;
             if (!v.ativo && !v.isSucata && !filters.showInactive) return false;
@@ -292,6 +296,22 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
     const activeFiltersCount = [filters.group, filters.type, filters.status].filter(f => f !== 'todos').length
         + (filters.showInactive ? 1 : 0) + (filters.showSucata ? 1 : 0);
 
+    // Controle de botões por role
+    const VEHICLE_ACTION_BUTTONS = {
+        admin:         ['edit', 'checklist', 'fines', 'history', 'delete', 'block', 'allocate'],
+        gerencia:      ['edit', 'checklist', 'fines', 'history', 'block', 'allocate'],
+        editor:        ['edit', 'checklist', 'fines', 'history', 'block', 'allocate'],
+        rh:            ['checklist', 'fines', 'history'],
+        faturamento:   ['checklist', 'history'],
+        abastecimento: ['checklist', 'history'],
+        oficina:       ['checklist', 'history'],
+    };
+    const canDo = (action) => {
+        const role = user?.user_type?.toLowerCase() || '';
+        const allowed = VEHICLE_ACTION_BUTTONS[role] || ['history'];
+        return allowed.includes(action);
+    };
+
     // ─── Render ───────────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen bg-gray-50/50">
@@ -320,144 +340,118 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                     </ProtectedComponent>
                 </div>
 
-                {/* ── Cards de Sumário ────────────────────────────────────── */}
-                {/* Frota Própria — terceirizados excluídos de todos os contadores */}
-                <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-0.5">Frota Própria</p>
-                    <div className="grid grid-cols-3 lg:grid-cols-6 gap-2.5">
+                {/* ── Cards de Sumário compactos (clicáveis) ─────────────── */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm px-3 py-2.5 flex flex-wrap items-center gap-1.5">
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-0.5 shrink-0">Própria:</span>
+                    {[
+                        { label: 'Ativos',      value: summary.total,       icon: Truck,         base: 'border-gray-200 bg-gray-50 text-gray-700',           active: 'border-gray-400 bg-gray-200',     filterKey: 'reset'       },
+                        { label: 'Disponíveis', value: summary.disponiveis, icon: CheckCircle2,  base: 'border-emerald-200 bg-emerald-50 text-emerald-700',   active: 'border-emerald-500 bg-emerald-100', filterKey: 'Disponível'  },
+                        { label: 'Em Obra',     value: summary.emObra,      icon: HardHat,       base: 'border-sky-200 bg-sky-50 text-sky-700',               active: 'border-sky-500 bg-sky-100',         filterKey: 'Em Obra'     },
+                        { label: 'Manutenção',  value: summary.manutencao,  icon: Wrench,        base: 'border-orange-200 bg-orange-50 text-orange-700',      active: 'border-orange-500 bg-orange-100',   filterKey: '_manutencao' },
+                        { label: 'Alertas',     value: summary.comAlerta,   icon: AlertTriangle, base: summary.comAlerta > 0 ? 'border-red-200 bg-red-50 text-red-600' : 'border-gray-200 bg-gray-50 text-gray-400', active: 'border-red-500 bg-red-100', filterKey: null },
+                        { label: 'Sucata',      value: summary.sucata,      icon: Package,       base: 'border-zinc-200 bg-zinc-100 text-zinc-600',           active: 'border-zinc-500 bg-zinc-200',       filterKey: '_sucata'     },
+                    ].map(({ label, value, icon: Icon, base, active, filterKey }) => {
+                        const isActive =
+                            filterKey === 'reset'      ? (filters.status === 'todos' && !filters.showSucata) :
+                            filterKey === '_sucata'    ? filters.showSucata :
+                            filterKey === '_manutencao'? filters.status === '_manutencao' :
+                            filterKey                  ? filters.status === filterKey :
+                            false;
+                        return (
+                            <button
+                                key={label}
+                                disabled={!filterKey}
+                                onClick={() => {
+                                    if (!filterKey) return;
+                                    if (filterKey === 'reset')       setFilters(p => ({ ...p, status: 'todos', showSucata: false, showInactive: false }));
+                                    else if (filterKey === '_sucata') setFilters(p => ({ ...p, status: 'Sucata', showSucata: true }));
+                                    else                             setFilters(p => ({ ...p, status: filterKey, showSucata: false }));
+                                }}
+                                className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium transition-all ${isActive ? active + ' ring-1 ring-offset-0' : base} ${filterKey ? 'cursor-pointer hover:shadow-sm hover:brightness-95' : 'cursor-default opacity-60'}`}
+                            >
+                                <Icon size={11} className="shrink-0"/>
+                                <span className="font-bold">{value}</span>
+                                <span className="opacity-75">{label}</span>
+                            </button>
+                        );
+                    })}
+
+                    {summary.terceiros > 0 && (<>
+                        <span className="text-gray-200 mx-0.5 text-base select-none">|</span>
+                        <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mr-0.5 shrink-0">Terceiros:</span>
                         {[
-                            { label: 'Ativos',      value: summary.total,       icon: Truck,         bg: 'bg-white',      text: 'text-gray-800',    sub: 'text-gray-400'    },
-                            { label: 'Disponíveis', value: summary.disponiveis, icon: CheckCircle2,  bg: 'bg-emerald-50', text: 'text-emerald-700', sub: 'text-emerald-400' },
-                            { label: 'Em Obra',     value: summary.emObra,      icon: HardHat,       bg: 'bg-sky-50',     text: 'text-sky-700',     sub: 'text-sky-400'     },
-                            { label: 'Manutenção',  value: summary.manutencao,  icon: Wrench,        bg: 'bg-orange-50',  text: 'text-orange-700',  sub: 'text-orange-400'  },
-                            { label: 'Alertas',     value: summary.comAlerta,   icon: AlertTriangle, bg: summary.comAlerta > 0 ? 'bg-red-50' : 'bg-white', text: summary.comAlerta > 0 ? 'text-red-600' : 'text-gray-500', sub: 'text-red-300' },
-                            { label: 'Sucata',      value: summary.sucata,      icon: Package,       bg: 'bg-zinc-100',   text: 'text-zinc-600',    sub: 'text-zinc-400'    },
-                        ].map(({ label, value, icon: Icon, bg, text, sub }) => (
-                            <div key={label} className={`${bg} rounded-xl border border-gray-100 shadow-sm p-3 md:p-4 flex items-center gap-2.5`}>
-                                <Icon size={18} className={`${text} shrink-0 opacity-70`}/>
-                                <div>
-                                    <p className={`text-lg md:text-xl font-bold leading-none ${text}`}>{value}</p>
-                                    <p className={`text-[10px] md:text-xs mt-0.5 ${sub}`}>{label}</p>
-                                </div>
-                            </div>
+                            { label: 'Total',       value: summary.terceiros,             dot: 'bg-purple-500' },
+                            { label: 'Disponíveis', value: summary.terceirosDisponiveis,  dot: 'bg-emerald-500' },
+                            { label: 'Em Obra',     value: summary.terceirosEmObra,       dot: 'bg-sky-500' },
+                            ...(summary.terceirosManutencao > 0 ? [{ label: 'Manutenção', value: summary.terceirosManutencao, dot: 'bg-orange-400' }] : []),
+                        ].map(({ label, value, dot }) => (
+                            <span key={label} className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-purple-100 bg-purple-50 text-purple-700 text-xs font-medium">
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}/>
+                                <span className="font-bold">{value}</span>
+                                <span className="opacity-75">{label}</span>
+                            </span>
                         ))}
-                    </div>
+                    </>)}
                 </div>
 
-                {/* Card de Terceirizados — contagem separada, não soma à frota própria */}
-                {summary.terceiros > 0 && (
-                    <div>
-                        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2 ml-0.5">Veículos Terceirizados</p>
-                        <div className="bg-purple-50 border border-purple-200 rounded-xl shadow-sm p-4 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-                            <div className="flex items-center gap-3 pr-0 sm:pr-5 sm:border-r border-purple-200">
-                                <div className="p-2 bg-purple-100 rounded-lg shrink-0">
-                                    <Briefcase size={18} className="text-purple-700"/>
-                                </div>
-                                <div>
-                                    <p className="text-2xl font-bold text-purple-800 leading-none">{summary.terceiros}</p>
-                                    <p className="text-xs text-purple-500 mt-0.5">Total cadastrado</p>
-                                </div>
-                            </div>
-                            <div className="flex flex-wrap gap-2.5 flex-1">
-                                <div className="flex items-center gap-2 bg-white border border-purple-100 rounded-lg px-3 py-2">
-                                    <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"/>
-                                    <span className="text-sm font-bold text-gray-800">{summary.terceirosDisponiveis}</span>
-                                    <span className="text-xs text-gray-500">Disponíveis</span>
-                                </div>
-                                <div className="flex items-center gap-2 bg-white border border-purple-100 rounded-lg px-3 py-2">
-                                    <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0"/>
-                                    <span className="text-sm font-bold text-gray-800">{summary.terceirosEmObra}</span>
-                                    <span className="text-xs text-gray-500">Em Obra</span>
-                                </div>
-                                {summary.terceirosManutencao > 0 && (
-                                    <div className="flex items-center gap-2 bg-white border border-purple-100 rounded-lg px-3 py-2">
-                                        <span className="w-2 h-2 rounded-full bg-orange-400 shrink-0"/>
-                                        <span className="text-sm font-bold text-gray-800">{summary.terceirosManutencao}</span>
-                                        <span className="text-xs text-gray-500">Manutenção</span>
-                                    </div>
-                                )}
-                            </div>
-                            <p className="hidden sm:block text-[10px] text-purple-400 whitespace-nowrap self-center">
-                                Não contabilizados na frota própria
-                            </p>
-                        </div>
-                    </div>
-                )}
-                {/* ── Filtros ─────────────────────────────────────────────── */}
+                {/* ── Filtros sempre visíveis ──────────────────────────────── */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-                    <div className="flex items-center gap-3 p-3 border-b border-gray-100">
-                        <div className="relative flex-1">
-                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
+                    <div className="p-3 flex flex-wrap items-center gap-2">
+                        {/* Busca */}
+                        <div className="relative flex-1 min-w-[180px]">
+                            <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"/>
                             <input
                                 type="text" name="search"
-                                placeholder="Buscar por placa, registro, marca ou modelo…"
+                                placeholder="Placa, registro, marca ou modelo…"
                                 value={filters.search} onChange={handleFilterChange}
-                                className="w-full pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none transition"
+                                className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 outline-none transition"
                             />
                         </div>
-                        <button
-                            onClick={() => setShowFilters(p => !p)}
-                            className={`flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border transition ${showFilters ? 'bg-yellow-50 border-yellow-300 text-yellow-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}
+                        {/* Selects */}
+                        <select name="group" value={filters.group} onChange={handleFilterChange} className="px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
+                            <option value="todos">Todos os tipos</option>
+                            {Object.keys(vehicleGroups).map(g => <option key={g} value={g}>{g}</option>)}
+                        </select>
+                        <select name="type" value={filters.type} onChange={handleFilterChange} className="px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
+                            <option value="todos">Todos os grupos</option>
+                            {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <select
+                            name="status"
+                            value={filters.status === '_manutencao' ? '_manutencao' : filters.status}
+                            onChange={handleFilterChange}
+                            className="px-2.5 py-1.5 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none"
                         >
-                            <SlidersHorizontal size={14}/>
-                            Filtros
+                            <option value="todos">Todos os status</option>
+                            <option value="_manutencao">Manutenção (qualquer)</option>
+                            {ALL_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+                        </select>
+                        {/* Toggles */}
+                        {[
+                            { name: 'showInactive', label: 'Inativos', activeColor: 'peer-checked:bg-yellow-400' },
+                            { name: 'showSucata',   label: `Sucatas (${summary.sucata})`, activeColor: 'peer-checked:bg-zinc-500' },
+                        ].map(({ name, label, activeColor }) => (
+                            <label key={name} className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                                <div className="relative">
+                                    <input type="checkbox" name={name} checked={filters[name]} onChange={handleFilterChange} className="sr-only peer"/>
+                                    <div className={`w-8 h-4 bg-gray-200 rounded-full transition-colors ${activeColor}`}/>
+                                    <div className="absolute top-0.5 left-0.5 w-3 h-3 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"/>
+                                </div>
+                                <span className="text-xs text-gray-600">{label}</span>
+                            </label>
+                        ))}
+                        {/* Contador + Limpar */}
+                        <div className="ml-auto flex items-center gap-3 shrink-0">
+                            <span className="text-xs text-gray-400">{filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''}</span>
                             {activeFiltersCount > 0 && (
-                                <span className="bg-yellow-400 text-gray-900 text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">{activeFiltersCount}</span>
+                                <button
+                                    onClick={() => setFilters({ type: 'todos', status: 'todos', search: '', group: 'todos', showInactive: false, showSucata: false })}
+                                    className="text-xs text-yellow-600 hover:text-yellow-700 font-medium"
+                                >
+                                    Limpar
+                                </button>
                             )}
-                        </button>
-                    </div>
-
-                    {showFilters && (
-                        <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-gray-50/60 border-b border-gray-100">
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Tipo</label>
-                                <select name="group" value={filters.group} onChange={handleFilterChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                    <option value="todos">Todos os tipos</option>
-                                    {Object.keys(vehicleGroups).map(g => <option key={g} value={g}>{g}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Grupo</label>
-                                <select name="type" value={filters.type} onChange={handleFilterChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                    <option value="todos">Todos os grupos</option>
-                                    {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-[10px] font-bold text-gray-500 uppercase mb-1.5 block">Status</label>
-                                <select name="status" value={filters.status} onChange={handleFilterChange} className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                    <option value="todos">Todos os status</option>
-                                    {ALL_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                                </select>
-                            </div>
-                            <div className="flex flex-col justify-center gap-3 pt-1">
-                                {[
-                                    { name: 'showInactive', label: 'Ver inativos',   activeColor: 'peer-checked:bg-yellow-400' },
-                                    { name: 'showSucata',   label: 'Ver sucatas',    activeColor: 'peer-checked:bg-zinc-500',  extra: `(${summary.sucata})` },
-                                ].map(({ name, label, activeColor, extra }) => (
-                                    <label key={name} className="flex items-center gap-2.5 cursor-pointer">
-                                        <div className="relative">
-                                            <input type="checkbox" name={name} checked={filters[name]} onChange={handleFilterChange} className="sr-only peer"/>
-                                            <div className={`w-9 h-5 bg-gray-200 rounded-full transition-colors ${activeColor}`}/>
-                                            <div className="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform peer-checked:translate-x-4"/>
-                                        </div>
-                                        <span className="text-sm text-gray-600">{label} {extra && <span className="text-gray-400 text-[11px]">{extra}</span>}</span>
-                                    </label>
-                                ))}
-                            </div>
                         </div>
-                    )}
-
-                    <div className="px-4 py-2 flex items-center justify-between text-xs text-gray-400">
-                        <span>{filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''} exibido{filteredVehicles.length !== 1 ? 's' : ''}</span>
-                        {activeFiltersCount > 0 && (
-                            <button
-                                onClick={() => setFilters({ type: 'todos', status: 'todos', search: '', group: 'todos', showInactive: false, showSucata: false })}
-                                className="text-yellow-600 hover:text-yellow-700 font-medium"
-                            >
-                                Limpar filtros
-                            </button>
-                        )}
                     </div>
                 </div>
 
@@ -569,26 +563,34 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                                     {/* Botões */}
                                     <div className="md:col-span-2 flex flex-wrap gap-1 justify-start md:justify-center items-center">
 
-                                        <button onClick={() => { setSelectedVehicle(vehicle); setIsChecklistModalOpen(true); }}
-                                            className={`p-1.5 rounded-md transition-colors ${hasChecklists ? 'text-purple-600 bg-purple-50 hover:bg-purple-100' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50'}`}
-                                            title="Checklists">
-                                            <ClipboardCheck size={15}/>
-                                        </button>
-                                        <button onClick={() => { setSelectedVehicle(vehicle); setIsFinesModalOpen(true); }}
-                                            className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors" title="Multas">
-                                            <ShieldAlert size={15}/>
-                                        </button>
-                                        <button onClick={() => { setSelectedVehicle(vehicle); setIsHistoryModalOpen(true); }}
-                                            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Histórico">
-                                            <Clock size={15}/>
-                                        </button>
+                                        {canDo('checklist') && (
+                                            <button onClick={() => { setSelectedVehicle(vehicle); setIsChecklistModalOpen(true); }}
+                                                className={`p-1.5 rounded-md transition-colors ${hasChecklists ? 'text-purple-600 bg-purple-50 hover:bg-purple-100' : 'text-gray-400 hover:text-purple-500 hover:bg-purple-50'}`}
+                                                title="Checklists">
+                                                <ClipboardCheck size={15}/>
+                                            </button>
+                                        )}
+                                        {canDo('fines') && (
+                                            <button onClick={() => { setSelectedVehicle(vehicle); setIsFinesModalOpen(true); }}
+                                                className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors" title="Multas">
+                                                <ShieldAlert size={15}/>
+                                            </button>
+                                        )}
+                                        {canDo('history') && (
+                                            <button onClick={() => { setSelectedVehicle(vehicle); setIsHistoryModalOpen(true); }}
+                                                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors" title="Histórico">
+                                                <Clock size={15}/>
+                                            </button>
+                                        )}
 
-                                        <ProtectedComponent requiredPermission="editor">
+                                        {canDo('edit') && (
                                             <button onClick={() => handleEdit(vehicle)}
                                                 className="p-1.5 text-gray-400 hover:text-yellow-600 hover:bg-yellow-50 rounded-md transition-colors" title="Editar">
                                                 <Edit size={15}/>
                                             </button>
+                                        )}
 
+                                        {canDo('allocate') && (<>
                                             {/* Ações de alocação — apenas ativos e não-sucata */}
                                             {vehicle.ativo && !vehicle.isSucata && vehicle.computedStatus === 'Disponível' && (<>
                                                 <button onClick={() => { setSelectedVehicle(vehicle); setIsObraAllocationModalOpen(true); }} className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors" title="Alocar Obra"><HardHat size={15}/></button>
@@ -604,23 +606,22 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                                             {vehicle.ativo && !vehicle.isSucata && (vehicle.computedStatus === 'Em Manutenção' || vehicle.computedStatus === 'Aguardando Manutenção') && (
                                                 <button onClick={() => { setSelectedVehicle(vehicle); setIsMaintenanceModalOpen(true); }} className="p-1.5 text-emerald-500 bg-emerald-50 hover:bg-emerald-100 rounded-md border border-emerald-100 transition-colors" title="Finalizar Manutenção"><Wrench size={15}/></button>
                                             )}
+                                        </>)}
 
-                                            {/* Ativar / Inativar — não exibe para sucata */}
-                                            {!vehicle.isSucata && (
-                                                <button onClick={() => setVehicleToToggleStatus(vehicle)}
-                                                    className={`p-1.5 rounded-md transition-colors ${vehicle.ativo ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-emerald-500 hover:bg-emerald-50'}`}
-                                                    title={vehicle.ativo ? 'Inativar Veículo' : 'Reativar Veículo'}>
-                                                    <Power size={15}/>
-                                                </button>
-                                            )}
+                                        {canDo('block') && !vehicle.isSucata && (
+                                            <button onClick={() => setVehicleToToggleStatus(vehicle)}
+                                                className={`p-1.5 rounded-md transition-colors ${vehicle.ativo ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-emerald-500 hover:bg-emerald-50'}`}
+                                                title={vehicle.ativo ? 'Inativar Veículo' : 'Reativar Veículo'}>
+                                                <Power size={15}/>
+                                            </button>
+                                        )}
 
-                                            <ProtectedComponent requiredPermission="admin">
-                                                <button onClick={() => { setSelectedVehicle(vehicle); setIsDeleteModalOpen(true); }}
-                                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Excluir permanentemente">
-                                                    <Trash2 size={15}/>
-                                                </button>
-                                            </ProtectedComponent>
-                                        </ProtectedComponent>
+                                        {canDo('delete') && (
+                                            <button onClick={() => { setSelectedVehicle(vehicle); setIsDeleteModalOpen(true); }}
+                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors" title="Excluir permanentemente">
+                                                <Trash2 size={15}/>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             );
@@ -644,7 +645,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                             {' '}Estes veículos ficam excluídos de todos os cálculos do sistema e servem apenas como banco de peças.
                         </span>
                         <button
-                            onClick={() => { setShowFilters(true); setFilters(p => ({ ...p, showSucata: true })); }}
+                            onClick={() => { setFilters(p => ({ ...p, showSucata: true })); }}
                             className="ml-auto whitespace-nowrap text-zinc-700 font-semibold hover:underline text-xs"
                         >
                             Visualizar →

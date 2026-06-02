@@ -27,7 +27,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
         if (filters.groupId) {
             list = list.filter(v => v.grupo === filters.groupId);
         }
-        return list.sort((a, b) => sortAlphaNum(a.placa || a.nome, b.placa || b.nome));
+        return list.sort((a, b) => sortAlphaNum(a.registroInterno || a.placa, b.registroInterno || b.placa));
     }, [vehicles, filters.groupId]);
 
     const reportData = useMemo(() => {
@@ -44,16 +44,17 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
             filteredRefuelings = filteredRefuelings.filter(r => new Date(r.data || r.dataAbastecimento).getTime() <= end);
         }
         if (filters.obraId) {
-            filteredRefuelings = filteredRefuelings.filter(r => r.obraId === filters.obraId);
+            filteredRefuelings = filteredRefuelings.filter(r => (r.obraId || r.obraAtual) === filters.obraId);
         }
         if (filters.vehicleIds.length > 0) {
-            filteredRefuelings = filteredRefuelings.filter(r => filters.vehicleIds.includes(r.veiculoId));
+            filteredRefuelings = filteredRefuelings.filter(r => filters.vehicleIds.includes(r.vehicleId || r.veiculoId));
         }
 
         const grouped = {};
 
         filteredRefuelings.forEach(r => {
-            const vId = r.veiculoId;
+            const vId = r.vehicleId || r.veiculoId;
+            if (!vId) return;
             if (!grouped[vId]) {
                 const vehicleObj = vehicles.find(v => v.id === vId) || {};
                 const unit = getGroupUnit(vehicleObj.tipo);
@@ -72,9 +73,12 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                 };
             }
 
-            grouped[vId].totalLiters += parseFloat(r.quantidade || 0);
-            
-            const leituraAtual = parseFloat(grouped[vId].isKm ? r.odometroAtual : r.horimetroAtual);
+            // Campos reais da tabela refuelings: litrosAbastecidos, odometro, horimetro
+            grouped[vId].totalLiters += parseFloat(r.litrosAbastecidos || r.quantidade || 0);
+
+            const leituraAtual = parseFloat(grouped[vId].isKm
+                ? (r.odometro || r.odometroAtual)
+                : (r.horimetro || r.horimetroAtual));
             if (!isNaN(leituraAtual) && leituraAtual > 0) {
                 grouped[vId].leituras.push(leituraAtual);
             }
@@ -88,10 +92,12 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                 const min = Math.min(...item.leituras);
                 const max = Math.max(...item.leituras);
                 totalUsage = max - min;
-            } else if (item.leituras.length === 1 && filteredRefuelings.find(r=> r.veiculoId === item.vehicleId)?.odometroAnterior) {
-               const ref = filteredRefuelings.find(r=> r.veiculoId === item.vehicleId);
-               const anterior = parseFloat(item.isKm ? ref.odometroAnterior : ref.horimetroAnterior);
-               if(anterior > 0) totalUsage = item.leituras[0] - anterior;
+            } else if (item.leituras.length === 1) {
+               const ref = filteredRefuelings.find(r => (r.vehicleId || r.veiculoId) === item.vehicleId);
+               const anterior = parseFloat(item.isKm
+                   ? (ref?.odometroAnterior || 0)
+                   : (ref?.horimetroAnterior || 0));
+               if (anterior > 0) totalUsage = item.leituras[0] - anterior;
             }
 
             if (totalUsage > 0 && item.totalLiters > 0) {
@@ -187,9 +193,13 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                     onChange={handleVehicleSelection} 
                     className="w-full h-32 p-2 border rounded bg-white text-sm custom-scrollbar focus:ring-2 focus:ring-teal-500"
                 >
-                    {filteredVehiclesList.map(v => (
-                        <option key={v.id} value={v.id}>{v.placa} - {v.nome} ({v.grupo})</option>
-                    ))}
+                    {filteredVehiclesList.map(v => {
+                        const grupoOuSubgrupo = v.sub_tipo || v.tipo || v.grupo || '';
+                        const partes = [v.registroInterno, v.placa, grupoOuSubgrupo, v.modelo].filter(Boolean);
+                        return (
+                            <option key={v.id} value={v.id}>{partes.join(' - ')}</option>
+                        );
+                    })}
                 </select>
                 <p className="text-xs text-gray-400 mt-1">Se nenhum for selecionado, todos os visíveis no filtro serão considerados.</p>
             </div>

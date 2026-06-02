@@ -88,7 +88,7 @@ const AllocationForecastPage = ({ onBack }) => {
                                 <tr>
                                     <th className="px-6 py-4">Equipamento</th>
                                     <th className="px-6 py-4">Obra Atual</th>
-                                    <th className="px-6 py-4">Tipo</th>
+                                    <th className="px-6 py-4">Grupo</th>
                                     <th className="px-6 py-4">Previsão Saída</th>
                                     <th className="px-6 py-4">Próximo Destino</th>
                                 </tr>
