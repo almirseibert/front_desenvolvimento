@@ -127,14 +127,13 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
 
     useEffect(() => {
         const active = getActiveGroupId(currentPage);
-        if (active) setExpandedGroups(prev => new Set([...prev, active]));
+        if (active) setExpandedGroups(new Set([active]));
     }, [currentPage]);
 
     const toggleGroup = (groupId) => {
         setExpandedGroups(prev => {
-            const next = new Set(prev);
-            next.has(groupId) ? next.delete(groupId) : next.add(groupId);
-            return next;
+            if (prev.has(groupId)) return new Set();
+            return new Set([groupId]);
         });
     };
 
@@ -308,20 +307,20 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
                                     <button
                                         onClick={() => toggleGroup(group.id)}
                                         className="flex items-center w-full px-2 py-1.5 rounded-md transition-colors"
-                                        style={{ color: active ? '#9E7A42' : '#7a6e60' }}
-                                        onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#c4b8a8'; } }}
-                                        onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#7a6e60'; } }}
+                                        style={{ color: active ? '#9E7A42' : '#a89880' }}
+                                        onMouseEnter={e => { if (!active) { e.currentTarget.style.color = '#d4c8b8'; } }}
+                                        onMouseLeave={e => { if (!active) { e.currentTarget.style.color = '#a89880'; } }}
                                     >
-                                        <span className="mr-2 shrink-0" style={{ color: active ? '#9E7A42' : '#7a6e60' }}>
+                                        <span className="mr-2 shrink-0" style={{ color: active ? '#9E7A42' : '#a89880' }}>
                                             {group.icon}
                                         </span>
                                         <span
                                             className="flex-1 text-left uppercase"
-                                            style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.10em' }}
+                                            style={{ fontSize: 12, fontWeight: 700, letterSpacing: '0.06em' }}
                                         >
                                             {group.label}
                                         </span>
-                                        <span style={{ color: '#3d3528' }}>
+                                        <span style={{ color: active ? '#9E7A42' : '#7a6e60' }}>
                                             {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                                         </span>
                                     </button>
