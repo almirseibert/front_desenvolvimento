@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { Shield, Users, Layers, MessageSquare, Settings, Server, Truck, Fuel } from 'lucide-react';
+import { Shield, Users, Layers, MessageSquare, Settings, Server, Truck, Fuel, AlertTriangle, Bell } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/apiClient';
 
@@ -8,15 +8,19 @@ import AccessGroupsTab from '../components/admin/AccessGroupsTab';
 import CommunicationTab from '../components/admin/CommunicationTab';
 import ConfiguracoesTab from '../components/admin/ConfiguracoesTab';
 import SystemTab from '../components/admin/SystemTab';
-import VehicleTaxonomyTab from '../components/admin/VehicleTaxonomyTab';
+import VehicleAdminTab from '../components/admin/VehicleAdminTab';
 import AbastecimentoAdminTab from '../components/admin/AbastecimentoAdminTab';
+import SolicitacaoErrosTab from '../components/admin/SolicitacaoErrosTab';
+import NotificacoesAdminTab from '../components/admin/NotificacoesAdminTab';
 
 const TABS = [
   { id: 'usuarios',      label: 'Usuários',         icon: <Users size={15} /> },
   { id: 'grupos',        label: 'Grupos de Acesso',  icon: <Layers size={15} /> },
   { id: 'veiculos',      label: 'Veículos',          icon: <Truck size={15} /> },
   { id: 'abastecimento', label: 'Abastecimento',     icon: <Fuel size={15} /> },
+  { id: 'erros_app',     label: 'Erros App',         icon: <AlertTriangle size={15} /> },
   { id: 'comunicacao',   label: 'Comunicação',       icon: <MessageSquare size={15} /> },
+  { id: 'notificacoes',  label: 'Notificações',      icon: <Bell size={15} /> },
   { id: 'configuracoes', label: 'Configurações',     icon: <Settings size={15} /> },
   { id: 'sistema',       label: 'Sistema',           icon: <Server size={15} /> },
 ];
@@ -106,16 +110,22 @@ const AdminPage = ({ socket }) => {
           />
         )}
         {activeTab === 'veiculos' && (
-          <VehicleTaxonomyTab />
+          <VehicleAdminTab />
         )}
         {activeTab === 'abastecimento' && (
           <AbastecimentoAdminTab />
+        )}
+        {activeTab === 'erros_app' && (
+          <SolicitacaoErrosTab />
         )}
         {activeTab === 'comunicacao' && (
           <CommunicationTab
             socket={socket}
             users={users}
           />
+        )}
+        {activeTab === 'notificacoes' && (
+          <NotificacoesAdminTab />
         )}
         {activeTab === 'configuracoes' && (
           <ConfiguracoesTab />

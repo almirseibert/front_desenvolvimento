@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useAuth } from '../contexts/AuthContext'; 
+import { useAuth } from '../contexts/AuthContext';
+import SearchableSelect from '../components/SearchableSelect';
 
 // Importamos checkVehicleRestrictions para verificar se existem alertas de revisão/doc
 import { checkVehicleRestrictions } from '../utils/vehicleRules';
@@ -588,7 +589,7 @@ const TireTransactionModal = ({ type, vehicle, position, tire, stockTires, onClo
                 <p className="text-sm text-gray-600 mb-4">{vehicle.placa} - {position}</p>
                 <div className="space-y-3">
                     {type === 'install' ? (
-                        <div><label className="block text-sm font-bold mb-1">Selecionar Pneu do Estoque</label><select className="w-full p-2 border rounded" value={formData.tireId} onChange={e => setFormData({...formData, tireId: e.target.value})}><option value="">-- Selecione --</option>{stockTires.map(t => <option key={t.id} value={t.id}>{t.fireNumber} - {t.brand} ({t.size})</option>)}</select></div>
+                        <div><label className="block text-sm font-bold mb-1">Selecionar Pneu do Estoque</label><SearchableSelect items={stockTires} value={formData.tireId} onChange={item => setFormData({...formData, tireId: item?.id || ''})} getLabel={t => `${t.fireNumber} - ${t.brand}`} getSubLabel={t => t.size || ''} placeholder="-- Selecione --" /></div>
                     ) : <div className="p-3 bg-red-50 font-bold text-red-800 border border-red-200 rounded">Removendo: {tire?.fireNumber}</div>}
                     
                     <div className="grid grid-cols-2 gap-2">
@@ -690,8 +691,8 @@ const StockActionModal = ({ tire, employees, obras, onClose, onSave }) => {
                         {actionType === 'transfer' && (
                             <>
                                 <div className="p-2 bg-orange-50 text-orange-800 text-xs rounded">Ao confirmar, será gerado um Termo de Responsabilidade PDF.</div>
-                                <div><label className="block text-sm font-bold mb-1">Funcionário</label><select required className="w-full p-2 border rounded" value={formData.employeeId} onChange={e => setFormData({...formData, employeeId: e.target.value})}><option value="">-- Selecione --</option>{employees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}</select></div>
-                                <div><label className="block text-sm font-bold mb-1">Obra</label><select required className="w-full p-2 border rounded" value={formData.obraId} onChange={e => setFormData({...formData, obraId: e.target.value})}><option value="">-- Selecione --</option>{obras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}</select></div>
+                                <div><label className="block text-sm font-bold mb-1">Funcionário</label><SearchableSelect items={employees} value={formData.employeeId} onChange={item => setFormData({...formData, employeeId: item?.id || ''})} getLabel={e => e.nome} getSubLabel={e => e.profissao || ''} placeholder="-- Selecione --" required /></div>
+                                <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => o.status === 'ativa').map(o => ({...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
                             </>
                         )}
                         {actionType === 'maintenance' && <div><label className="block text-sm font-bold mb-1">Fornecedor</label><input required className="w-full p-2 border rounded" value={formData.vendorName} onChange={e => setFormData({...formData, vendorName: e.target.value})} placeholder="Nome do fornecedor" /></div>}
@@ -718,9 +719,9 @@ const SpareTireModal = ({ stockTires, employees, obras, onClose, onSave }) => {
                 <h3 className="text-xl font-bold mb-4">Enviar Step/Reserva (Rápido)</h3>
                 <form onSubmit={handleSubmit}>
                     <div className="space-y-3">
-                        <div><label className="block text-sm font-bold mb-1">Pneu</label><select required className="w-full p-2 border rounded" value={formData.tireId} onChange={e => setFormData({...formData, tireId: e.target.value})}><option value="">-- Selecione --</option>{stockTires.map(t => <option key={t.id} value={t.id}>{t.fireNumber} - {t.brand}</option>)}</select></div>
-                        <div><label className="block text-sm font-bold mb-1">Funcionário</label><select required className="w-full p-2 border rounded" value={formData.employeeId} onChange={e => setFormData({...formData, employeeId: e.target.value})}><option value="">-- Selecione --</option>{employees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}</select></div>
-                        <div><label className="block text-sm font-bold mb-1">Obra</label><select required className="w-full p-2 border rounded" value={formData.obraId} onChange={e => setFormData({...formData, obraId: e.target.value})}><option value="">-- Selecione --</option>{obras.filter(o => o.status === 'ativa').map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}</select></div>
+                        <div><label className="block text-sm font-bold mb-1">Pneu</label><SearchableSelect items={stockTires} value={formData.tireId} onChange={item => setFormData({...formData, tireId: item?.id || ''})} getLabel={t => `${t.fireNumber} - ${t.brand}`} placeholder="-- Selecione --" required /></div>
+                        <div><label className="block text-sm font-bold mb-1">Funcionário</label><SearchableSelect items={employees} value={formData.employeeId} onChange={item => setFormData({...formData, employeeId: item?.id || ''})} getLabel={e => e.nome} getSubLabel={e => e.profissao || ''} placeholder="-- Selecione --" required /></div>
+                        <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => o.status === 'ativa').map(o => ({...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
                         <div><label className="block text-sm font-bold mb-1">Obs</label><textarea className="w-full p-2 border rounded" rows="3" value={formData.observation} onChange={e => setFormData({...formData, observation: e.target.value})}></textarea></div>
                     </div>
                     <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button><button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded">Enviar</button></div>

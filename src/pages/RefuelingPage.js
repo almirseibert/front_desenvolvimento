@@ -7,6 +7,7 @@ import autoTable from 'jspdf-autotable';
 import RefuelingHistory from '../components/RefuelingHistory';
 import RefuelingOrderModal from '../components/modals/RefuelingOrderModal';
 import ConfirmRefuelingModal from '../components/modals/ConfirmRefuelingModal';
+import SearchableSelect from '../components/SearchableSelect';
 
 const RefuelingPage = ({
     user,
@@ -435,16 +436,16 @@ const RefuelingPage = ({
                     <div className="bg-white p-6 rounded-xl shadow-sm " style={{ border: "1px solid #f0ebe3" }}>
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
                             <h2 className="text-lg font-bold text-gray-800">Análise Detalhada por Veículo</h2>
-                            <select 
-                                value={selectedVehicleId} 
-                                onChange={(e) => setSelectedVehicleId(e.target.value)} 
-                                className="p-2 border rounded-lg bg-gray-50"
-                            >
-                                <option value="">-- Selecione o Veículo --</option>
-                                {sortedVehicles.map(v => (
-                                    <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>
-                                ))}
-                            </select>
+                            <div className="min-w-[280px]">
+                                <SearchableSelect
+                                    items={sortedVehicles}
+                                    value={selectedVehicleId}
+                                    onChange={(item) => setSelectedVehicleId(item?.id || '')}
+                                    getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                    getSubLabel={(v) => v.modelo || ''}
+                                    placeholder="-- Selecione o Veículo --"
+                                />
+                            </div>
                         </div>
                         <RefuelingHistory 
                             vehicleId={selectedVehicleId}

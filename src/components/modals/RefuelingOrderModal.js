@@ -198,9 +198,13 @@ const RefuelingOrderModal = ({
             .sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || ''))
     , [vehicles]);
     const sortedEmployees = useMemo(() => [...employees].sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [employees]);
+    // Postos disponíveis para ordens: parceiros de tipo 'posto' E comboios internos
+    // ('comboio'). Excluímos qualquer um marcado como bloqueado.
     const sortedPartners = useMemo(() =>
         [...partners]
-            .filter(p => p.tipo_parceiro === 'posto' && p.status_operacional !== 'Bloqueado')
+            .filter(p => (p.tipo_parceiro === 'posto' || p.tipo_parceiro === 'comboio')
+                && p.status_operacional !== 'Bloqueado'
+                && p.status_operacional !== 'BLOQUEADO')
             .sort((a,b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''))
     , [partners]);
     const sortedObras = useMemo(() => [...obras].filter(o => o.status === 'ativa').sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);

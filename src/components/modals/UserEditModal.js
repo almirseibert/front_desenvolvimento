@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { X, User } from 'lucide-react';
+import SearchableSelect from '../SearchableSelect';
 
 const ROLES = [
   { value: 'admin',         label: 'Administrador' },
@@ -108,14 +109,13 @@ const UserEditModal = ({ user, groups = [], onClose, onSave }) => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Grupo de Acesso</label>
-              <select
+              <SearchableSelect
+                items={groups.map(g => ({ ...g, _label: g.name }))}
                 value={form.group_id}
-                onChange={e => set('group_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm bg-white"
-              >
-                <option value="">Nenhum</option>
-                {groups.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
-              </select>
+                onChange={(item) => set('group_id', item?.id || '')}
+                getLabel={(g) => g.name}
+                placeholder="Nenhum"
+              />
             </div>
           </div>
 

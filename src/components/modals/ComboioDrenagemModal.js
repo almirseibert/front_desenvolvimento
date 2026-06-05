@@ -1,5 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X } from 'lucide-react';
+import SearchableSelect from '../SearchableSelect';
 
 const ComboioDrenagemModal = ({ 
     user, 
@@ -84,18 +85,28 @@ const ComboioDrenagemModal = ({
                     
                     <div>
                         <label className="block text-sm font-medium mb-1">Drenar de (Origem) *</label>
-                        <select name="drainingVehicleId" value={formData.drainingVehicleId} onChange={handleChange} className="w-full p-2 border rounded" required>
-                            <option value="">Selecione...</option>
-                            {drainableVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.modelo}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={drainableVehicles}
+                            value={formData.drainingVehicleId}
+                            onChange={(item) => handleChange({ target: { name: 'drainingVehicleId', value: item?.id || '' } })}
+                            getLabel={(v) => `${v.registroInterno} - ${v.modelo || ''}`.trim()}
+                            getSubLabel={(v) => v.placa || ''}
+                            placeholder="Selecione o veículo de origem..."
+                            required
+                        />
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium mb-1">Para Comboio (Destino) *</label>
-                        <select name="comboioVehicleId" value={formData.comboioVehicleId} onChange={handleChange} className="w-full p-2 border rounded" required>
-                            <option value="">Selecione...</option>
-                            {comboioVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={comboioVehicles}
+                            value={formData.comboioVehicleId}
+                            onChange={(item) => handleChange({ target: { name: 'comboioVehicleId', value: item?.id || '' } })}
+                            getLabel={(v) => v.registroInterno || ''}
+                            getSubLabel={(v) => v.placa || ''}
+                            placeholder="Selecione o comboio destino..."
+                            required
+                        />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">

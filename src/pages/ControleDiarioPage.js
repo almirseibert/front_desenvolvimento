@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import apiClient from '../services/apiClient';
 import SearchableObraSelect from '../components/SearchableObraSelect';
+import SearchableSelect from '../components/SearchableSelect';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -416,16 +417,23 @@ const ControleDiarioPage = ({
                         />
                     )}
                     {filterType === 'vehicleType' && (
-                        <select value={selectedVehicleType} onChange={e => setSelectedVehicleType(e.target.value)} className="w-full p-2 border rounded-md bg-white">
-                            <option value="">Selecione um Tipo</option>
-                            {vehicleTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={vehicleTypes.map(t => ({ id: t, label: t }))}
+                            value={selectedVehicleType}
+                            onChange={(item) => setSelectedVehicleType(item?.id || '')}
+                            getLabel={(t) => t.label}
+                            placeholder="Selecione um Tipo"
+                        />
                     )}
                      {filterType === 'employee' && (
-                        <select value={selectedEmployeeId} onChange={e => setSelectedEmployeeId(e.target.value)} className="w-full p-2 border rounded-md bg-white">
-                            <option value="">Selecione um Funcionário</option>
-                            {sortedEmployees.map(emp => <option key={emp.id} value={emp.id}>{emp.nome}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={sortedEmployees}
+                            value={selectedEmployeeId}
+                            onChange={(item) => setSelectedEmployeeId(item?.id || '')}
+                            getLabel={(e) => e.nome}
+                            getSubLabel={(e) => e.profissao || ''}
+                            placeholder="Selecione um Funcionário"
+                        />
                     )}
                 </div>
             </div>

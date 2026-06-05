@@ -16,6 +16,7 @@ import VehicleDetailModal from '../components/VehicleDetailModal';
 import OperationalAssignmentModal from '../components/OperationalAssignmentModal';
 import ObraAllocationModal from '../components/ObraAllocationModal';
 import HistoryModal from '../components/HistoryModal';
+import SearchableSelect from '../components/SearchableSelect';
 import ChecklistModal from '../components/ChecklistModal';
 
 import { getVehicleMainReading, checkVehicleRestrictions } from '../utils/vehicleRules';
@@ -430,10 +431,15 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                             <option value="todos">Todos os tipos</option>
                             {Object.keys(vehicleGroups).map(g => <option key={g} value={g}>{g}</option>)}
                         </select>
-                        <select name="type" value={filters.type} onChange={handleFilterChange} className="px-2.5 py-1.5 text-sm rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none" style={{ border: "1px solid #f0ebe3" }}>
-                            <option value="todos">Todos os grupos</option>
-                            {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
+                        <div className="min-w-[180px]">
+                            <SearchableSelect
+                                items={[{ id: 'todos', label: 'Todos os grupos' }, ...vehicleTypes.map(t => ({ id: t, label: t }))]}
+                                value={filters.type || 'todos'}
+                                onChange={(item) => handleFilterChange({ target: { name: 'type', value: item?.id || 'todos' } })}
+                                getLabel={(t) => t.label}
+                                placeholder="Todos os grupos"
+                            />
+                        </div>
                         <select
                             name="status"
                             value={filters.status === '_manutencao' ? '_manutencao' : filters.status}

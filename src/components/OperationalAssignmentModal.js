@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo } from 'react';
 import { Loader, X, AlertTriangle, Shield, HardHat } from 'lucide-react';
 import { checkVehicleRestrictions } from '../utils/vehicleRules';
+import SearchableSelect from './SearchableSelect';
 
 const OperationalAssignmentModal = ({ user, vehicle, employees = [], revisions = [], onClose, setAlertMessage, apiClient, reloadData, operationalSubGroups = [], PasswordConfirmationModal }) => {
     
@@ -174,10 +175,14 @@ const OperationalAssignmentModal = ({ user, vehicle, employees = [], revisions =
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Alocar para Funcionário *</label>
-                                        <select value={employeeId} onChange={e => setEmployeeId(e.target.value)} className="w-full p-2 border rounded bg-white focus:ring-2 focus:ring-blue-500 text-sm" required>
-                                            <option value="">Selecione...</option>
-                                            {availableEmployees.map(e => <option key={e.id} value={e.id}>{e.nome} ({e.funcao})</option>)}
-                                        </select>
+                                        <SearchableSelect
+                                            items={availableEmployees}
+                                            value={employeeId}
+                                            onChange={(item) => setEmployeeId(item?.id || '')}
+                                            getLabel={(e) => `${e.nome}${e.funcao ? ` (${e.funcao})` : ''}`}
+                                            placeholder="Selecione..."
+                                            required
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Observações</label>

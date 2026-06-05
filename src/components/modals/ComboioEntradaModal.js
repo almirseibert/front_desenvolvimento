@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
 import { Loader, X, AlertTriangle, FileText } from 'lucide-react';
+import SearchableSelect from '../SearchableSelect';
 
 const ComboioEntradaModal = ({ 
     user, 
@@ -182,10 +183,15 @@ const ComboioEntradaModal = ({
 
                         <div className="md:col-span-2">
                             <label className="block font-medium mb-1">Posto Fornecedor *</label>
-                            <select name="partnerId" value={formData.partnerId} onChange={handleChange} className="w-full p-2 border rounded" required>
-                                <option value="">Selecione...</option>
-                                {sortedPartners.map(p => <option key={p.id} value={p.id}>{p.razaoSocial}</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={sortedPartners}
+                                value={formData.partnerId}
+                                onChange={(item) => handleChange({ target: { name: 'partnerId', value: item?.id || '' } })}
+                                getLabel={(p) => p.razaoSocial || ''}
+                                getSubLabel={(p) => p.cidade || ''}
+                                placeholder="Selecione o posto..."
+                                required
+                            />
                         </div>
 
                         <div>
@@ -228,10 +234,15 @@ const ComboioEntradaModal = ({
 
                         <div>
                             <label className="block font-medium mb-1">Funcionário *</label>
-                            <select name="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full p-2 border rounded" required>
-                                <option value="">Selecione...</option>
-                                {sortedEmployees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={sortedEmployees}
+                                value={formData.employeeId}
+                                onChange={(item) => handleChange({ target: { name: 'employeeId', value: item?.id || '' } })}
+                                getLabel={(e) => e.nome || ''}
+                                getSubLabel={(e) => e.profissao || ''}
+                                placeholder="Selecione o funcionário..."
+                                required
+                            />
                         </div>
 
                         <div className="md:col-span-2">

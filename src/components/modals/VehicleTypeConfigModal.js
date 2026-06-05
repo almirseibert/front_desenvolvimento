@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Trash2, Edit2, Save, Loader, AlertTriangle, ChevronDown, ChevronUp, Fuel } from 'lucide-react';
 import { vehicleGroups, vehicleSubTypes, getGroupUnit, getReadingSourceForUnit } from '../../utils/vehicleRules';
+import SearchableSelect from '../SearchableSelect';
 
 const EMPTY_FORM = {
     tipo: '',
@@ -174,14 +175,13 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                 {/* Tipo */}
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Grupo *</label>
-                                    <select
+                                    <SearchableSelect
+                                        items={allTypes.map(t => ({ id: t, label: t }))}
                                         value={form.tipo}
-                                        onChange={e => handleTipoChange(e.target.value)}
-                                        className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm"
-                                    >
-                                        <option value="">Selecione...</option>
-                                        {allTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                                    </select>
+                                        onChange={(item) => handleTipoChange(item?.id || '')}
+                                        getLabel={(t) => t.label}
+                                        placeholder="Selecione..."
+                                    />
                                 </div>
 
                                 {/* Subgrupo (condicional) */}
@@ -189,15 +189,14 @@ const VehicleTypeConfigModal = ({ onClose, apiClient, setAlertMessage }) => {
                                     <label className="block text-xs font-bold text-gray-600 uppercase mb-1">
                                         Subgrupo {subTypesForSelected.length > 0 ? '' : '(sem subgrupos)'}
                                     </label>
-                                    <select
+                                    <SearchableSelect
+                                        items={subTypesForSelected.map(st => ({ id: st, label: st }))}
                                         value={form.sub_tipo}
-                                        onChange={e => setForm(prev => ({ ...prev, sub_tipo: e.target.value }))}
+                                        onChange={(item) => setForm(prev => ({ ...prev, sub_tipo: item?.id || '' }))}
+                                        getLabel={(t) => t.label}
+                                        placeholder="Nenhum (vale para todo o grupo)"
                                         disabled={subTypesForSelected.length === 0}
-                                        className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm disabled:bg-gray-100 disabled:text-gray-400"
-                                    >
-                                        <option value="">Nenhum (vale para todo o grupo)</option>
-                                        {subTypesForSelected.map(st => <option key={st} value={st}>{st}</option>)}
-                                    </select>
+                                    />
                                 </div>
 
                                 {/* Média de consumo */}

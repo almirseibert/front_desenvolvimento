@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Users, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] }) => {
     // Filtros
@@ -238,10 +239,13 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                     <option value="">Cadastro: Todos</option>
                 </select>
 
-                <select value={filters.cidade} onChange={e => setFilters({...filters, cidade: e.target.value})} className="input-field">
-                    <option value="">Todas as Cidades</option>
-                    {[...new Set(employees.map(e => e.cidade).filter(Boolean))].sort(sortAlphaNum).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+                <SearchableSelect
+                    items={[...new Set(employees.map(e => e.cidade).filter(Boolean))].sort(sortAlphaNum).map(c => ({ id: c, label: c }))}
+                    value={filters.cidade}
+                    onChange={(item) => setFilters({...filters, cidade: item?.id || ''})}
+                    getLabel={(c) => c.label}
+                    placeholder="Todas as Cidades"
+                />
 
                 <select value={filters.allocationStatus} onChange={e => setFilters({...filters, allocationStatus: e.target.value})} className="input-field bg-yellow-50 border-yellow-200 text-yellow-800 font-medium">
                     <option value="todos">Situação: Todos</option>
@@ -249,10 +253,13 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                     <option value="disponivel">Apenas Disponíveis</option>
                 </select>
 
-                <select value={filters.funcao} onChange={e => setFilters({...filters, funcao: e.target.value})} className="input-field">
-                    <option value="">Todas as Funções</option>
-                    {[...new Set(employees.map(e => e.funcao).filter(Boolean))].sort(sortAlphaNum).map(f => <option key={f} value={f}>{f}</option>)}
-                </select>
+                <SearchableSelect
+                    items={[...new Set(employees.map(e => e.funcao).filter(Boolean))].sort(sortAlphaNum).map(f => ({ id: f, label: f }))}
+                    value={filters.funcao}
+                    onChange={(item) => setFilters({...filters, funcao: item?.id || ''})}
+                    getLabel={(f) => f.label}
+                    placeholder="Todas as Funções"
+                />
                 
                 <SearchableObraSelect
                     obras={obras}

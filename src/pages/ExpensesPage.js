@@ -12,6 +12,7 @@ import apiClient from '../services/apiClient'; // Importa apiClient
 
 // Importa componentes necessários
 import ProtectedComponent from '../components/ProtectedComponent'; // Ajuste o caminho se necessário
+import SearchableSelect from '../components/SearchableSelect';
 // import { useAuth } from '../contexts/AuthContext'; // Removido, user vem via props
 
 // ===================================================================================
@@ -191,14 +192,20 @@ const ExpensesPage = ({
                         {/* Select Obra */}
                         <div className="lg:col-span-1">
                              <label className="block font-medium text-gray-600 mb-1">Obra*</label>
-                            <select value={selectedObra} onChange={e => setSelectedObra(e.target.value)} className="w-full p-2 border rounded bg-white" required>
-                                <option value="">Selecione...</option>
-                                {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                                <option value="Administração">Administração</option>
-                                <option value="Oficina">Oficina</option>
-                                <option value="Pátio">Pátio</option>
-                                <option value="Diversos">Diversos</option>
-                            </select>
+                            <SearchableSelect
+                                items={[
+                                    { id: 'Administração', nome: 'Administração' },
+                                    { id: 'Oficina',       nome: 'Oficina' },
+                                    { id: 'Pátio',         nome: 'Pátio' },
+                                    { id: 'Diversos',      nome: 'Diversos' },
+                                    ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                                ]}
+                                value={selectedObra}
+                                onChange={(item) => setSelectedObra(item?.id || '')}
+                                getLabel={(o) => o.nome}
+                                placeholder="Selecione..."
+                                required
+                            />
                         </div>
                          {/* Input Descrição */}
                         <div className="lg:col-span-1">

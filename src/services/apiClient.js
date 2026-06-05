@@ -30,7 +30,13 @@ const apiFetch = async (endpoint, options = {}) => {
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const errorMessage = errorData.message || errorData.error || `Erro ${response.status}: ${response.statusText}`;
-            throw new Error(errorMessage);
+            const err = new Error(errorMessage);
+            // Preserva o payload completo (campo, tipo, valor_*) para que a UI
+            // possa destacar o input ofensor em vez de só mostrar a mensagem.
+            err.status = response.status;
+            err.data = errorData;
+            err.response = { status: response.status, data: errorData };
+            throw err;
         }
         
         if (response.status === 204) {
@@ -342,6 +348,35 @@ const apiClient = {
         const q = new URLSearchParams(params).toString();
         return apiFetch(`/admin/audit-log?${q}`);
     },
+
+    // --- Comboios (partners-espelho) ---
+    adminGetComboios:      async () => apiFetch('/admin/comboios'),
+    adminSyncComboios:     async () => apiFetch('/admin/comboios/sync', { method: 'POST' }),
+    adminActivateComboio:  async (vehicleId) => apiFetch(`/admin/comboios/${vehicleId}/activate`,   { method: 'POST' }),
+    adminDeactivateComboio:async (vehicleId) => apiFetch(`/admin/comboios/${vehicleId}/deactivate`, { method: 'POST' }),
+    adminUpdateComboioPartnerContacts: async (vehicleId, data) =>
+        apiFetch(`/admin/comboios/${vehicleId}/partner`, { method: 'PATCH', body: JSON.stringify(data) }),
+    adminGetComboioPeriodos: async (vehicleId) =>
+        apiFetch(`/admin/comboios/${vehicleId}/periodos`),
+
+    // --- Notificações: destinos por evento (Fase 3.1) ---
+    adminListNotificationTargets: async (eventType) => {
+        const q = eventType ? `?event_type=${encodeURIComponent(eventType)}` : '';
+        return apiFetch(`/admin/notification-targets${q}`);
+    },
+    adminCreateNotificationTarget: async (data) =>
+        apiFetch('/admin/notification-targets', { method: 'POST', body: JSON.stringify(data) }),
+    adminUpdateNotificationTarget: async (id, data) =>
+        apiFetch(`/admin/notification-targets/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    adminDeleteNotificationTarget: async (id) =>
+        apiFetch(`/admin/notification-targets/${id}`, { method: 'DELETE' }),
+
+    // --- Log de erros de solicitação de abastecimento (app) ---
+    adminGetSolicitacaoErros: async (params = {}) => {
+        const q = new URLSearchParams(params).toString();
+        return apiFetch(`/admin/solicitacao-erros${q ? `?${q}` : ''}`);
+    },
+    adminGetSolicitacaoErrosResumo: async () => apiFetch('/admin/solicitacao-erros/resumo'),
 
     // --- Sessões Ativas (TODO: backend) ---
     adminGetActiveSessions: async () => apiFetch('/admin/sessions'),

@@ -11,6 +11,7 @@ import {
 
 import ProtectedComponent from '../components/ProtectedComponent';
 import { PasswordConfirmationModal } from '../App';
+import SearchableSelect from '../components/SearchableSelect';
 
 // ===================================================================================
 // HELPERS DE PARSE E FORMATAÇÃO
@@ -645,16 +646,25 @@ const OrdersPage = ({
                     <option value="Concluída">Concluída</option>
                     <option value="Cancelada">Cancelada</option>
                 </select>
-                <select value={filters.obra} onChange={e => setFilters({...filters, obra: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}>
-                    <option value="">Todas as Obras</option>
-                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                    <option value="Administração">Administração</option>
-                    <option value="Oficina">Oficina Central</option>
-                </select>
-                <select value={filters.vehicle} onChange={e => setFilters({...filters, vehicle: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}>
-                    <option value="">Todos os Veículos</option>
-                    {sortedVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>)}
-                </select>
+                <SearchableSelect
+                    items={[
+                        { id: 'Administração', nome: 'Administração' },
+                        { id: 'Oficina', nome: 'Oficina Central' },
+                        ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                    ]}
+                    value={filters.obra}
+                    onChange={(item) => setFilters({...filters, obra: item?.id || ''})}
+                    getLabel={(o) => o.nome}
+                    placeholder="Todas as Obras"
+                />
+                <SearchableSelect
+                    items={sortedVehicles}
+                    value={filters.vehicle}
+                    onChange={(item) => setFilters({...filters, vehicle: item?.id || ''})}
+                    getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                    getSubLabel={(v) => v.modelo || ''}
+                    placeholder="Todos os Veículos"
+                />
                 <input type="text" placeholder="Emissor (email)" value={filters.emitter} onChange={e => setFilters({...filters, emitter: e.target.value})} className="p-2 rounded-lg w-full bg-[#faf9f7] text-sm" style={{ border: "1px solid #e8e0d4" }}/>
             </div>
 
@@ -1405,41 +1415,59 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Obra de Destino (Custo) *</label>
-                                <select value={formData.obraId} onChange={e => setFormData({...formData, obraId: e.target.value})} className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500" required disabled={isReadOnly}>
-                                    <option value="">Selecione...</option>
-                                    {sortedObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
-                                    <option value="Administração">Administração</option>
-                                    <option value="Oficina">Oficina Central</option>
-                                </select>
+                                <SearchableSelect
+                                    items={[
+                                        { id: 'Administração', nome: 'Administração' },
+                                        { id: 'Oficina', nome: 'Oficina Central' },
+                                        ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                                    ]}
+                                    value={formData.obraId}
+                                    onChange={(item) => setFormData({...formData, obraId: item?.id || ''})}
+                                    getLabel={(o) => o.nome}
+                                    placeholder="Selecione..."
+                                    disabled={isReadOnly}
+                                    required
+                                />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1" title="Quem fará o serviço ou irá retirar as peças">Funcionário Autorizado (Retirada) *</label>
-                                <select value={formData.employeeId} onChange={e => setFormData({...formData, employeeId: e.target.value})} className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500" required disabled={isReadOnly}>
-                                    <option value="">Selecione quem irá retirar o pedido...</option>
-                                    {sortedEmployees.map(e => <option key={e.id} value={e.id}>{e.nome} {e.vulgo ? `(${e.vulgo})` : ''}</option>)}
-                                </select>
+                                <SearchableSelect
+                                    items={sortedEmployees}
+                                    value={formData.employeeId}
+                                    onChange={(item) => setFormData({...formData, employeeId: item?.id || ''})}
+                                    getLabel={(e) => `${e.nome}${e.vulgo ? ` (${e.vulgo})` : ''}`}
+                                    getSubLabel={(e) => e.profissao || ''}
+                                    placeholder="Selecione quem irá retirar..."
+                                    disabled={isReadOnly}
+                                    required
+                                />
                             </div>
 
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1" title="Para cruzamento de custos de manutenção de equipamento">Operador do Equipamento (Custo)</label>
-                                <select value={formData.operatorId} onChange={e => setFormData({...formData, operatorId: e.target.value})} className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500" disabled={isReadOnly}>
-                                    <option value="">Opcional / Não se aplica</option>
-                                    {sortedEmployees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                                </select>
+                                <SearchableSelect
+                                    items={sortedEmployees}
+                                    value={formData.operatorId}
+                                    onChange={(item) => setFormData({...formData, operatorId: item?.id || ''})}
+                                    getLabel={(e) => e.nome}
+                                    getSubLabel={(e) => e.profissao || ''}
+                                    placeholder="Opcional / Não se aplica"
+                                    disabled={isReadOnly}
+                                />
                             </div>
 
                             <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-700 uppercase mb-1">Vincular Veículo / Equipamento</label>
-                                <select
+                                <SearchableSelect
+                                    items={sortedVehicles}
                                     value={formData.vehicleId}
-                                    onChange={e => handleVehicleChange(e.target.value)}
-                                    className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500"
+                                    onChange={(item) => handleVehicleChange(item?.id || '')}
+                                    getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                    getSubLabel={(v) => v.modelo || ''}
+                                    placeholder="Uso Geral / Sem Veículo Específico"
                                     disabled={isReadOnly}
-                                >
-                                    <option value="">Uso Geral / Sem Veículo Específico</option>
-                                    {sortedVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa} ({v.modelo})</option>)}
-                                </select>
+                                />
                                 {formData.obraId && formData.vehicleId && (
                                     <p className="text-[10px] text-green-700 mt-1">✔ Obra e operador preenchidos automaticamente com base no histórico do veículo.</p>
                                 )}

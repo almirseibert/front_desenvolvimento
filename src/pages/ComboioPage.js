@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import { Droplet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Recycle, Edit, Trash2, MapPin } from 'lucide-react';
+import { Droplet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Recycle, Edit, Trash2, MapPin, Truck, History } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -10,6 +10,7 @@ import ComboioDrenagemModal from '../components/modals/ComboioDrenagemModal';
 import { getAllowedReadingTypes } from '../utils/vehicleRules';
 
 import ProtectedComponent from '../components/ProtectedComponent';
+import SearchableSelect from '../components/SearchableSelect';
 
 // --- FUNÇÃO DE GERAÇÃO DE PDF (Padronizada A4 - Igual Abastecimento) ---
 const generateAuthorizationPDF = (orderData, vehicles = [], partners = [], employees = [], vehicleGroups = {}) => {
@@ -195,8 +196,9 @@ const ComboioPage = ({
 }) => {
     // Estado
     const [selectedComboioId, setSelectedComboioId] = useState(null);
-    const [modalState, setModalState] = useState({ type: null, data: null, isEditing: false }); 
+    const [modalState, setModalState] = useState({ type: null, data: null, isEditing: false });
     const [deleteTransaction, setDeleteTransaction] = useState(null);
+    const [selectedObraFilter, setSelectedObraFilter] = useState('todas');
 
     // Listas Filtradas
     const comboioVehicles = useMemo(() => vehicles.filter(v => v.isComboioVehicle).sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')), [vehicles]);
@@ -211,12 +213,38 @@ const ComboioPage = ({
 
     const selectedComboio = comboioVehicles.find(v => v.id === selectedComboioId);
 
-    // Transações do comboio selecionado
-    const transactions = useMemo(() => {
-        return comboioTransactions
+    // Reseta filtro de obra ao trocar de comboio
+    useEffect(() => { setSelectedObraFilter('todas'); }, [selectedComboioId]);
+
+    // Todas as transações deste comboio (sem filtro)
+    const allTransactions = useMemo(() => (
+        comboioTransactions
             .filter(t => t.comboioVehicleId === selectedComboioId)
-            .sort((a, b) => new Date(b.date) - new Date(a.date));
-    }, [comboioTransactions, selectedComboioId]);
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+    ), [comboioTransactions, selectedComboioId]);
+
+    // Obras atendidas: agrega litros de SAÍDA por obraId
+    const obrasAtendidas = useMemo(() => {
+        const map = new Map();
+        for (const t of allTransactions) {
+            if (t.type !== 'saida') continue;
+            const oid = t.obraId || '__sem_obra__';
+            const obra = t.obraId ? obras.find(o => o.id === t.obraId) : null;
+            const nome = t.obraName || obra?.nome || (t.obraId ? t.obraId : 'Sem obra');
+            const cur = map.get(oid) || { obraId: t.obraId || null, obraName: nome, totalLitros: 0, qtd: 0 };
+            cur.totalLitros += parseFloat(t.liters) || 0;
+            cur.qtd += 1;
+            map.set(oid, cur);
+        }
+        return Array.from(map.values()).sort((a, b) => b.totalLitros - a.totalLitros);
+    }, [allTransactions, obras]);
+
+    // Transações filtradas pela obra atendida selecionada
+    const transactions = useMemo(() => {
+        if (selectedObraFilter === 'todas') return allTransactions;
+        if (selectedObraFilter === '__sem_obra__') return allTransactions.filter(t => t.type === 'saida' && !t.obraId);
+        return allTransactions.filter(t => t.type === 'saida' && t.obraId === selectedObraFilter);
+    }, [allTransactions, selectedObraFilter]);
 
     // Handlers
     const closeModal = () => setModalState({ type: null, data: null, isEditing: false });
@@ -295,77 +323,117 @@ const ComboioPage = ({
                 </ProtectedComponent>
             </header>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* COLUNA ESQUERDA: LISTA DE COMBOIOS */}
-                <div className="space-y-4">
-                    <h2 className="font-bold text-gray-700 uppercase text-xs tracking-wider flex items-center gap-2">
-                        <Droplet size={14}/> Frotas de Comboio
-                    </h2>
-                    {comboioVehicles.map(comboio => (
-                        <div 
-                            key={comboio.id}
-                            onClick={() => setSelectedComboioId(comboio.id)}
-                            className={`bg-white p-5 rounded-xl shadow-sm border cursor-pointer transition-all relative overflow-hidden ${selectedComboioId === comboio.id ? 'border-yellow-500 ring-1 ring-yellow-300' : 'border-gray-100 hover:border-blue-200'}`}
-                        >
-                            {selectedComboioId === comboio.id && <div className="absolute top-0 right-0 w-3 h-3 bg-yellow-500 rounded-bl-lg"></div>}
-                            
-                            <div className="flex justify-between items-start mb-2">
-                                <div>
-                                    <div className="flex items-center gap-2">
-                                        <span style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">{comboio.registroInterno}</span>
-                                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">{comboio.placa}</span>
-                                    </div>
-                                    <p className="text-xs text-gray-500 mt-0.5">{comboio.modelo}</p>
-                                </div>
-                            </div>
+            {/* SELETOR DE COMBOIO — combo searchable (substitui a antiga lista que abria todos) */}
+            <div className="bg-white rounded-xl shadow-sm p-4" style={{ border: "1px solid #f0ebe3" }}>
+                <label className="text-xs font-bold uppercase tracking-wider text-gray-600 flex items-center gap-2 mb-2">
+                    <Truck size={14}/> Selecione o Comboio
+                </label>
+                <SearchableSelect
+                    items={comboioVehicles}
+                    value={selectedComboioId || ''}
+                    onChange={(item) => setSelectedComboioId(item?.id || null)}
+                    getLabel={(v) => `${v.registroInterno} — ${v.placa}`}
+                    getSubLabel={(v) => v.modelo || ''}
+                    getBadge={(v) => {
+                        const obra = obras.find(o => o.id === v.obraAtualId);
+                        return obra ? { text: obra.nome, color: 'bg-blue-100 text-blue-700' } : null;
+                    }}
+                    placeholder={comboioVehicles.length === 0 ? 'Nenhum comboio cadastrado' : 'Busque por RE, placa ou modelo...'}
+                    disabled={comboioVehicles.length === 0}
+                />
+                {comboioVehicles.length === 0 && (
+                    <p className="mt-2 text-xs text-gray-400 italic">
+                        Marque um veículo como "Comboio" no cadastro de veículos para ele aparecer aqui.
+                    </p>
+                )}
+            </div>
 
-                            <div className="flex items-center gap-1.5 text-xs text-blue-700 bg-blue-50 p-2 rounded-md mb-4 border border-blue-100">
-                                <MapPin size={14} />
-                                <span className="font-medium truncate">
-                                    {getObraName(comboio.obraAtualId)}
-                                </span>
-                            </div>
-
-                            <div className="flex justify-center gap-4 mb-4 px-2">
-                                {Object.entries(comboio.fuelLevels || {}).map(([type, level]) => (
-                                    <FuelBar key={type} type={type} level={level} capacity={comboio.fuelCapacity} />
-                                ))}
-                                {Object.keys(comboio.fuelLevels || {}).length === 0 && (
-                                    <div className="text-xs text-gray-400 py-4 italic text-center w-full bg-gray-50 rounded">
-                                        Sem dados de tanque
-                                    </div>
-                                )}
-                            </div>
-
-                            <ProtectedComponent requiredPermission="editor">
-                                <div className="grid grid-cols-2 gap-3 mt-2">
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); setModalState({ type: 'entrada', data: comboio, isEditing: false }); }}
-                                        className="bg-blue-600 text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-blue-700 flex justify-center items-center gap-2 transition shadow-sm"
-                                    >
-                                        <Plus size={16}/> Entrada
-                                    </button>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); setModalState({ type: 'saida', data: comboio, isEditing: false }); }}
-                                        className="bg-yellow-400 text-gray-900 py-2.5 rounded-lg text-sm font-semibold hover:bg-[#fdf8f0]0 flex justify-center items-center gap-2 transition shadow-sm"
-                                    >
-                                        <Minus size={16}/> Abastecer
-                                    </button>
-                                </div>
-                            </ProtectedComponent>
+            {/* PAINEL DO COMBOIO SELECIONADO */}
+            {selectedComboio && (
+            <div className="bg-white rounded-xl shadow-sm p-5" style={{ border: "1px solid #f0ebe3" }}>
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-4">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                            <span style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }}>{selectedComboio.registroInterno}</span>
+                            <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full border">{selectedComboio.placa}</span>
+                            <span className="text-xs text-gray-500">{selectedComboio.modelo}</span>
                         </div>
-                    ))}
-                    {comboioVehicles.length === 0 && (
-                        <div className="text-center text-gray-400 py-10 border-2 border-dashed border-gray-200 rounded-lg bg-gray-50">
-                            Nenhum veículo configurado como comboio.
+                        <div className="flex items-center gap-1.5 text-xs text-blue-700 mt-2">
+                            <MapPin size={14} />
+                            <span className="font-medium">{getObraName(selectedComboio.obraAtualId)}</span>
                         </div>
-                    )}
+
+                        {/* OBRAS ATENDIDAS — agregado de saídas por obra (lista suspensa) */}
+                        <div className="mt-3">
+                            <label className="text-[10px] font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1 mb-1">
+                                <History size={12}/> Obras atendidas {obrasAtendidas.length > 0 && <span className="text-gray-400 normal-case font-normal">({obrasAtendidas.length})</span>}
+                            </label>
+                            <select
+                                value={selectedObraFilter}
+                                onChange={(e) => setSelectedObraFilter(e.target.value)}
+                                disabled={obrasAtendidas.length === 0}
+                                className="w-full md:w-auto text-xs px-2 py-1.5 rounded-md border border-gray-300 bg-white text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-200 disabled:bg-gray-50 disabled:text-gray-400"
+                            >
+                                <option value="todas">Todas as obras{obrasAtendidas.length > 0 ? ` (${obrasAtendidas.length})` : ''}</option>
+                                {obrasAtendidas.map(o => {
+                                    const key = o.obraId || '__sem_obra__';
+                                    return (
+                                        <option key={key} value={key}>
+                                            {o.obraName} — {o.totalLitros.toFixed(1)} L ({o.qtd} saída{o.qtd > 1 ? 's' : ''})
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                            {obrasAtendidas.length === 0 && (
+                                <p className="mt-1 text-[11px] text-gray-400 italic">Nenhuma saída registrada ainda.</p>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex justify-center gap-4 px-2">
+                        {Object.entries(selectedComboio.fuelLevels || {}).map(([type, level]) => (
+                            <FuelBar key={type} type={type} level={level} capacity={selectedComboio.fuelCapacity} />
+                        ))}
+                        {Object.keys(selectedComboio.fuelLevels || {}).length === 0 && (
+                            <div className="text-xs text-gray-400 py-4 italic text-center bg-gray-50 rounded px-4">
+                                Sem dados de tanque
+                            </div>
+                        )}
+                    </div>
+
+                    <ProtectedComponent requiredPermission="editor">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 min-w-[220px]">
+                            <button
+                                onClick={() => setModalState({ type: 'entrada', data: selectedComboio, isEditing: false })}
+                                className="bg-blue-600 text-white py-2 px-3 rounded-lg text-sm font-semibold hover:bg-blue-700 flex justify-center items-center gap-2 transition shadow-sm"
+                            >
+                                <Plus size={16}/> Entrada
+                            </button>
+                            <button
+                                onClick={() => setModalState({ type: 'saida', data: selectedComboio, isEditing: false })}
+                                className="bg-yellow-400 text-gray-900 py-2 px-3 rounded-lg text-sm font-semibold hover:bg-yellow-300 flex justify-center items-center gap-2 transition shadow-sm"
+                            >
+                                <Minus size={16}/> Abastecer
+                            </button>
+                        </div>
+                    </ProtectedComponent>
                 </div>
+            </div>
+            )}
 
-                {/* COLUNA DIREITA: HISTÓRICO */}
-                <div className="lg:col-span-2 bg-white rounded-xl shadow-sm flex flex-col h-[700px]" style={{ border: "1px solid #f0ebe3" }}>
+            {/* HISTÓRICO DO COMBOIO SELECIONADO */}
+            {selectedComboio && (
+            <div className="grid grid-cols-1">
+                <div className="bg-white rounded-xl shadow-sm flex flex-col h-[600px]" style={{ border: "1px solid #f0ebe3" }}>
                     <div className="p-4 border-b bg-gray-50 rounded-t-xl flex justify-between items-center">
-                        <h2 className="font-bold text-gray-700">Histórico de Operações {selectedComboio ? `- ${selectedComboio.registroInterno}` : ''}</h2>
+                        <h2 className="font-bold text-gray-700">
+                            Histórico de Operações {selectedComboio ? `- ${selectedComboio.registroInterno}` : ''}
+                            {selectedObraFilter !== 'todas' && (
+                                <span className="ml-2 text-xs font-normal text-gray-500">
+                                    (saídas para {obrasAtendidas.find(o => (o.obraId || '__sem_obra__') === selectedObraFilter)?.obraName || 'obra'})
+                                </span>
+                            )}
+                        </h2>
                         {selectedComboio && (
                             <span className="text-xs text-gray-500 bg-white px-2 py-1 rounded border">
                                 {transactions.length} registros
@@ -435,6 +503,7 @@ const ComboioPage = ({
                     </div>
                 </div>
             </div>
+            )}
 
             {modalState.type === 'entrada' && (
                 <ComboioEntradaModal

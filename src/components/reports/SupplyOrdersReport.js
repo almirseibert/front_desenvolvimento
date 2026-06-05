@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { FileText, Printer, Droplet, AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const SupplyOrdersReport = ({ 
     supplyOrders = [], 
@@ -184,15 +185,23 @@ const SupplyOrdersReport = ({
                     </div>
                 </div>
 
-                <select value={filters.vehicleId} onChange={e => setFilters({...filters, vehicleId: e.target.value})} className="input-field">
-                    <option value="">Todos os Veículos</option>
-                    {sortedVehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.modelo}</option>)}
-                </select>
+                <SearchableSelect
+                    items={sortedVehicles}
+                    value={filters.vehicleId}
+                    onChange={(item) => setFilters({...filters, vehicleId: item?.id || ''})}
+                    getLabel={(v) => `${v.registroInterno} - ${v.modelo || ''}`.trim()}
+                    getSubLabel={(v) => v.placa || ''}
+                    placeholder="Todos os Veículos"
+                />
 
-                <select value={filters.partnerId} onChange={e => setFilters({...filters, partnerId: e.target.value})} className="input-field">
-                    <option value="">Todos os Postos ({sortedPartners.length})</option>
-                    {sortedPartners.map(p => <option key={p.id} value={p.id}>{p.razaoSocial || p.nome || 'Sem Nome'}</option>)}
-                </select>
+                <SearchableSelect
+                    items={sortedPartners}
+                    value={filters.partnerId}
+                    onChange={(item) => setFilters({...filters, partnerId: item?.id || ''})}
+                    getLabel={(p) => p.razaoSocial || p.nome || 'Sem Nome'}
+                    getSubLabel={(p) => p.cidade || ''}
+                    placeholder={`Todos os Postos (${sortedPartners.length})`}
+                />
 
                 <SearchableObraSelect
                     obras={sortedObras}

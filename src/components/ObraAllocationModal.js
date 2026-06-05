@@ -2,6 +2,7 @@
 import { Loader, X, AlertTriangle, Shield, Calendar, Gauge, MapPin, ChevronDown, Search, User, Building2 } from 'lucide-react';
 import FinishObraModal from './FinishObraModal';
 import { getAllowedReadingTypes, getVehicleMainReading, checkVehicleRestrictions, checkReadingConsistency } from '../utils/vehicleRules';
+import SearchableSelect from './SearchableSelect';
 
 // --- Seletor de funcionário com pesquisa ---
 const EmployeeSelector = ({ employees, value, onChange, accentColor = 'green' }) => {
@@ -432,16 +433,13 @@ const ObraAllocationModal = ({
                                     <label className="block text-xs font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
                                         <Building2 size={12} /> Obra Destino <span className="text-red-500">*</span>
                                     </label>
-                                    <select
+                                    <SearchableSelect
+                                        items={activeObras.map(o => ({ ...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
                                         value={obraId}
-                                        onChange={e => setObraId(e.target.value)}
-                                        className="w-full p-2.5 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-green-500 focus:border-green-400 outline-none"
-                                    >
-                                        <option value="">Selecione a obra...</option>
-                                        {activeObras.map(o => (
-                                            <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
-                                        ))}
-                                    </select>
+                                        onChange={(item) => setObraId(item?.id || '')}
+                                        getLabel={(o) => o._displayNome || o.nome}
+                                        placeholder="Selecione a obra..."
+                                    />
                                     {activeObras.length === 0 && (
                                         <p className="text-xs text-amber-600 mt-1">Nenhuma obra ativa cadastrada.</p>
                                     )}

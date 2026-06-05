@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import ProtectedComponent from '../components/ProtectedComponent';
+import SearchableSelect from '../components/SearchableSelect';
 
 // ===================================================================================
 // FUNÇÃO AUXILIAR PARA FORMATAR DATAS
@@ -255,19 +256,27 @@ const FineModal = ({
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                              <div>
                                 <label className="block font-bold text-gray-700 mb-1">Veículo Infrator *</label>
-                                <select name="vehicleId" value={formData.vehicleId} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none" required>
-                                    <option value="">Selecione...</option>
-                                    {sortedVehicles.map(v =>
-                                        <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa} ({v.modelo})</option>
-                                    )}
-                                </select>
+                                <SearchableSelect
+                                    items={sortedVehicles}
+                                    value={formData.vehicleId}
+                                    onChange={(item) => handleChange({ target: { name: 'vehicleId', value: item?.id || '' } })}
+                                    getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                    getSubLabel={(v) => v.modelo || ''}
+                                    placeholder="Selecione o veículo..."
+                                    required
+                                />
                             </div>
                             <div>
                                 <label className="block font-bold text-gray-700 mb-1">Condutor Responsável *</label>
-                                <select name="employeeId" value={formData.employeeId} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none" required>
-                                    <option value="">Selecione...</option>
-                                    {activeEmployees.map(e => <option key={e.id} value={e.id}>{e.nome}</option>)}
-                                </select>
+                                <SearchableSelect
+                                    items={activeEmployees}
+                                    value={formData.employeeId}
+                                    onChange={(item) => handleChange({ target: { name: 'employeeId', value: item?.id || '' } })}
+                                    getLabel={(e) => e.nome}
+                                    getSubLabel={(e) => e.profissao || ''}
+                                    placeholder="Selecione o condutor..."
+                                    required
+                                />
                             </div>
                         </div>
 

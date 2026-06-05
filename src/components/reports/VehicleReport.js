@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Truck, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
     const [filters, setFilters] = useState({ type: '', obraId: '', status: '', group: '' });
@@ -107,10 +108,13 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
                     {vehicleGroupOptions.map(g => <option key={g} value={g}>{g}</option>)}
                     <option value="Outros">Outros</option>
                 </select>
-                <select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} className="input-field">
-                    <option value="">Todos os Grupos</option>
-                    {vehicleTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+                <SearchableSelect
+                    items={vehicleTypes.map(t => ({ id: t, label: t }))}
+                    value={filters.type}
+                    onChange={(item) => setFilters({...filters, type: item?.id || ''})}
+                    getLabel={(t) => t.label}
+                    placeholder="Todos os Grupos"
+                />
                 <SearchableObraSelect
                     obras={obras}
                     value={filters.obraId}

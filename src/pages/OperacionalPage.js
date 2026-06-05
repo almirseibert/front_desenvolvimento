@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import apiClientModule from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext';
+import SearchableSelect from '../components/SearchableSelect';
 
 const GAP_THRESHOLD_DAYS = 10;
 
@@ -930,10 +931,15 @@ const OperacionalPage = ({
                                     <button key={val} onClick={() => setMaqCriticality(val)} className={`px-3 py-1 rounded-md font-medium transition-all ${maqCriticality === val ? 'bg-white shadow text-yellow-600' : 'text-[#9a8a78] hover:text-[#6a5e4e]'}`}>{label}</button>
                                 ))}
                             </div>
-                            <select value={maqObraId} onChange={e => setMaqObraId(e.target.value)} className="text-sm border rounded-lg px-3 py-2 bg-white focus:ring-2 focus:ring-yellow-400 outline-none">
-                                <option value="">Todas as obras</option>
-                                {activeObras.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
-                            </select>
+                            <div className="min-w-[220px]">
+                                <SearchableSelect
+                                    items={activeObras}
+                                    value={maqObraId}
+                                    onChange={(item) => setMaqObraId(item?.id || '')}
+                                    getLabel={(o) => o.nome}
+                                    placeholder="Todas as obras"
+                                />
+                            </div>
                             <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
                                 <input type="checkbox" checked={showWithoutObra} onChange={e => setShowWithoutObra(e.target.checked)} className="rounded accent-yellow-500" />
                                 Mostrar sem obra

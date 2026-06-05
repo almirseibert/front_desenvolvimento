@@ -265,21 +265,26 @@ const PartnerModal = ({ user, partner, defaultTipo, onClose, setAlertMessage, ap
         whatsapp: partner?.whatsapp || '',
         email: partner?.email || '',
         contatoResponsavel: partner?.contatoResponsavel || '',
-        tipo_parceiro: partner?.tipo_parceiro || defaultTipo || 'posto'
+        tipo_parceiro: partner?.tipo_parceiro || defaultTipo || 'posto',
+        envia_por_whatsapp: !!(partner?.envia_por_whatsapp ?? 0),
+        envia_por_email:    !!(partner?.envia_por_email    ?? 0),
     });
     const [isSaving, setIsSaving] = useState(false);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+        setFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.razaoSocial) return setAlertMessage("A Razão Social é obrigatória.");
-        
+
         setIsSaving(true);
         const dataToSave = { ...formData };
+        // Converte os checkboxes para 1/0 (esperado pelo banco). Strings vazias viram null.
+        dataToSave.envia_por_whatsapp = dataToSave.envia_por_whatsapp ? 1 : 0;
+        dataToSave.envia_por_email    = dataToSave.envia_por_email    ? 1 : 0;
         Object.keys(dataToSave).forEach(key => { if (dataToSave[key] === '') dataToSave[key] = null; });
 
         try {
@@ -329,6 +334,39 @@ const PartnerModal = ({ user, partner, defaultTipo, onClose, setAlertMessage, ap
                         <div><label className="block font-medium text-gray-700">WhatsApp</label><input name="whatsapp" value={formData.whatsapp} onChange={handleChange} placeholder="(00) 90000-0000" className="mt-1 p-2 border rounded w-full bg-white" /></div>
                         <div><label className="block font-medium text-gray-700">E-mail</label><input name="email" type="email" value={formData.email} onChange={handleChange} placeholder="contato@empresa.com" className="mt-1 p-2 border rounded w-full bg-white" /></div>
                         <div><label className="block font-medium text-gray-700">Contato Responsável (Nome)</label><input name="contatoResponsavel" value={formData.contatoResponsavel} onChange={handleChange} placeholder="Falar com..." className="mt-1 p-2 border rounded w-full bg-white" /></div>
+
+                        {formData.tipo_parceiro === 'posto' && (
+                            <div className="md:col-span-2 bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-2">
+                                <label className="block font-bold text-gray-800 mb-2 text-xs uppercase tracking-wide">
+                                    Envio automático de ordens
+                                </label>
+                                <div className="flex flex-col sm:flex-row gap-3">
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm">
+                                        <input
+                                            type="checkbox"
+                                            name="envia_por_whatsapp"
+                                            checked={!!formData.envia_por_whatsapp}
+                                            onChange={handleChange}
+                                            className="w-4 h-4 accent-green-600"
+                                        />
+                                        Enviar ordem por <strong>WhatsApp</strong>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer text-sm">
+                                        <input
+                                            type="checkbox"
+                                            name="envia_por_email"
+                                            checked={!!formData.envia_por_email}
+                                            onChange={handleChange}
+                                            className="w-4 h-4 accent-blue-600"
+                                        />
+                                        Enviar ordem por <strong>E-mail</strong>
+                                    </label>
+                                </div>
+                                <p className="text-[11px] text-gray-500 mt-2">
+                                    Os canais marcados receberão a ordem automaticamente assim que ela for criada.
+                                </p>
+                            </div>
+                        )}
                     </div>
                     <div className="p-4 bg-gray-50 border-t flex flex-col sm:flex-row justify-end gap-2 sticky bottom-0 z-10">
                         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm font-medium w-full sm:w-auto" disabled={isSaving}>Cancelar</button>

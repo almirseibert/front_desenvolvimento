@@ -2,6 +2,7 @@
 import { PlusCircle, Wrench, X, CheckCircle, ArrowRight, Loader } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const getVehicleName = (id, vehicles) => {
     const v = vehicles.find(v => String(v.id) === String(id));
@@ -226,10 +227,15 @@ const NovaProgramadaModal = ({ vehicles, onClose, onSave }) => {
                 <div className="p-4 space-y-3">
                     <div>
                         <label className="block text-xs font-semibold mb-1">Veículo *</label>
-                        <select name="vehicleId" value={formData.vehicleId} onChange={handleChange} className="w-full p-2 border rounded text-sm outline-none" required>
-                            <option value="">Selecione...</option>
-                            {vehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={vehicles}
+                            value={formData.vehicleId}
+                            onChange={(item) => handleChange({ target: { name: 'vehicleId', value: item?.id || '' } })}
+                            getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                            getSubLabel={(v) => v.modelo || ''}
+                            placeholder="Selecione..."
+                            required
+                        />
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                         <div>
@@ -296,10 +302,16 @@ const NovaExecutadaModal = ({ vehicles, obras, defaultData = {}, onClose, onSave
                     <div className="grid grid-cols-2 gap-3">
                         <div className="col-span-2">
                             <label className="block text-xs font-semibold mb-1">Veículo *</label>
-                            <select name="vehicleId" value={formData.vehicleId} onChange={handleChange} className="w-full p-2 border rounded text-sm outline-none" required disabled={!!formData.programadaId}>
-                                <option value="">Selecione...</option>
-                                {vehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>)}
-                            </select>
+                            <SearchableSelect
+                                items={vehicles}
+                                value={formData.vehicleId}
+                                onChange={(item) => handleChange({ target: { name: 'vehicleId', value: item?.id || '' } })}
+                                getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                getSubLabel={(v) => v.modelo || ''}
+                                placeholder="Selecione..."
+                                disabled={!!formData.programadaId}
+                                required
+                            />
                         </div>
                         <div className="col-span-2">
                             <label className="block text-xs font-semibold mb-1">Centro de Custo (Obra) *</label>

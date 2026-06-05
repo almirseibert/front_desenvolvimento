@@ -2,6 +2,7 @@
 import { PlusCircle, Droplet, Users, X, Trash2, Edit2, CheckCircle, Loader } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableObraSelect from '../SearchableObraSelect';
+import SearchableSelect from '../SearchableSelect';
 
 const getVehicleName = (id, vehicles) => {
     const v = vehicles.find(v => String(v.id) === String(id));
@@ -167,10 +168,15 @@ const NovaLavagemModal = ({ vehicles, obras, washingPartners, onClose, onSave })
                 <div className="p-4 space-y-3">
                     <div>
                         <label className="block text-xs font-semibold mb-1">Veículo *</label>
-                        <select name="vehicleId" value={formData.vehicleId} onChange={handleChange} className="w-full p-2 border rounded text-sm outline-none" required>
-                            <option value="">Selecione...</option>
-                            {vehicles.map(v => <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={vehicles}
+                            value={formData.vehicleId}
+                            onChange={(item) => handleChange({ target: { name: 'vehicleId', value: item?.id || '' } })}
+                            getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                            getSubLabel={(v) => v.modelo || ''}
+                            placeholder="Selecione..."
+                            required
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold mb-1">Centro de Custo (Obra) *</label>
@@ -194,10 +200,13 @@ const NovaLavagemModal = ({ vehicles, obras, washingPartners, onClose, onSave })
                     </div>
                     <div>
                         <label className="block text-xs font-semibold mb-1">Lava-Jato (Parceiro)</label>
-                        <select name="parceiroId" value={formData.parceiroId} onChange={handleChange} className="w-full p-2 border rounded text-sm outline-none">
-                            <option value="">Selecione (Opcional)...</option>
-                            {washingPartners.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                        </select>
+                        <SearchableSelect
+                            items={washingPartners}
+                            value={formData.parceiroId}
+                            onChange={(item) => handleChange({ target: { name: 'parceiroId', value: item?.id || '' } })}
+                            getLabel={(p) => p.nome}
+                            placeholder="Selecione (Opcional)..."
+                        />
                     </div>
                     <div>
                         <label className="block text-xs font-semibold mb-1">Tipo de Serviço</label>

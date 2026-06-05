@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 
 import ChangePasswordModal from '../components/ChangePasswordModal';
+import SearchableSelect from '../components/SearchableSelect';
 
 // --- INÍCIO DA LÓGICA DE REGRAS ---
 const vehicleGroups = {
@@ -156,6 +157,8 @@ const SolicitacaoAbastecimentoPage = ({
     
     const [errorPopup, setErrorPopup] = useState({ open: false, title: '', messages: [] });
     const [internalEmployees, setInternalEmployees] = useState([]);
+    // Campo que falhou na última tentativa de envio — destaca visualmente o input ofensor
+    const [errorField, setErrorField] = useState(null);
     
     // --- DADOS ---
     const [myRequests, setMyRequests] = useState([]);
@@ -608,11 +611,6 @@ const SolicitacaoAbastecimentoPage = ({
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (userStatus.blocked) {
-            showError("ACESSO BLOQUEADO", "Você está bloqueado. Contate o administrador.");
-            return;
-        }
 
         if (hasBlockingAlert) {
             showError("VEÍCULO BLOQUEADO", "Existem pendências bloqueantes neste veículo (veja os alertas).");
@@ -728,9 +726,34 @@ const SolicitacaoAbastecimentoPage = ({
 
         } catch (error) {
             console.error("Erro no envio:", error);
-            const msg = error.response?.data?.error || error.message || "Erro ao enviar.";
-            showError("Erro no Envio", msg);
-            if (msg.includes("BLOQUEADO")) checkUserStatus();
+            // O backend agora retorna { error, campo, tipo, valor_informado, valor_anterior }
+            // quando a falha é em um campo específico — destacamos esse campo na UI.
+            const data = error.response?.data || error.data || {};
+            const msg = data.error || error.message || "Erro ao enviar.";
+            const campo = data.campo || null;
+
+            if (campo) {
+                setErrorField(campo);
+                const fieldLabel = {
+                    odometro:  'HODÔMETRO (Km)',
+                    horimetro: 'HORÍMETRO (Hr)',
+                    obraId:    'Obra',
+                    veiculoId: 'Veículo',
+                }[campo] || campo.toUpperCase();
+                showError(
+                    "CORRIJA ANTES DE REENVIAR",
+                    [`Campo: ${fieldLabel}`, msg]
+                );
+                // Rola até o input destacado
+                setTimeout(() => {
+                    const el = document.querySelector(`[data-field="${campo}"]`);
+                    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
+            } else {
+                showError("Erro no Envio", msg);
+            }
+            // Atualiza contador de tentativas (informativo, não bloqueia mais)
+            checkUserStatus();
         } finally {
             setLoading(false);
         }
@@ -762,20 +785,6 @@ const SolicitacaoAbastecimentoPage = ({
     };
 
     if (!user) return <div className="flex justify-center items-center h-screen"><Loader className="animate-spin"/></div>;
-
-    if (userStatus.blocked) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-screen bg-red-50 p-6 text-center animate-fadeIn">
-                <Lock size={64} className="text-red-500 mb-4" />
-                <h1 className="text-2xl font-bold text-red-700 mb-2">ACESSO BLOQUEADO</h1>
-                <p className="text-gray-600 mb-4">Número máximo de tentativas falhas excedido.</p>
-                <div className="bg-red-100 border-l-4 border-red-500 p-4 text-left w-full max-w-md">
-                    <p className="font-bold text-red-800">Contate o Gestor de Frotas.</p>
-                </div>
-                <button onClick={() => window.location.reload()} className="mt-6 px-6 py-2 bg-gray-800 text-white rounded-lg shadow">Atualizar</button>
-            </div>
-        );
-    }
 
     return (
         <div className="w-full bg-gray-100 pb-24 relative">
@@ -841,6 +850,16 @@ const SolicitacaoAbastecimentoPage = ({
                             </div>
                         )}
 
+                        {userStatus.attempts > 0 && (
+                            <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg flex items-center gap-2 text-xs">
+                                <AlertOctagon size={14} className="shrink-0" />
+                                <span>
+                                    Você possui <strong>{userStatus.attempts}</strong> tentativa(s) com erro registradas.
+                                    Confira odômetro/horímetro com atenção antes de enviar.
+                                </span>
+                            </div>
+                        )}
+
                         {allowedObras.length === 0 && (
                             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded shadow-sm">
                                 <p className="font-bold flex items-center gap-2"><AlertTriangle size={18}/> Sem Obra Alocada</p>
@@ -852,32 +871,27 @@ const SolicitacaoAbastecimentoPage = ({
 
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sua Obra</label>
-                            <select 
-                                className="w-full p-4 bg-white border border-gray-300 rounded-xl shadow-sm text-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                            <SearchableSelect
+                                items={allowedObras.map(o => ({ ...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
                                 value={formData.obraId}
-                                onChange={e => setFormData({...formData, obraId: e.target.value, veiculoId: '', funcionarioId: ''})}
+                                onChange={(item) => setFormData({...formData, obraId: item?.id || '', veiculoId: '', funcionarioId: ''})}
+                                getLabel={(o) => o._displayNome || o.nome}
+                                placeholder="Selecione a Obra..."
                                 disabled={allowedObras.length === 0}
-                            >
-                                <option value="">Selecione a Obra...</option>
-                                {allowedObras.map(o => (
-                                    <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Veículo (na Obra)</label>
-                            <select 
-                                className="w-full p-4 bg-white border border-gray-300 rounded-xl shadow-sm text-lg focus:ring-2 focus:ring-yellow-400 outline-none disabled:bg-gray-100"
+                            <SearchableSelect
+                                items={filteredVehicles}
                                 value={formData.veiculoId}
-                                onChange={e => setFormData({...formData, veiculoId: e.target.value})}
+                                onChange={(item) => setFormData({...formData, veiculoId: item?.id || ''})}
+                                getLabel={(v) => `${v.registroInterno} - ${v.placa}`}
+                                getSubLabel={(v) => v.modelo || ''}
+                                placeholder="Selecione o Veículo..."
                                 disabled={!formData.obraId}
-                            >
-                                <option value="">Selecione o Veículo...</option>
-                                {filteredVehicles.map(v => (
-                                    <option key={v.id} value={v.id}>{v.registroInterno} - {v.placa} ({v.modelo})</option>
-                                ))}
-                            </select>
+                            />
                             
                             {veiculoSelecionado && (
                                 <div className="space-y-2 mt-2 px-1">
@@ -921,53 +935,64 @@ const SolicitacaoAbastecimentoPage = ({
 
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Condutor/Responsável</label>
-                            <select 
-                                className="w-full p-3 bg-white border border-gray-300 rounded-xl shadow-sm text-base focus:ring-2 focus:ring-yellow-400 outline-none"
+                            <SearchableSelect
+                                items={
+                                    (formData.funcionarioId && filteredEmployees.length === 0)
+                                        ? [{ id: formData.funcionarioId, nome: `${user.name} (Auto-selecionado)` }]
+                                        : filteredEmployees
+                                }
                                 value={formData.funcionarioId}
-                                onChange={e => setFormData({...formData, funcionarioId: e.target.value})}
+                                onChange={(item) => setFormData({...formData, funcionarioId: item?.id || ''})}
+                                getLabel={(e) => e.nome}
+                                placeholder="Selecione quem está trabalhando com o Veículo/Máquina..."
                                 disabled={!formData.obraId}
-                            >
-                                {formData.funcionarioId && filteredEmployees.length === 0 && (
-                                    <option value={formData.funcionarioId}>{user.name} (Auto-selecionado)</option>
-                                )}
-                                <option value="">Selecione quem está trabalhando com o Veículo/Máquina...</option>
-                                {filteredEmployees.map(e => (
-                                    <option key={e.id} value={e.id}>{e.nome}</option>
-                                ))}
-                            </select>
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 gap-4">
                             {readingType === 'odometro' && (
-                                <div className="animate-fadeIn">
+                                <div className="animate-fadeIn" data-field="odometro">
                                     <label className="text-xs font-bold text-gray-500 uppercase ml-1 flex items-center gap-1">
                                         <Gauge size={14}/> Hodômetro (Km)
                                     </label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full p-3 bg-white border border-gray-300 rounded-xl shadow-sm text-lg font-bold"
+                                    <input
+                                        type="number"
+                                        className={`w-full p-3 bg-white border rounded-xl shadow-sm text-lg font-bold ${
+                                            errorField === 'odometro'
+                                                ? 'border-red-500 ring-2 ring-red-300 bg-red-50'
+                                                : 'border-gray-300'
+                                        }`}
                                         placeholder="Ex: 15000"
                                         value={formData.odometro}
-                                        onChange={e => setFormData({...formData, odometro: e.target.value, horimetro: ''})}
-                                        disabled={!veiculoSelecionado} 
+                                        onChange={e => { setFormData({...formData, odometro: e.target.value, horimetro: ''}); if (errorField === 'odometro') setErrorField(null); }}
+                                        disabled={!veiculoSelecionado}
                                     />
+                                    {veiculoSelecionado && (
+                                        <p className="text-[10px] text-gray-500 mt-1 text-right">
+                                            Atual: {veiculoSelecionado.odometro || 0} Km
+                                        </p>
+                                    )}
                                 </div>
                             )}
                             
                             {readingType === 'horimetro' && (
-                                <div className="animate-fadeIn p-3 bg-red-50 border border-red-200 rounded-xl">
+                                <div className="animate-fadeIn p-3 bg-red-50 border border-red-200 rounded-xl" data-field="horimetro">
                                     <label className="text-xs font-bold text-red-700 uppercase ml-1 flex justify-between items-center mb-1">
                                         <span className="flex items-center gap-1"><CalendarClock size={14}/> Horímetro (Hr)</span>
                                         <span className="bg-red-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">
                                             ATENÇÃO: NÃO USAR KM!
                                         </span>
                                     </label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full p-3 bg-white border border-gray-300 rounded-xl shadow-sm text-lg font-bold"
+                                    <input
+                                        type="number"
+                                        className={`w-full p-3 bg-white border rounded-xl shadow-sm text-lg font-bold ${
+                                            errorField === 'horimetro'
+                                                ? 'border-red-500 ring-2 ring-red-300 bg-red-50'
+                                                : 'border-gray-300'
+                                        }`}
                                         placeholder="Ex: 1500.5"
                                         value={formData.horimetro}
-                                        onChange={e => setFormData({...formData, horimetro: e.target.value, odometro: ''})}
+                                        onChange={e => { setFormData({...formData, horimetro: e.target.value, odometro: ''}); if (errorField === 'horimetro') setErrorField(null); }}
                                         disabled={!veiculoSelecionado}
                                     />
                                     <p className="text-[10px] text-red-600 mt-1 font-semibold">
@@ -1021,18 +1046,14 @@ const SolicitacaoAbastecimentoPage = ({
                                 Posto
                                 {formData.postoId && <span className="text-blue-600 text-[10px] font-bold bg-blue-50 px-1 rounded">Sugestão Automática</span>}
                             </label>
-                            <select 
-                                className="w-full p-3 bg-white border border-gray-300 rounded-xl shadow-sm"
+                            <SearchableSelect
+                                items={partners.filter(p => p.status_operacional !== 'BLOQUEADO' && (!p.tipo_parceiro || p.tipo_parceiro === 'posto'))}
                                 value={formData.postoId}
-                                onChange={e => setFormData({...formData, postoId: e.target.value})}
-                            >
-                                <option value="">Selecione o Posto...</option>
-                                {partners
-                                    .filter(p => p.status_operacional !== 'BLOQUEADO' && (!p.tipo_parceiro || p.tipo_parceiro === 'posto'))
-                                    .map(p => (
-                                    <option key={p.id} value={p.id}>{p.razaoSocial}</option>
-                                ))}
-                            </select>
+                                onChange={(item) => setFormData({...formData, postoId: item?.id || ''})}
+                                getLabel={(p) => p.razaoSocial || ''}
+                                getSubLabel={(p) => p.cidade || ''}
+                                placeholder="Selecione o Posto..."
+                            />
                         </div>
 
                         <div className="bg-yellow-50 p-4 rounded-xl shadow-inner border border-yellow-200 space-y-3">

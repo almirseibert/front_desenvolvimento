@@ -1,6 +1,7 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clock, RefreshCw, User, ClipboardList, Trash2 } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
+import SearchableSelect from '../SearchableSelect';
 
 // --- COMPONENTES AUXILIARES INTERNOS ---
 
@@ -80,12 +81,14 @@ const EditActiveVehicleAssignmentModal = ({ assignment, vehicle, employees = [],
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-gray-700">Operador *</label>
-                        <select name="employeeId" value={editedData.employeeId} onChange={handleInputChange} className="w-full p-2 border rounded mt-1 text-sm bg-white" required>
-                             <option value="">Selecione...</option>
-                             {(employees || []).filter(e => e.status === 'ativo' && !e.statusAfastamentoTipo).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')).map(emp => (
-                                <option key={emp.id} value={emp.id}>{emp.nome}{emp.funcao ? ` · ${emp.funcao}` : ''}</option>
-                             ))}
-                        </select>
+                        <SearchableSelect
+                            items={(employees || []).filter(e => e.status === 'ativo' && !e.statusAfastamentoTipo).sort((a, b) => (a.nome || '').localeCompare(b.nome || ''))}
+                            value={editedData.employeeId}
+                            onChange={(item) => handleInputChange({ target: { name: 'employeeId', value: item?.id || '' } })}
+                            getLabel={(e) => `${e.nome}${e.funcao ? ` · ${e.funcao}` : ''}`}
+                            placeholder="Selecione..."
+                            required
+                        />
                     </div>
                      <div>
                         <label className="block text-sm font-medium text-gray-700">Leitura Inicial (Horímetro/Odômetro) *</label>

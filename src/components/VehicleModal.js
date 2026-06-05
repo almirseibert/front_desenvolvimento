@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel } from 'lucide-react';
 import { checkReadingConsistency, vehicleSubTypes, getGroupUnit } from '../utils/vehicleRules';
+import SearchableSelect from './SearchableSelect';
 
 const ModalBtn = ({ variant = 'primary', onClick, disabled, children }) => {
     const [h, setH] = React.useState(false);
@@ -373,19 +374,26 @@ const VehicleModal = ({
 
                                 <div>
                                     <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Grupo de Equipamento *</label>
-                                    <select name="tipo" value={formData.tipo} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm" required>
-                                        <option value="">Selecione...</option>
-                                        {(vehicleTypes || []).map(type => <option key={type} value={type}>{type}</option>)}
-                                    </select>
+                                    <SearchableSelect
+                                        items={(vehicleTypes || []).map(t => ({ id: t, label: t }))}
+                                        value={formData.tipo}
+                                        onChange={(item) => handleChange({ target: { name: 'tipo', value: item?.id || '' } })}
+                                        getLabel={(t) => t.label}
+                                        placeholder="Selecione o tipo..."
+                                        required
+                                    />
                                 </div>
 
                                 {availableSubTypes.length > 0 && (
                                     <div>
                                         <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Subgrupo</label>
-                                        <select name="sub_tipo" value={formData.sub_tipo} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none text-sm">
-                                            <option value="">Nenhum</option>
-                                            {availableSubTypes.map(st => <option key={st} value={st}>{st}</option>)}
-                                        </select>
+                                        <SearchableSelect
+                                            items={availableSubTypes.map(st => ({ id: st, label: st }))}
+                                            value={formData.sub_tipo}
+                                            onChange={(item) => handleChange({ target: { name: 'sub_tipo', value: item?.id || '' } })}
+                                            getLabel={(t) => t.label}
+                                            placeholder="Nenhum"
+                                        />
                                     </div>
                                 )}
 
