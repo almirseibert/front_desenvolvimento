@@ -371,6 +371,15 @@ const apiClient = {
     adminDeleteNotificationTarget: async (id) =>
         apiFetch(`/admin/notification-targets/${id}`, { method: 'DELETE' }),
 
+    // --- Contatos Internos (Fase 4.1) ---
+    adminListInternalContacts:   async () => apiFetch('/admin/internal-contacts'),
+    adminCreateInternalContact:  async (data) =>
+        apiFetch('/admin/internal-contacts', { method: 'POST', body: JSON.stringify(data) }),
+    adminUpdateInternalContact:  async (id, data) =>
+        apiFetch(`/admin/internal-contacts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    adminDeleteInternalContact:  async (id) =>
+        apiFetch(`/admin/internal-contacts/${id}`, { method: 'DELETE' }),
+
     // --- Log de erros de solicitação de abastecimento (app) ---
     adminGetSolicitacaoErros: async (params = {}) => {
         const q = new URLSearchParams(params).toString();

@@ -93,10 +93,19 @@ const CommunicationTab = ({ socket, users = [] }) => {
     if (!testEmail) return;
     setSendingTest(true);
     try {
-      await apiClient.adminSendTestEmail({ to: testEmail });
-      alert('E-mail de teste enviado!');
+      const result = await apiClient.adminSendTestEmail({ to: testEmail });
+      const linhas = [
+        `✅ ${result.message || 'E-mail aceito pelo SMTP.'}`,
+        result.from        ? `De: ${result.from}`                          : null,
+        result.to          ? `Para: ${result.to}`                          : null,
+        result.messageId   ? `Message-ID: ${result.messageId}`             : null,
+        result.response    ? `Resposta SMTP: ${result.response}`           : null,
+        result.accepted    ? `Aceitos: ${result.accepted.join(', ')}`      : null,
+        result.dica        ? `\n💡 ${result.dica}`                          : null,
+      ].filter(Boolean);
+      alert(linhas.join('\n'));
     } catch (err) {
-      alert(`Falha ao enviar e-mail de teste: ${err.message}`);
+      alert(`❌ Falha ao enviar e-mail de teste:\n\n${err.message}`);
     } finally {
       setSendingTest(false);
     }

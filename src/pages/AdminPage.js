@@ -12,6 +12,7 @@ import VehicleAdminTab from '../components/admin/VehicleAdminTab';
 import AbastecimentoAdminTab from '../components/admin/AbastecimentoAdminTab';
 import SolicitacaoErrosTab from '../components/admin/SolicitacaoErrosTab';
 import NotificacoesAdminTab from '../components/admin/NotificacoesAdminTab';
+import ContatosInternosTab from '../components/admin/ContatosInternosTab';
 
 const TABS = [
   { id: 'usuarios',      label: 'Usuários',         icon: <Users size={15} /> },
@@ -21,6 +22,7 @@ const TABS = [
   { id: 'erros_app',     label: 'Erros App',         icon: <AlertTriangle size={15} /> },
   { id: 'comunicacao',   label: 'Comunicação',       icon: <MessageSquare size={15} /> },
   { id: 'notificacoes',  label: 'Notificações',      icon: <Bell size={15} /> },
+  { id: 'contatos',      label: 'Contatos Internos', icon: <Users size={15} /> },
   { id: 'configuracoes', label: 'Configurações',     icon: <Settings size={15} /> },
   { id: 'sistema',       label: 'Sistema',           icon: <Server size={15} /> },
 ];
@@ -126,6 +128,9 @@ const AdminPage = ({ socket }) => {
         )}
         {activeTab === 'notificacoes' && (
           <NotificacoesAdminTab />
+        )}
+        {activeTab === 'contatos' && (
+          <ContatosInternosTab />
         )}
         {activeTab === 'configuracoes' && (
           <ConfiguracoesTab />
