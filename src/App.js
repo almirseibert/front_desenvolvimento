@@ -501,7 +501,7 @@ const AppContent = () => {
         billing:              ['dailyWorkLogs', 'refuelings', 'expenses'],
         orders:               ['orders'],
         obras:                ['revisions'],
-        operacional:          [],
+        operacional:          ['dailyWorkLogs'],
         supervisor_dashboard: ['revisions', 'fines'],
         supervisor_detail:    ['revisions', 'fines', 'refuelings', 'expenses'],
     }), []);
