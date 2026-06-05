@@ -12,7 +12,6 @@ const AbastecimentoAdminTab = () => {
     const [obras, setObras]           = useState([]);
     const [vehicles, setVehicles]     = useState([]);
     const [employees, setEmployees]   = useState([]);
-    const [partners, setPartners]     = useState([]);
     const [loading, setLoading]       = useState(true);
     const [liberando, setLiberando]   = useState(null);
     const [negando, setNegando]       = useState(null);
@@ -22,18 +21,16 @@ const AbastecimentoAdminTab = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const [r, o, v, e, p] = await Promise.all([
+            const [r, o, v, e] = await Promise.all([
                 apiClient.getRefuelings(),
                 apiClient.getObras(),
                 apiClient.getVehicles(),
                 apiClient.getEmployees(),
-                apiClient.getPartners(),
             ]);
             setRefuelings(Array.isArray(r) ? r : []);
             setObras(Array.isArray(o) ? o : []);
             setVehicles(Array.isArray(v) ? v : []);
             setEmployees(Array.isArray(e) ? e : []);
-            setPartners(Array.isArray(p) ? p : []);
         } catch {
             setMensagem({ tipo: 'erro', texto: 'Erro ao carregar dados.' });
         } finally {
@@ -73,66 +70,11 @@ const AbastecimentoAdminTab = () => {
         return 'Leitura de Km/Hr inválida ou salto excessivo.';
     };
 
-    const enviarAoPosto = (ordem) => {
-        const partner = partners.find(p => p.id === ordem.partnerId);
-        const vehicle = getVehicle(ordem.vehicleId);
-        const employee = getEmployee(ordem.employeeId);
-        if (!partner) return;
-
-        const authNum = String(ordem.authNumber).padStart(6, '0');
-        const qtd = ordem.isFillUp ? 'COMPLETAR TANQUE' : `${ordem.litrosLiberados} Litros`;
-        const dataFormatada = formatDate(ordem.data || ordem.date);
-        const veiculoInfo = vehicle ? `${vehicle.marca || ''} ${vehicle.modelo || ''} - ${vehicle.placa} / ${vehicle.registroInterno}`.trim() : 'N/A';
-        const outrosMsg = ordem.outros ? `\nOutros/Obs: ${ordem.outros}` : '';
-
-        if (partner.email && partner.email.includes('@')) {
-            const subject = `Autorização de Abastecimento #${authNum} - ${partner.razaoSocial}`;
-            const body =
-`Olá,
-
-Segue autorização de abastecimento emitida pelo sistema Frotas MAK.
-
---- RESUMO ---
-
-Nº Ordem: ${authNum}
-Data: ${dataFormatada}
-Posto: ${partner.razaoSocial}
-Veículo: ${veiculoInfo}
-Combustível: ${ordem.fuelType}
-Qtd: ${qtd}${outrosMsg}
-Motorista: ${employee?.nome || 'N/A'}
-
-Esta ordem foi liberada pelo Administrador do sistema.
-
-Att,
-Equipe Frotas MAK`;
-            window.location.href = `mailto:${partner.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-            return;
-        }
-
-        const phone = partner.whatsapp || partner.telefone;
-        if (phone) {
-            const msg =
-`*ORDEM DE ABASTECIMENTO - FROTAS MAK*
-*(Liberada pelo Administrador)*
-
-*Nº Ordem:* ${authNum}
-*Data:* ${dataFormatada}
-*Posto:* ${partner.razaoSocial}
-*Veículo:* ${veiculoInfo}
-*Combustível:* ${ordem.fuelType}
-*Qtd:* ${qtd}${outrosMsg ? '\n*Obs:* ' + ordem.outros : ''}
-*Motorista:* ${employee?.nome || 'N/A'}`;
-            window.open(`https://wa.me/55${phone.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-        }
-    };
-
     const handleLiberar = async ordem => {
         setLiberando(ordem.id);
         setMensagem(null);
         try {
             await apiClient.liberarOrdemBloqueada(ordem.id);
-            await enviarAoPosto(ordem);
             setMensagem({ tipo: 'ok', texto: `Ordem #${String(ordem.authNumber).padStart(6, '0')} liberada e enviada ao posto.` });
             await load();
         } catch (e) {
