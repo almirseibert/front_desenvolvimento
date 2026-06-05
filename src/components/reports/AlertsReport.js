@@ -209,7 +209,15 @@ const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], ob
             }
         });
 
-        return list.sort((a, b) => (a.isCritical === b.isCritical) ? 0 : a.isCritical ? -1 : 1);
+        // Deduplicar por entity + type + message para evitar entradas duplicadas
+        const seen = new Set();
+        const deduped = list.filter(item => {
+            const key = `${item.entity}|${item.type}|${item.message}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        return deduped.sort((a, b) => (a.isCritical === b.isCritical) ? 0 : a.isCritical ? -1 : 1);
     }, [vehicles, employees, inactivityAlerts, obras, refuelings, revisions]);
 
     const filteredAlerts = filterType === 'Todos' ? alerts : alerts.filter(a => a.type === filterType);

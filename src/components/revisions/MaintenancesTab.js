@@ -15,6 +15,7 @@ const getObraName = (id, obras) => {
 }
 
 const MaintenancesTab = ({ vehicles = [], obras = [], setAlertMessage, apiClient }) => {
+    const activeVehicles = vehicles.filter(v => !v.isOutsourced && v.ativo !== 0 && !v.isSucata);
     const [manutencoesProgramadas, setManutencoesProgramadas] = useState([]);
     const [manutencoesExecutadas, setManutencoesExecutadas] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -184,16 +185,16 @@ const MaintenancesTab = ({ vehicles = [], obras = [], setAlertMessage, apiClient
             </div>
 
             {modalNovaProgramada && (
-                <NovaProgramadaModal 
-                    vehicles={vehicles} 
+                <NovaProgramadaModal
+                    vehicles={activeVehicles}
                     onClose={() => setModalNovaProgramada(false)}
                     onSave={onSaveProgramada}
                 />
             )}
 
             {modalNovaExecutada && (
-                <NovaExecutadaModal 
-                    vehicles={vehicles} 
+                <NovaExecutadaModal
+                    vehicles={activeVehicles}
                     obras={obras}
                     defaultData={modalNovaExecutada} 
                     onClose={() => setModalNovaExecutada(null)}

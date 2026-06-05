@@ -55,7 +55,7 @@ const ObrasPage = ({
     // --- HELPER: Cores do Card Baseado em Progresso ---
     const getCardBorderColor = (obra) => {
         if (obra.status === 'finalizada') return '#9ca3af';
-        if (obra.tipo_registro !== 'centro_custo' && (!obra.orgao_contratante || !obra.regiao)) return '#3d3528';
+        if (obra.tipo_registro !== 'centro_custo' && (!obra.orgao_contratante || !obra.regiao)) return '#f97316'; // laranja: informações pendentes
         if (obra.contractType === 'horas') {
             const contratado = Object.values(obra.horasContratadasPorTipo || {}).reduce((s, h) => s + (parseFloat(h) || 0), 0);
             const realizado = obra.totalHorasRealizadas || 0;
@@ -248,6 +248,11 @@ const ObrasPage = ({
                                     {obra.tipo_registro === 'centro_custo' && (
                                         <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#ede9fe', color: '#3730a3', border: '1px solid #ddd6fe', borderRadius: 9999, padding: '2px 7px', display: 'inline-block', marginBottom: 4 }}>
                                             Centro de Custo
+                                        </span>
+                                    )}
+                                    {obra.tipo_registro !== 'centro_custo' && (!obra.orgao_contratante || !obra.regiao) && (
+                                        <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', background: '#fff7ed', color: '#c2410c', border: '1px solid #fed7aa', borderRadius: 9999, padding: '2px 7px', display: 'inline-block', marginBottom: 4 }}>
+                                            ⚠ Informações Pendentes
                                         </span>
                                     )}
                                     <h3 className="line-clamp-1" style={{ fontSize: 14, fontWeight: 700, color: '#3d3528' }} title={obra.nome}>

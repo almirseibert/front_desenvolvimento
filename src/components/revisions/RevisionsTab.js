@@ -19,7 +19,9 @@ const RevisionsTab = ({
         const validVehicles = Array.isArray(vehicles) ? vehicles : [];
         const validRevisions = Array.isArray(revisions) ? revisions : [];
 
-        const sortedVehicles = [...validVehicles].sort((a, b) => {
+        const sortedVehicles = [...validVehicles].filter(v =>
+            !v.isOutsourced && v.ativo !== 0 && !v.isSucata
+        ).sort((a, b) => {
             const regA = a.registroInterno || '';
             const regB = b.registroInterno || '';
             const numA = parseInt(regA.replace(/\D/g, ''));

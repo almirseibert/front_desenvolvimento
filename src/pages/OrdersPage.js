@@ -1,5 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import apiClient from '../services/apiClient';
+import { getVehicleMainReading } from '../utils/vehicleRules';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
@@ -366,6 +367,12 @@ const generateOrderPDF = (order, vehicle, employee, operator, obra, logoDataUrl,
         doc.text('Veículo Vinculado:', midX, infoStartY + 7);
         doc.setFont('helvetica', 'normal');
         doc.text(`${vehicle.registroInterno || 'N/A'} - ${vehicle.placa || 'N/A'}`, midX + 35, infoStartY + 7);
+        if (order.kmHrAtual != null && order.kmHrAtual !== '') {
+            doc.setFont('helvetica', 'bold');
+            doc.text(`${order.kmHrUnit || 'Km/Hr'} Atual:`, midX, infoStartY + 12);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${Number(order.kmHrAtual).toLocaleString('pt-BR')} ${order.kmHrUnit || ''}`, midX + 35, infoStartY + 12);
+        }
     }
 
     const tableBody = (order.items || []).map(item => [
@@ -1034,6 +1041,8 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
         operatorId:     orderToEdit?.operatorId  || '',
         obraId:         orderToEdit?.obraId      || '',
         vehicleId:      orderToEdit?.vehicleId   || '',
+        kmHrAtual:      orderToEdit?.kmHrAtual   ?? '',
+        kmHrUnit:       orderToEdit?.kmHrUnit    || '',
         items: (Array.isArray(orderToEdit?.items) && orderToEdit.items.length > 0
             ? orderToEdit.items
             : [{ quantity: '1', description: '', unitPrice: '', itemId: null }]
@@ -1093,11 +1102,14 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                 } catch (_) {}
             }
 
+            const reading = getVehicleMainReading(vehicle);
             setFormData(prev => ({
                 ...prev,
                 vehicleId,
                 obraId:     suggestedObraId,
                 operatorId: suggestedOperatorId,
+                kmHrAtual:  reading.raw || '',
+                kmHrUnit:   reading.unit || '',
             }));
         } catch (err) {
             console.warn('[OrderModal] Erro ao buscar dados do veículo:', err?.message);
@@ -1299,6 +1311,8 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
             operatorId:     formData.operatorId || null,
             obraId:         formData.obraId,
             vehicleId:      formData.vehicleId || null,
+            kmHrAtual:      formData.kmHrAtual !== '' ? parseFloat(formData.kmHrAtual) : null,
+            kmHrUnit:       formData.kmHrUnit || null,
             items:          formData.items.map(item => ({
                 quantity:    parseFloat(item.quantity) || 0,
                 description: item.description,
@@ -1472,6 +1486,24 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                                     <p className="text-[10px] text-green-700 mt-1">✔ Obra e operador preenchidos automaticamente com base no histórico do veículo.</p>
                                 )}
                             </div>
+
+                            {formData.vehicleId && (
+                                <div>
+                                    <label className="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                        {formData.kmHrUnit === 'Km' ? 'Odômetro Atual (Km)' : formData.kmHrUnit === 'Hr' ? 'Horímetro Atual (Hr)' : 'Km / Hr Atual'}
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.1"
+                                        value={formData.kmHrAtual}
+                                        onChange={e => setFormData(prev => ({ ...prev, kmHrAtual: e.target.value }))}
+                                        placeholder={`Leitura atual em ${formData.kmHrUnit || 'Km ou Hr'}`}
+                                        className="p-2 border rounded w-full bg-white outline-none focus:border-yellow-500"
+                                        disabled={isReadOnly}
+                                    />
+                                    <p className="text-[10px] text-gray-400 mt-0.5">Preenchido automaticamente com a leitura atual do veículo. Corrija se necessário.</p>
+                                </div>
+                            )}
                         </div>
 
                         {/* Layout Dividido: Itens | Financeiro + Arquivos */}
