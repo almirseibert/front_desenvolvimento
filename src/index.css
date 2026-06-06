@@ -437,3 +437,18 @@ button.bg-yellow-500 {
   50%       { opacity: 0.5; transform: scale(0.85); }
 }
 .dot-pulse { animation: dot-pulse 1.4s ease-in-out infinite; }
+
+/* ─── Neon Red Pulse — usado em avisos críticos de bloqueio ─── */
+@keyframes neonRedPulse {
+  0%, 100% {
+    box-shadow: 0 0 4px #ef4444, 0 0 8px #ef4444, 0 0 12px #b91c1c;
+    border-color: #ef4444;
+  }
+  50% {
+    box-shadow: 0 0 10px #ff1a1a, 0 0 20px #ff1a1a, 0 0 30px #dc2626, 0 0 40px #b91c1c;
+    border-color: #ff1a1a;
+  }
+}
+.neon-red-pulse {
+  animation: neonRedPulse 1s ease-in-out infinite;
+}

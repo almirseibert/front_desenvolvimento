@@ -161,6 +161,41 @@ const RefuelingOrderModal = ({
     const isEditing = !!orderToEdit && !!orderToEdit.id && orderToEdit.id !== 'PREVIEW';
     const isSolicitacao = !!solicitacaoData;
 
+    // Feriados nacionais BR (fixos). Móveis (Carnaval/Páscoa/Corpus Christi)
+    // ficam de fora — se precisar incluir, migrar para tabela no backend.
+    const FERIADOS_BR_FIXOS = useMemo(() => new Set([
+        '01-01', // Confraternização
+        '04-21', // Tiradentes
+        '05-01', // Trabalho
+        '09-07', // Independência
+        '10-12', // N. Sra. Aparecida
+        '11-02', // Finados
+        '11-15', // Proclamação
+        '12-25', // Natal
+    ]), []);
+
+    const isWeekendOrHoliday = useMemo(() => {
+        if (!formData.date) return false;
+        const d = new Date(formData.date + 'T12:00:00');
+        const dow = d.getDay();
+        if (dow === 0 || dow === 6) return true;
+        return FERIADOS_BR_FIXOS.has(formData.date.slice(5));
+    }, [formData.date, FERIADOS_BR_FIXOS]);
+
+    // Ordem aberta = qualquer status que NÃO seja terminal. Inverter a lista
+    // (em vez de listar "abertos") protege contra status novos do backend.
+    const openOrderForVehicle = useMemo(() => {
+        if (!formData.vehicleId) return null;
+        const closedStatuses = ['Concluída', 'Concluida', 'Cancelada', 'Negada', 'Baixada'];
+        return refuelings.find(r =>
+            r.vehicleId === formData.vehicleId &&
+            !closedStatuses.includes(r.status) &&
+            (!isEditing || r.id !== orderToEdit.id)
+        );
+    }, [formData.vehicleId, refuelings, isEditing, orderToEdit]);
+
+    const duplicateBlocked = !!openOrderForVehicle && !isWeekendOrHoliday;
+
     useEffect(() => {
         if (formData.obraId && obras.length > 0) { 
             const obra = obras.find(o => o.id === formData.obraId);
@@ -385,6 +420,11 @@ const RefuelingOrderModal = ({
             return;
         }
 
+        if (duplicateBlocked) {
+            setAlertMessage(`Existe uma ordem em aberto (Nº ${openOrderForVehicle.authNumber || openOrderForVehicle.id}) para este veículo. Conclua ou cancele antes de emitir outra.`);
+            return;
+        }
+
         executeSave();
     };
 
@@ -503,6 +543,24 @@ const RefuelingOrderModal = ({
                     {budgetWarning && (
                         <div className="flex items-center gap-2 p-1.5 bg-orange-100 text-orange-900 rounded border border-orange-200 text-[10px] font-bold">
                             <Wallet size={12}/> {budgetWarning} {requiresBudgetOverride && "(Requer Senha)"}
+                        </div>
+                    )}
+
+                    {duplicateBlocked && (
+                        <div className="neon-red-pulse flex items-start gap-2 p-2 rounded-md border-2 border-red-500 bg-red-50 text-red-800 text-[11px] font-bold leading-snug">
+                            <Lock size={14} className="mt-0.5 flex-shrink-0 text-red-700"/>
+                            <span>
+                                🚫 ORDEM DUPLICADA: Já existe ordem em aberto Nº <u>{openOrderForVehicle.authNumber || openOrderForVehicle.id}</u> ({openOrderForVehicle.status}) para este veículo, emitida em {formatDateDisplay(openOrderForVehicle.date || openOrderForVehicle.data)}. Conclua ou cancele a ordem anterior antes de emitir outra.
+                            </span>
+                        </div>
+                    )}
+
+                    {openOrderForVehicle && isWeekendOrHoliday && (
+                        <div className="flex items-start gap-2 p-1.5 bg-amber-50 border border-amber-300 text-amber-900 rounded text-[10px] font-bold leading-snug">
+                            <Info size={12} className="mt-0.5 flex-shrink-0"/>
+                            <span>
+                                Exceção aplicada: já existe ordem aberta Nº {openOrderForVehicle.authNumber || openOrderForVehicle.id}, mas a nova é para <u>fim de semana/feriado</u> ({formatDateDisplay(formData.date)}) — antecipação permitida.
+                            </span>
                         </div>
                     )}
                 </div>
@@ -664,16 +722,19 @@ const RefuelingOrderModal = ({
                             <input type="checkbox" id="geraValor" name="outrosGeraValor" checked={formData.outrosGeraValor} onChange={handleChange} className="w-3 h-3 text-green-600"/>
                             <label htmlFor="geraValor" className="text-[10px] font-medium text-gray-700">Preenchimento Gera Valor</label>
                         </div>
+
+                        {blockReason && (
+                            <div className="neon-red-pulse mt-2 p-2 rounded-md border-2 border-red-500 bg-red-50 text-red-800 text-[11px] font-bold leading-snug flex items-start gap-2">
+                                <Lock size={14} className="mt-0.5 flex-shrink-0 text-red-700"/>
+                                <span>
+                                    ⚠️ ATENÇÃO: Ordem será salva com <u>bloqueio de leitura</u> e <u>NÃO será enviada ao posto</u> até liberação do administrador. Só prossiga se tiver certeza absoluta que deseja enviar esta ordem para análise do supervisor.
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </form>
 
                 <div className="p-2 border-t bg-gray-50 flex justify-between items-center rounded-b-xl shrink-0">
-                    {blockReason && (
-                        <p className="text-[10px] font-bold text-red-700 flex items-start gap-1 max-w-sm leading-snug">
-                            <Lock size={10} className="mt-0.5 flex-shrink-0"/>
-                            Ordem salva com bloqueio de leitura. Esta ordem <u>não será enviada ao posto</u> até ser verificada e liberada por um administrador do sistema.
-                        </p>
-                    )}
                     {requiresBudgetOverride && !blockReason && (
                         <p className="text-[10px] font-bold text-orange-700 flex items-start gap-1 max-w-sm leading-snug">
                             <Lock size={10} className="mt-0.5 flex-shrink-0"/>
@@ -684,10 +745,12 @@ const RefuelingOrderModal = ({
                         <button onClick={onClose} className="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded transition">Cancelar</button>
                         <button
                             onClick={handleSaveClick}
-                            disabled={isSaving}
-                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 flex items-center gap-1 ${(blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-[#fdf8f0]0'}`}
+                            disabled={isSaving || duplicateBlocked}
+                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${duplicateBlocked ? 'bg-red-400 text-white' : (blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-[#fdf8f0]0'}`}
                         >
-                            {isSaving ? <Loader className="animate-spin" size={12}/> : (
+                            {isSaving ? <Loader className="animate-spin" size={12}/> : duplicateBlocked ? (
+                                <><Lock size={12}/> Ordem Duplicada</>
+                            ) : (
                                 <><Send size={12} /> {(blockReason || requiresBudgetOverride) ? 'Salvar Bloqueado' : 'Salvar & Enviar'}</>
                             )}
                         </button>
