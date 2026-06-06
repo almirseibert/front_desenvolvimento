@@ -14,6 +14,7 @@ const ConfirmRefuelingModal = ({
     expenses = [],
     vehicles = [],
     partners = [],
+    employees = [],
     PasswordConfirmationModal
 }) => {
     const [litros, setLitros] = useState(order.litrosLiberados || '');
@@ -21,6 +22,9 @@ const ConfirmRefuelingModal = ({
 
     const [precoUnitario, setPrecoUnitario] = useState('');
     const [initialPartnerPrice, setInitialPartnerPrice] = useState(0);
+
+    const [precoUnitarioArla, setPrecoUnitarioArla] = useState('');
+    const [initialPartnerPriceArla, setInitialPartnerPriceArla] = useState(0);
 
     const [invoiceNumber, setInvoiceNumber] = useState(order.invoiceNumber || '');
 
@@ -33,7 +37,6 @@ const ConfirmRefuelingModal = ({
 
     const [obraStatus, setObraStatus] = useState(null);
 
-    // Bloqueios separados — combinamos em blockReason abaixo
     const [readingBlock, setReadingBlock] = useState(null);
     const [litrosBlock, setLitrosBlock] = useState(null);
     const [priceBlock, setPriceBlock] = useState(null);
@@ -45,27 +48,63 @@ const ConfirmRefuelingModal = ({
 
     const blockReason = readingBlock || litrosBlock || priceBlock;
 
-    const valorTotal = useMemo(() => {
-        const l = parseFloat(litros) || 0;
-        const p = parseFloat(precoUnitario) || 0;
-        return l * p;
-    }, [litros, precoUnitario]);
+    const fmtBRL = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-    // --- 1. Inicializa Preço do Posto ---
+    // --- Lookups ---
+    const partnerInfo = useMemo(() => {
+        if (!order.partnerId) return null;
+        return partners.find(p => p.id === order.partnerId) || null;
+    }, [order.partnerId, partners]);
+
+    const vehicleInfo = useMemo(() => {
+        if (!order.vehicleId) return null;
+        return vehicles.find(v => v.id === order.vehicleId) || null;
+    }, [order.vehicleId, vehicles]);
+
+    const driverInfo = useMemo(() => {
+        if (!order.employeeId) return null;
+        return employees.find(e => e.id === order.employeeId) || null;
+    }, [order.employeeId, employees]);
+
+    // --- Totais ---
+    const valorCombustivel = useMemo(
+        () => (parseFloat(litros) || 0) * (parseFloat(precoUnitario) || 0),
+        [litros, precoUnitario]
+    );
+    const valorArla = useMemo(
+        () => order.needsArla ? (parseFloat(litrosArla) || 0) * (parseFloat(precoUnitarioArla) || 0) : 0,
+        [order.needsArla, litrosArla, precoUnitarioArla]
+    );
+    const valorOutros = useMemo(
+        () => order.outrosGeraValor ? (parseFloat(outrosValorConfirmado) || 0) : 0,
+        [order.outrosGeraValor, outrosValorConfirmado]
+    );
+    const valorTotal = valorCombustivel + valorArla + valorOutros;
+
+    // --- 1. Inicializa Preços do Posto (combustível + arla) ---
     useEffect(() => {
-        if (order.partnerId && order.fuelType && partners.length > 0) {
+        if (order.partnerId && partners.length > 0) {
             const partner = partners.find(p => p.id === order.partnerId);
             if (partner && partner.fuel_prices) {
-                const currentPrice = partner.fuel_prices[order.fuelType];
-                if (currentPrice) {
-                    setPrecoUnitario(currentPrice);
-                    setInitialPartnerPrice(parseFloat(currentPrice));
+                if (order.fuelType) {
+                    const currentPrice = partner.fuel_prices[order.fuelType];
+                    if (currentPrice) {
+                        setPrecoUnitario(currentPrice);
+                        setInitialPartnerPrice(parseFloat(currentPrice));
+                    }
+                }
+                if (order.needsArla) {
+                    const arlaPrice = partner.fuel_prices['Arla'];
+                    if (arlaPrice) {
+                        setPrecoUnitarioArla(arlaPrice);
+                        setInitialPartnerPriceArla(parseFloat(arlaPrice));
+                    }
                 }
             }
         }
-    }, [order.partnerId, order.fuelType, partners]);
+    }, [order.partnerId, order.fuelType, order.needsArla, partners]);
 
-    // --- 2. Cálculo de Progresso Financeiro ---
+    // --- 2. Progresso Financeiro Obra ---
     useEffect(() => {
         if (order.obraId && obras.length > 0) {
             const obra = obras.find(o => o.id === order.obraId);
@@ -96,7 +135,7 @@ const ConfirmRefuelingModal = ({
         }
     }, [order.obraId, obras, expenses]);
 
-    // --- 3. Validação Leitura (regressão e saltos) ---
+    // --- 3. Validação Leitura ---
     useEffect(() => {
         setReadingBlock(null);
         if (!kmOuHrConfirmado || !order.vehicleId) return;
@@ -129,7 +168,7 @@ const ConfirmRefuelingModal = ({
         }
     }, [kmOuHrConfirmado, order.vehicleId, vehicles]);
 
-    // --- 4. Validação Litros vs Liberados (anti-erro de digitação) ---
+    // --- 4. Validação Litros vs Liberados ---
     useEffect(() => {
         setLitrosBlock(null);
         const l = parseFloat(litros);
@@ -143,7 +182,7 @@ const ConfirmRefuelingModal = ({
         }
     }, [litros, order.litrosLiberados]);
 
-    // --- 5. Validação Preço vs Cadastro (10% aviso, 25% bloqueio) ---
+    // --- 5. Validação Preço vs Cadastro ---
     useEffect(() => {
         setPriceBlock(null);
         setPriceWarning(null);
@@ -158,50 +197,55 @@ const ConfirmRefuelingModal = ({
         }
     }, [precoUnitario, initialPartnerPrice]);
 
-    // --- 6. Alerta de Média ---
-    useEffect(() => {
-        setAverageAlert(null);
-
-        if (!litros || !kmOuHrConfirmado || parseFloat(litros) <= 0) return;
+    // --- 6. Médias (últimos 3 abastecimentos + atual) ---
+    const mediaStats = useMemo(() => {
+        if (!order.vehicleId || refuelings.length === 0) return null;
 
         const history = refuelings
             .filter(r => r.vehicleId === order.vehicleId && r.status === 'Concluída')
             .sort((a, b) => new Date(b.data || 0) - new Date(a.data || 0));
 
-        if (history.length === 0) return;
+        if (history.length < 2) return null;
 
-        const currentReading = parseFloat(kmOuHrConfirmado);
-        const lastRefuel = history[0];
-        const lastReading = parseFloat(lastRefuel.horimetro || lastRefuel.odometro || 0);
-
-        if (currentReading <= lastReading) return;
-
-        const diff = currentReading - lastReading;
-        const currentAverage = diff / parseFloat(litros);
-
-        let sumAvgs = 0;
-        let count = 0;
-
+        const items = [];
         for (let i = 0; i < Math.min(history.length - 1, 3); i++) {
             const rCurrent = history[i];
             const rPrev = history[i + 1];
             const l = parseFloat(rCurrent.litrosAbastecidos || 0);
             const valCurr = parseFloat(rCurrent.horimetro || rCurrent.odometro || 0);
             const valPrev = parseFloat(rPrev.horimetro || rPrev.odometro || 0);
-
             if (l > 0 && valCurr > valPrev) {
-                sumAvgs += (valCurr - valPrev) / l;
-                count++;
+                items.push({
+                    data: rCurrent.data,
+                    media: (valCurr - valPrev) / l,
+                    litros: l
+                });
             }
+        }
+        if (items.length === 0) return null;
+
+        const combinedAvg = items.reduce((s, i) => s + i.media, 0) / items.length;
+
+        const lastReading = parseFloat(history[0].horimetro || history[0].odometro || 0);
+        const currentReading = parseFloat(kmOuHrConfirmado) || 0;
+        const currentLitros = parseFloat(litros) || 0;
+        let currentAvg = null;
+        if (currentReading > lastReading && currentLitros > 0) {
+            currentAvg = (currentReading - lastReading) / currentLitros;
         }
 
-        if (count > 0) {
-            const baselineAverage = sumAvgs / count;
-            if (currentAverage < (baselineAverage * 0.75)) {
-                setAverageAlert(`⚠️ ALERTA: Média caiu >25% (Atual: ${currentAverage.toFixed(2)} / Base: ${baselineAverage.toFixed(2)})`);
-            }
+        return { items, combinedAvg, currentAvg };
+    }, [refuelings, order.vehicleId, kmOuHrConfirmado, litros]);
+
+    // --- 7. Alerta de Média ---
+    useEffect(() => {
+        setAverageAlert(null);
+        if (!mediaStats || mediaStats.currentAvg == null) return;
+        const { combinedAvg, currentAvg } = mediaStats;
+        if (currentAvg < (combinedAvg * 0.75)) {
+            setAverageAlert(`⚠️ ALERTA: Média caiu >25% (Atual: ${currentAvg.toFixed(2)} / Base: ${combinedAvg.toFixed(2)})`);
         }
-    }, [litros, kmOuHrConfirmado, refuelings, order.vehicleId]);
+    }, [mediaStats]);
 
     // --- HANDLERS ---
     const handleConfirmClick = (e) => {
@@ -252,6 +296,7 @@ const ConfirmRefuelingModal = ({
                 litrosAbastecidos: parseFloat(litros) || 0,
                 litrosAbastecidosArla: order.needsArla ? (parseFloat(litrosArla) || 0) : 0,
                 pricePerLiter: parseFloat(precoUnitario) || 0,
+                pricePerLiterArla: order.needsArla ? (parseFloat(precoUnitarioArla) || 0) : 0,
                 confirmedReading: parseFloat(kmOuHrConfirmado) || 0,
                 confirmedBy: user,
                 outrosValor: order.outrosGeraValor ? (parseFloat(outrosValorConfirmado) || 0) : 0,
@@ -270,7 +315,11 @@ const ConfirmRefuelingModal = ({
         }
     };
 
-    const fmtBRL = (v) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const partnerName = partnerInfo?.razaoSocial || '-';
+    const driverName = driverInfo?.nome || '-';
+    const vehicleRegistro = vehicleInfo?.registroInterno || '-';
+    const vehicleModelo = vehicleInfo?.modelo || '-';
+    const vehiclePlaca = vehicleInfo?.placa || '';
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-[60] p-4 backdrop-blur-sm">
@@ -365,15 +414,84 @@ const ConfirmRefuelingModal = ({
                         )}
                     </div>
 
-                    {/* VALOR TOTAL — somente visual, não editável */}
+                    {/* ARLA — antes do total */}
+                    {order.needsArla && (
+                        <div className="p-2 bg-cyan-50 border border-cyan-200 rounded space-y-2">
+                            <div className="text-[10px] font-bold text-cyan-900">Arla 32</div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Litros Arla *</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={litrosArla}
+                                    onChange={e => setLitrosArla(e.target.value)}
+                                    className="w-full p-1.5 border rounded focus:ring-1 focus:ring-yellow-400 outline-none"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">
+                                    Preço por Litro Arla (R$) *
+                                    {initialPartnerPriceArla > 0 && <span className="font-normal text-gray-400 ml-1">(cadastrado: R$ {initialPartnerPriceArla.toFixed(3)})</span>}
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.001"
+                                    value={precoUnitarioArla}
+                                    onChange={e => setPrecoUnitarioArla(e.target.value)}
+                                    className="w-full p-1.5 border rounded focus:ring-1 focus:ring-yellow-400 outline-none"
+                                    placeholder="0.000"
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-between text-[10px] text-cyan-900 font-medium pt-1 border-t border-cyan-200">
+                                <span>Subtotal Arla:</span>
+                                <span className="font-bold">{fmtBRL(valorArla)}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* OUTROS — antes do total */}
+                    {order.outrosGeraValor && (
+                        <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
+                            <label className="block text-[10px] font-bold text-yellow-900 mb-0.5">Valor "{order.outros}" (R$) *</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={outrosValorConfirmado}
+                                onChange={e => setOutrosValorConfirmado(e.target.value)}
+                                className="w-full p-1.5 border border-yellow-400 rounded bg-white font-bold text-yellow-900 focus:ring-1 focus:ring-yellow-400 outline-none"
+                                required
+                                placeholder="0.00"
+                            />
+                        </div>
+                    )}
+
+                    {/* VALOR TOTAL — somente leitura, com breakdown */}
                     <div className="p-2 bg-green-50 border-2 border-green-300 rounded">
                         <div className="flex justify-between items-center">
-                            <span className="text-[10px] font-bold text-green-800">VALOR TOTAL (confira no cupom)</span>
+                            <span className="text-[10px] font-bold text-green-800">VALOR TOTAL DA NOTA</span>
                             <span className="text-lg font-bold text-green-700">{fmtBRL(valorTotal)}</span>
                         </div>
-                        <p className="text-[9px] text-green-700 mt-0.5">
-                            {(parseFloat(litros) || 0).toFixed(2)} L × R$ {(parseFloat(precoUnitario) || 0).toFixed(3)}
-                        </p>
+                        <div className="text-[9px] text-green-700 mt-1 space-y-0.5 border-t border-green-200 pt-1">
+                            <div className="flex justify-between">
+                                <span>Combustível: {(parseFloat(litros) || 0).toFixed(2)} L × R$ {(parseFloat(precoUnitario) || 0).toFixed(3)}</span>
+                                <span>{fmtBRL(valorCombustivel)}</span>
+                            </div>
+                            {order.needsArla && (
+                                <div className="flex justify-between">
+                                    <span>Arla: {(parseFloat(litrosArla) || 0).toFixed(2)} L × R$ {(parseFloat(precoUnitarioArla) || 0).toFixed(3)}</span>
+                                    <span>{fmtBRL(valorArla)}</span>
+                                </div>
+                            )}
+                            {order.outrosGeraValor && (
+                                <div className="flex justify-between">
+                                    <span>{order.outros || 'Outros'}:</span>
+                                    <span>{fmtBRL(valorOutros)}</span>
+                                </div>
+                            )}
+                        </div>
+                        <p className="text-[9px] text-green-700 mt-1 italic">Confira no cupom fiscal</p>
                     </div>
 
                     {/* Nota Fiscal */}
@@ -387,20 +505,6 @@ const ConfirmRefuelingModal = ({
                             placeholder="Nº da NF"
                         />
                     </div>
-
-                    {order.needsArla && (
-                        <div>
-                            <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Litros Arla 32 *</label>
-                            <input type="number" step="0.01" value={litrosArla} onChange={e => setLitrosArla(e.target.value)} className="w-full p-1.5 border rounded focus:ring-1 focus:ring-yellow-400 outline-none" required />
-                        </div>
-                    )}
-
-                    {order.outrosGeraValor && (
-                        <div className="bg-yellow-50 p-2 rounded border border-yellow-200">
-                            <label className="block text-[10px] font-bold text-yellow-900 mb-0.5">Valor "{order.outros}" (R$) *</label>
-                            <input type="number" step="0.01" value={outrosValorConfirmado} onChange={e => setOutrosValorConfirmado(e.target.value)} className="w-full p-1.5 border border-yellow-400 rounded bg-white font-bold text-yellow-900 focus:ring-1 focus:ring-yellow-400 outline-none" required placeholder="0.00" />
-                        </div>
-                    )}
 
                     {/* Leitura Painel */}
                     <div>
@@ -437,37 +541,72 @@ const ConfirmRefuelingModal = ({
 
                 {/* RESUMO FINAL — força revisão antes de gravar */}
                 {showFinalConfirm && (
-                    <div className="absolute inset-0 bg-white bg-opacity-98 z-20 flex flex-col items-center justify-center p-5 text-center animate-fadeIn overflow-y-auto">
-                        <div className="bg-blue-100 p-3 rounded-full mb-3 text-blue-600">
-                            <CheckCircle size={28} />
+                    <div className="absolute inset-0 bg-white z-20 flex flex-col p-4 animate-fadeIn overflow-y-auto">
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                            <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                                <CheckCircle size={20} />
+                            </div>
+                            <h3 className="text-sm font-bold text-gray-800">Confira antes de gravar</h3>
                         </div>
-                        <h3 className="text-sm font-bold text-gray-800 mb-1">Confira antes de gravar</h3>
-                        <p className="text-[10px] text-gray-500 mb-3">Compare cada linha com o cupom fiscal.</p>
-                        <div className="w-full bg-gray-50 border border-gray-200 rounded p-3 space-y-1.5 text-xs mb-4">
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Litros:</span>
-                                <span className="font-bold">{(parseFloat(litros) || 0).toFixed(2)} L</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Preço/L:</span>
-                                <span className="font-bold">R$ {(parseFloat(precoUnitario) || 0).toFixed(3)}</span>
-                            </div>
-                            <div className="flex justify-between border-t pt-1.5 mt-1.5">
-                                <span className="text-gray-700 font-bold">Total:</span>
+                        <p className="text-[10px] text-gray-500 text-center mb-3">Compare cada linha com o cupom fiscal.</p>
+
+                        {/* Identificação */}
+                        <div className="bg-gray-50 border border-gray-200 rounded p-2 mb-2 text-[11px] space-y-1">
+                            <div className="flex justify-between"><span className="text-gray-500">Posto:</span><span className="font-bold text-right">{partnerName}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Veículo:</span><span className="font-bold text-right">{vehicleRegistro} — {vehicleModelo}{vehiclePlaca ? ` (${vehiclePlaca})` : ''}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Motorista:</span><span className="font-bold text-right">{driverName}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-500">Ordem:</span><span className="font-bold">#{String(order.authNumber).padStart(6, '0')}</span></div>
+                        </div>
+
+                        {/* Valores */}
+                        <div className="bg-gray-50 border border-gray-200 rounded p-2 mb-2 text-[11px] space-y-1">
+                            <div className="flex justify-between"><span className="text-gray-500">Combustível:</span><span className="font-bold">{(parseFloat(litros) || 0).toFixed(2)} L × R$ {(parseFloat(precoUnitario) || 0).toFixed(3)} = {fmtBRL(valorCombustivel)}</span></div>
+                            {order.needsArla && (
+                                <div className="flex justify-between"><span className="text-gray-500">Arla:</span><span className="font-bold">{(parseFloat(litrosArla) || 0).toFixed(2)} L × R$ {(parseFloat(precoUnitarioArla) || 0).toFixed(3)} = {fmtBRL(valorArla)}</span></div>
+                            )}
+                            {order.outrosGeraValor && (
+                                <div className="flex justify-between"><span className="text-gray-500">{order.outros || 'Outros'}:</span><span className="font-bold">{fmtBRL(valorOutros)}</span></div>
+                            )}
+                            <div className="flex justify-between border-t pt-1 mt-1">
+                                <span className="text-gray-700 font-bold">TOTAL DA NOTA:</span>
                                 <span className="font-bold text-green-700 text-base">{fmtBRL(valorTotal)}</span>
                             </div>
                             {invoiceNumber && (
-                                <div className="flex justify-between">
-                                    <span className="text-gray-500">NF:</span>
-                                    <span className="font-bold">{invoiceNumber}</span>
-                                </div>
+                                <div className="flex justify-between"><span className="text-gray-500">NF:</span><span className="font-bold">{invoiceNumber}</span></div>
                             )}
-                            <div className="flex justify-between">
-                                <span className="text-gray-500">Leitura:</span>
-                                <span className="font-bold">{kmOuHrConfirmado}</span>
-                            </div>
+                            <div className="flex justify-between"><span className="text-gray-500">Leitura:</span><span className="font-bold">{kmOuHrConfirmado}</span></div>
                         </div>
-                        <div className="flex gap-2 w-full">
+
+                        {/* Médias */}
+                        {mediaStats && (
+                            <div className="bg-gray-50 border border-gray-200 rounded p-2 mb-2 text-[11px]">
+                                <div className="font-bold text-gray-700 mb-1">Médias (Km|Hr por litro)</div>
+                                <div className="space-y-0.5">
+                                    {mediaStats.items.map((it, idx) => (
+                                        <div key={idx} className="flex justify-between text-gray-600">
+                                            <span>{idx + 1}º anterior {it.data ? `(${new Date(it.data).toLocaleDateString('pt-BR')})` : ''}:</span>
+                                            <span className="font-mono">{it.media.toFixed(2)}</span>
+                                        </div>
+                                    ))}
+                                    <div className="flex justify-between border-t pt-1 mt-1">
+                                        <span className="font-bold text-gray-700">Média combinada:</span>
+                                        <span className="font-mono font-bold">{mediaStats.combinedAvg.toFixed(2)}</span>
+                                    </div>
+                                    {mediaStats.currentAvg != null && (
+                                        <div className={`flex justify-between font-bold ${
+                                            mediaStats.currentAvg < mediaStats.combinedAvg * 0.75 ? 'text-red-700' :
+                                            mediaStats.currentAvg < mediaStats.combinedAvg * 0.9 ? 'text-yellow-700' :
+                                            'text-green-700'
+                                        }`}>
+                                            <span>Média desta abastecida:</span>
+                                            <span className="font-mono">{mediaStats.currentAvg.toFixed(2)} ({((mediaStats.currentAvg / mediaStats.combinedAvg - 1) * 100).toFixed(1)}%)</span>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="flex gap-2 w-full mt-auto pt-2">
                             <button onClick={() => setShowFinalConfirm(false)} className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 font-bold rounded text-xs hover:bg-gray-200">Voltar e corrigir</button>
                             <button onClick={checkPriceAndSubmit} disabled={isSaving} className="flex-1 py-2 px-3 bg-green-500 text-white font-bold rounded text-xs hover:bg-green-600 shadow">Está correto, gravar</button>
                         </div>
