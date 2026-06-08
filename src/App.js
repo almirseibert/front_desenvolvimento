@@ -591,13 +591,6 @@ const AppContent = () => {
             );
         }
 
-        // DEBUG TEMPORÁRIO — remover após diagnóstico
-        const comboioVehicles = vehicles.filter(v => v.isComboioVehicle);
-        console.log('[ComboioDetect] user.employeeId:', user.employeeId);
-        console.log('[ComboioDetect] comboios encontrados:', comboioVehicles.map(v => ({
-            id: v.id, re: v.registroInterno, operationalAssignment: v.operationalAssignment
-        })));
-
         // Verifica se o operador está vinculado a um veículo Comboio via operationalAssignment
         const getAssignmentEmployeeId = (v) => {
             if (!v.operationalAssignment) return null;
@@ -606,9 +599,16 @@ const AppContent = () => {
                 : v.operationalAssignment;
             return a.employeeId || null;
         };
-        const comboioVinculado = vehicles.find(v =>
-            v.isComboioVehicle && user.employeeId && getAssignmentEmployeeId(v) === user.employeeId
-        );
+
+        // Resolve o employeeId do usuário: preferencialmente do campo direto,
+        // com fallback pelo nome no array de funcionários (para sessões com token antigo)
+        const resolvedEmployeeId = user.employeeId
+            || employees.find(e => e.nome === user.name)?.id
+            || null;
+
+        const comboioVinculado = resolvedEmployeeId
+            ? vehicles.find(v => v.isComboioVehicle && getAssignmentEmployeeId(v) === resolvedEmployeeId)
+            : null;
 
         if (comboioVinculado) {
             return (
