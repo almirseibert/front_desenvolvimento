@@ -105,7 +105,10 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             icon: <Shield size={14} />,
             hidden: !canAccess('admin'),
             items: [
-                { id: 'admin', label: 'Admin' },
+                { id: 'admin_usuarios',    label: 'Usuários & Acesso' },
+                { id: 'admin_frota',       label: 'Frota' },
+                { id: 'admin_comunicacao', label: 'Comunicação' },
+                { id: 'admin_sistema',     label: 'Sistema' },
             ],
         },
     ];

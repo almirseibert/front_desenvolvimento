@@ -84,6 +84,10 @@ const SolicitacaoAbastecimentoPage = lazy(() => import('./pages/SolicitacaoAbast
 const ComboioMobilePage            = lazy(() => import('./pages/ComboioMobilePage'));
 const AdminSolicitacoesPage        = lazy(() => import('./pages/AdminSolicitacoesPage'));
 const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
+const AdminUsuariosPage            = lazy(() => import('./pages/AdminUsuariosPage'));
+const AdminFrotaPage               = lazy(() => import('./pages/AdminFrotaPage'));
+const AdminComunicacaoPage         = lazy(() => import('./pages/AdminComunicacaoPage'));
+const AdminSistemaPage             = lazy(() => import('./pages/AdminSistemaPage'));
 
 // ==========================================
 // Fallback de Carregamento de Página
@@ -694,6 +698,18 @@ const AppContent = () => {
             case 'admin':
                 return canAccessPage(user.roleNormalized, 'admin')
                     ? <AdminPage {...commonProps} /> : <Denied />;
+            case 'admin_usuarios':
+                return canAccessPage(user.roleNormalized, 'admin')
+                    ? <AdminUsuariosPage {...commonProps} /> : <Denied />;
+            case 'admin_frota':
+                return canAccessPage(user.roleNormalized, 'admin')
+                    ? <AdminFrotaPage {...commonProps} /> : <Denied />;
+            case 'admin_comunicacao':
+                return canAccessPage(user.roleNormalized, 'admin')
+                    ? <AdminComunicacaoPage {...commonProps} /> : <Denied />;
+            case 'admin_sistema':
+                return canAccessPage(user.roleNormalized, 'admin')
+                    ? <AdminSistemaPage {...commonProps} /> : <Denied />;
             case 'sigasul':
                 return canAccessPage(user.roleNormalized, 'sigasul')
                     ? <SigaSulPage {...commonProps} /> : <Denied />;
