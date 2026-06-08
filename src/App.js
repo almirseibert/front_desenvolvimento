@@ -591,24 +591,17 @@ const AppContent = () => {
             );
         }
 
-        // DEBUG TEMPORÁRIO
-        const _emp = employees.find(e => e.nome === user.name);
-        console.log('[ComboioDetect] employee completo:', JSON.stringify(_emp));
+        // Detecta comboio via alocacaoAtual.description (registroInterno do veículo alocado)
+        const employeeRecord = employees.find(e =>
+            e.id === user.employeeId || e.nome === user.name
+        );
 
-        // Detecta comboio via employees.alocadoEm.veiculoId
-        // Quando um funcionário é alocado a um veículo, employees.alocadoEm = { veiculoId, assignmentType }
-        const resolvedEmployeeId = user.employeeId
-            || employees.find(e => e.nome === user.name)?.id
-            || null;
+        const reAlocado = employeeRecord?.alocacaoAtual?.isAllocated
+            ? employeeRecord.alocacaoAtual.description
+            : null;
 
-        const employeeRecord = resolvedEmployeeId
-            ? employees.find(e => e.id === resolvedEmployeeId)
-            : employees.find(e => e.nome === user.name);
-
-        const veiculoIdDoFuncionario = employeeRecord?.alocadoEm?.veiculoId || null;
-
-        const comboioVinculado = veiculoIdDoFuncionario
-            ? vehicles.find(v => v.id === veiculoIdDoFuncionario && v.isComboioVehicle)
+        const comboioVinculado = reAlocado
+            ? vehicles.find(v => v.registroInterno === reAlocado && v.isComboioVehicle)
             : null;
 
         if (comboioVinculado) {
