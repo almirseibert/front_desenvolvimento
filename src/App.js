@@ -591,6 +591,13 @@ const AppContent = () => {
             );
         }
 
+        // DEBUG TEMPORÁRIO — remover após diagnóstico
+        const comboioVehicles = vehicles.filter(v => v.isComboioVehicle);
+        console.log('[ComboioDetect] user.employeeId:', user.employeeId);
+        console.log('[ComboioDetect] comboios encontrados:', comboioVehicles.map(v => ({
+            id: v.id, re: v.registroInterno, operationalAssignment: v.operationalAssignment
+        })));
+
         // Verifica se o operador está vinculado a um veículo Comboio via operationalAssignment
         const getAssignmentEmployeeId = (v) => {
             if (!v.operationalAssignment) return null;
