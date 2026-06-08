@@ -81,6 +81,7 @@ const OperacionalPage              = lazy(() => import('./pages/OperacionalPage'
 const SupervisorDashboard          = lazy(() => import('./pages/SupervisorDashboard'));
 const SupervisorObraDetail         = lazy(() => import('./pages/SupervisorObraDetail'));
 const SolicitacaoAbastecimentoPage = lazy(() => import('./pages/SolicitacaoAbastecimentoPage'));
+const ComboioMobilePage            = lazy(() => import('./pages/ComboioMobilePage'));
 const AdminSolicitacoesPage        = lazy(() => import('./pages/AdminSolicitacoesPage'));
 const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
 
@@ -589,6 +590,39 @@ const AppContent = () => {
                 </div>
             );
         }
+
+        // Verifica se o operador está vinculado a um veículo Comboio via operationalAssignment
+        const getAssignmentEmployeeId = (v) => {
+            if (!v.operationalAssignment) return null;
+            const a = typeof v.operationalAssignment === 'string'
+                ? (() => { try { return JSON.parse(v.operationalAssignment); } catch { return {}; } })()
+                : v.operationalAssignment;
+            return a.employeeId || null;
+        };
+        const comboioVinculado = vehicles.find(v =>
+            v.isComboioVehicle && user.employeeId && getAssignmentEmployeeId(v) === user.employeeId
+        );
+
+        if (comboioVinculado) {
+            return (
+                <Suspense fallback={<PageFallback />}>
+                    <ComboioMobilePage
+                        apiClient={apiClient}
+                        user={user}
+                        comboio={comboioVinculado}
+                        vehicles={vehicles}
+                        obras={obras}
+                        employees={employees}
+                        partners={partners}
+                        expenses={expenses}
+                        setAlertMessage={setAlertMessage}
+                        socket={socket}
+                        PasswordConfirmationModal={PasswordConfirmationModalWrapped}
+                    />
+                </Suspense>
+            );
+        }
+
         return (
             <Suspense fallback={<PageFallback />}>
                 <SolicitacaoAbastecimentoPage
