@@ -591,6 +591,11 @@ const AppContent = () => {
             );
         }
 
+        // DEBUG TEMPORÁRIO
+        const _emp = employees.find(e => e.nome === user.name);
+        console.log('[ComboioDetect] employee encontrado:', _emp ? { id: _emp.id, nome: _emp.nome, alocadoEm: _emp.alocadoEm } : 'NÃO ENCONTRADO');
+        console.log('[ComboioDetect] user.employeeId:', user.employeeId);
+
         // Detecta comboio via employees.alocadoEm.veiculoId
         // Quando um funcionário é alocado a um veículo, employees.alocadoEm = { veiculoId, assignmentType }
         const resolvedEmployeeId = user.employeeId
