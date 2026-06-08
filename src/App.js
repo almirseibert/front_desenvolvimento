@@ -591,6 +591,12 @@ const AppContent = () => {
             );
         }
 
+        // DEBUG TEMPORÁRIO
+        console.log('[ComboioDetect] user:', { id: user.id, name: user.name, employeeId: user.employeeId });
+        console.log('[ComboioDetect] employees (primeiros 5):', employees.slice(0, 5).map(e => ({ id: e.id, nome: e.nome })));
+        console.log('[ComboioDetect] veículos comboio:', vehicles.filter(v => v.isComboioVehicle).map(v => ({ id: v.id, re: v.registroInterno, operationalAssignment: v.operationalAssignment })));
+        console.log('[ComboioDetect] total veículos:', vehicles.length);
+
         // Verifica se o operador está vinculado a um veículo Comboio via operationalAssignment
         const getAssignmentEmployeeId = (v) => {
             if (!v.operationalAssignment) return null;
