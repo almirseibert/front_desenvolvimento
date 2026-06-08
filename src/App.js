@@ -591,29 +591,20 @@ const AppContent = () => {
             );
         }
 
-        // DEBUG TEMPORÁRIO
-        console.log('[ComboioDetect] user:', { id: user.id, name: user.name, employeeId: user.employeeId });
-        console.log('[ComboioDetect] employees (primeiros 5):', employees.slice(0, 5).map(e => ({ id: e.id, nome: e.nome })));
-        console.log('[ComboioDetect] veículos comboio:', vehicles.filter(v => v.isComboioVehicle).map(v => ({ id: v.id, re: v.registroInterno, operationalAssignment: v.operationalAssignment })));
-        console.log('[ComboioDetect] total veículos:', vehicles.length);
-
-        // Verifica se o operador está vinculado a um veículo Comboio via operationalAssignment
-        const getAssignmentEmployeeId = (v) => {
-            if (!v.operationalAssignment) return null;
-            const a = typeof v.operationalAssignment === 'string'
-                ? (() => { try { return JSON.parse(v.operationalAssignment); } catch { return {}; } })()
-                : v.operationalAssignment;
-            return a.employeeId || null;
-        };
-
-        // Resolve o employeeId do usuário: preferencialmente do campo direto,
-        // com fallback pelo nome no array de funcionários (para sessões com token antigo)
+        // Detecta comboio via employees.alocadoEm.veiculoId
+        // Quando um funcionário é alocado a um veículo, employees.alocadoEm = { veiculoId, assignmentType }
         const resolvedEmployeeId = user.employeeId
             || employees.find(e => e.nome === user.name)?.id
             || null;
 
-        const comboioVinculado = resolvedEmployeeId
-            ? vehicles.find(v => v.isComboioVehicle && getAssignmentEmployeeId(v) === resolvedEmployeeId)
+        const employeeRecord = resolvedEmployeeId
+            ? employees.find(e => e.id === resolvedEmployeeId)
+            : employees.find(e => e.nome === user.name);
+
+        const veiculoIdDoFuncionario = employeeRecord?.alocadoEm?.veiculoId || null;
+
+        const comboioVinculado = veiculoIdDoFuncionario
+            ? vehicles.find(v => v.id === veiculoIdDoFuncionario && v.isComboioVehicle)
             : null;
 
         if (comboioVinculado) {
