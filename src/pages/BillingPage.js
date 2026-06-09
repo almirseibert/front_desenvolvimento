@@ -328,23 +328,31 @@ const BillingPage = ({
         return getObraVehicles.filter(v => idsWithData.has(v.id));
     }, [reportData, getObraVehicles, reportStartDate, reportEndDate]);
 
-    const getDefaultOperator = () => {
-        if (dailyLogs.length > 0) {
-            const lastLog = dailyLogs.find(l => l.employeeId);
-            if (lastLog) return lastLog.employeeId;
-        }
-        
+    // Retorna o funcionário que tinha a máquina na data informada,
+    // consultando o histórico de alocações da obra (dataEntrada/dataSaida).
+    // Se dateKey não for fornecido, usa a alocação mais recente como fallback.
+    const getDefaultOperator = (dateKey) => {
         const obra = obras.find(o => o.id === selectedObraId);
         if (!obra) return '';
 
-        // 2. MODIFICAÇÃO: Busca no histórico de veículos da obra, 
-        // mesmo que já tenha data de saída (dataSaida)
         const allocations = obra.historicoVeiculos
             .filter(h => h.veiculoId === controlVehicleId)
             .sort((a, b) => new Date(b.dataEntrada) - new Date(a.dataEntrada));
 
-        // Retorna o operador da alocação mais recente encontrada
-        return allocations.length > 0 ? allocations[0].employeeId : '';
+        if (!allocations.length) return '';
+
+        if (dateKey) {
+            const date = new Date(dateKey + 'T00:00:00');
+            const active = allocations.find(h => {
+                const entrada = new Date(h.dataEntrada + 'T00:00:00');
+                const saida = h.dataSaida ? new Date(h.dataSaida + 'T23:59:59') : null;
+                return entrada <= date && (!saida || saida >= date);
+            });
+            if (active) return active.employeeId || '';
+        }
+
+        // Fallback: alocação mais recente (para dias sem cobertura no histórico)
+        return allocations[0].employeeId || '';
     };
 
     // --- HELPERS DE NAVEGAÇÃO E COMBOBOX ---
@@ -503,7 +511,7 @@ const BillingPage = ({
                 obraId: selectedObraId,
                 vehicleId: controlVehicleId,
                 date: dateKey,
-                employeeId: changes.employeeId || existingLog?.employeeId || getDefaultOperator(),
+                employeeId: changes.employeeId || existingLog?.employeeId || getDefaultOperator(dateKey),
                 morningStart: justificativaTipo ? null : (changes.morningStart !== undefined ? changes.morningStart : (existingLog?.morningStart || null)),
                 morningEnd: justificativaTipo ? null : (changes.morningEnd !== undefined ? changes.morningEnd : (existingLog?.morningEnd || null)),
                 afternoonStart: justificativaTipo ? null : (changes.afternoonStart !== undefined ? changes.afternoonStart : (existingLog?.afternoonStart || null)),
@@ -1120,7 +1128,7 @@ const BillingPage = ({
                                                                 : (existingLog.justificativaTipo || null)
                                                         );
 
-                                                        const employeeId = changes.employeeId !== undefined ? changes.employeeId : (existingLog.employeeId || getDefaultOperator());
+                                                        const employeeId = changes.employeeId !== undefined ? changes.employeeId : (existingLog.employeeId || getDefaultOperator(dayDate));
                                                         const mStart = (justificativaTipo || isCleared) ? '' : (changes.morningStart !== undefined ? changes.morningStart : (existingLog.morningStart || ''));
                                                         const mEnd = (justificativaTipo || isCleared) ? '' : (changes.morningEnd !== undefined ? changes.morningEnd : (existingLog.morningEnd || ''));
                                                         const aStart = (justificativaTipo || isCleared) ? '' : (changes.afternoonStart !== undefined ? changes.afternoonStart : (existingLog.afternoonStart || ''));
