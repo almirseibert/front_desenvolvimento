@@ -166,6 +166,7 @@ const ComboioMobilePage = ({
     setAlertMessage,
     socket,
     PasswordConfirmationModal,
+    onVoltar,
 }) => {
     useEnsureResources(['expenses']);
 
@@ -233,6 +234,15 @@ const ComboioMobilePage = ({
 
                 <div className="flex justify-between items-start mb-5 relative z-10">
                     <div className="overflow-hidden">
+                        {onVoltar && (
+                            <button
+                                onClick={onVoltar}
+                                className="flex items-center gap-1 text-gray-400 hover:text-white text-xs mb-2 transition"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                                Voltar
+                            </button>
+                        )}
                         <h1 className="text-xl font-bold truncate">Olá, {user.name.split(' ')[0]}</h1>
                         <p className="text-gray-400 text-sm">Operador de Comboio</p>
                         <p className="text-yellow-400 text-xs font-mono mt-0.5">

@@ -382,6 +382,7 @@ const AppContent = () => {
     const [showChangePasswordModal, setShowChangePasswordModal] = useState(false);
     const [pendingRequestsCount, setPendingRequestsCount] = useState(0);
     const [pendingSolicitacoesCount, setPendingSolicitacoesCount] = useState(0);
+    const [operadorTelaAtual, setOperadorTelaAtual] = useState(null); // null | 'comboio' | 'normal'
 
     const [agendaAlerts, setAgendaAlerts] = useState([]);
 
@@ -595,26 +596,33 @@ const AppContent = () => {
             );
         }
 
-        // Detecta comboio via alocacaoAtual.description (registroInterno do veículo alocado)
+        // Detecta veículos vinculados ao operador via alocacaoAtual.description
         const employeeRecord = employees.find(e =>
             e.id === user.employeeId || e.nome === user.name
         );
 
-        const reAlocado = employeeRecord?.alocacaoAtual?.isAllocated
-            ? employeeRecord.alocacaoAtual.description
-            : null;
+        const registrosVinculados = employeeRecord?.alocacaoAtual?.isAllocated
+            ? employeeRecord.alocacaoAtual.description.split(',').map(s => s.trim()).filter(Boolean)
+            : [];
 
-        const comboioVinculado = reAlocado
-            ? vehicles.find(v => v.registroInterno === reAlocado && v.isComboioVehicle)
-            : null;
+        const veiculosVinculados = registrosVinculados
+            .map(reg => vehicles.find(v => v.registroInterno === reg))
+            .filter(Boolean);
 
-        if (comboioVinculado) {
+        const comboiosVinculados  = veiculosVinculados.filter(v => v.isComboioVehicle);
+        const normaisVinculados   = veiculosVinculados.filter(v => !v.isComboioVehicle);
+
+        const temComboio  = comboiosVinculados.length > 0;
+        const temNormal   = normaisVinculados.length > 0;
+
+        // Caso 2: todos comboio (ou apenas comboio) → vai direto pro comboio
+        if (temComboio && !temNormal) {
             return (
                 <Suspense fallback={<PageFallback />}>
                     <ComboioMobilePage
                         apiClient={apiClient}
                         user={user}
-                        comboio={comboioVinculado}
+                        comboio={comboiosVinculados[0]}
                         vehicles={vehicles}
                         obras={obras}
                         employees={employees}
@@ -628,6 +636,80 @@ const AppContent = () => {
             );
         }
 
+        // Caso 1: tem comboio E normal → tela de seleção
+        if (temComboio && temNormal) {
+            if (operadorTelaAtual === 'comboio') {
+                return (
+                    <Suspense fallback={<PageFallback />}>
+                        <ComboioMobilePage
+                            apiClient={apiClient}
+                            user={user}
+                            comboio={comboiosVinculados[0]}
+                            vehicles={vehicles}
+                            obras={obras}
+                            employees={employees}
+                            partners={partners}
+                            expenses={expenses}
+                            setAlertMessage={setAlertMessage}
+                            socket={socket}
+                            PasswordConfirmationModal={PasswordConfirmationModalWrapped}
+                            onVoltar={() => setOperadorTelaAtual(null)}
+                        />
+                    </Suspense>
+                );
+            }
+            if (operadorTelaAtual === 'normal') {
+                return (
+                    <Suspense fallback={<PageFallback />}>
+                        <SolicitacaoAbastecimentoPage
+                            apiClient={apiClient}
+                            user={user}
+                            vehicles={vehicles}
+                            obras={obras}
+                            partners={partners}
+                            setAlertMessage={setAlertMessage}
+                            socket={socket}
+                            onVoltar={() => setOperadorTelaAtual(null)}
+                        />
+                    </Suspense>
+                );
+            }
+            // Tela de seleção
+            return (
+                <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-6" style={{ background: '#f5f3ef' }}>
+                    <div className="text-center mb-2">
+                        <div className="text-xl font-bold text-slate-800">Abastecimento</div>
+                        <div className="text-sm text-slate-500 mt-1">Selecione o tipo de abastecimento</div>
+                    </div>
+                    <button
+                        onClick={() => setOperadorTelaAtual('normal')}
+                        className="w-full max-w-xs bg-white border-2 border-yellow-500 rounded-2xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md active:scale-95 transition-all"
+                    >
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: '#fef9c3' }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#9E7A42" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H6a3 3 0 0 0-3 3v8a3 3 0 0 0 3 3z"/>
+                            </svg>
+                        </div>
+                        <div className="font-semibold text-slate-800 text-lg">Abastecimento Normal</div>
+                        <div className="text-xs text-slate-400 text-center">Solicitar abastecimento para seu veículo</div>
+                    </button>
+                    <button
+                        onClick={() => setOperadorTelaAtual('comboio')}
+                        className="w-full max-w-xs bg-white border-2 border-slate-700 rounded-2xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md active:scale-95 transition-all"
+                    >
+                        <div className="w-14 h-14 rounded-full flex items-center justify-center" style={{ background: '#f1f5f9' }}>
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="1" y="3" width="15" height="13" rx="2"/><path d="M16 8h4l3 4v4h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                            </svg>
+                        </div>
+                        <div className="font-semibold text-slate-800 text-lg">Comboio</div>
+                        <div className="text-xs text-slate-400 text-center">Gerenciar abastecimento do comboio</div>
+                    </button>
+                </div>
+            );
+        }
+
+        // Caso 3: apenas veículos normais → tela normal
         return (
             <Suspense fallback={<PageFallback />}>
                 <SolicitacaoAbastecimentoPage

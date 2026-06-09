@@ -135,16 +135,17 @@ const checkVehicleRestrictions = (vehicle) => {
 };
 // --- FIM DA LÓGICA DE REGRAS ---
 
-const SolicitacaoAbastecimentoPage = ({ 
-    apiClient, 
-    vehicles = [], 
-    obras = [], 
-    partners = [], 
-    employees = [], 
+const SolicitacaoAbastecimentoPage = ({
+    apiClient,
+    vehicles = [],
+    obras = [],
+    partners = [],
+    employees = [],
     setAlertMessage,
     user,
     onLogout,
-    socket 
+    socket,
+    onVoltar,
 }) => {
     
     // --- ESTADOS DE CONTROLE ---
@@ -1191,6 +1192,15 @@ const SolicitacaoAbastecimentoPage = ({
                         </div>
                         <div className="flex justify-between items-start mb-6 relative z-10">
                             <div className="flex-1 mr-2 overflow-hidden">
+                                {onVoltar && (
+                                    <button
+                                        onClick={onVoltar}
+                                        className="flex items-center gap-1 text-gray-400 hover:text-white text-xs mb-2 transition"
+                                    >
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+                                        Voltar
+                                    </button>
+                                )}
                                 <h1 className="text-xl md:text-2xl font-bold truncate">Olá, {user.name.split(' ')[0]}</h1>
                                 <p className="text-gray-400 text-sm">Painel do Operador</p>
                             </div>
