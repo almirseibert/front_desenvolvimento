@@ -194,7 +194,15 @@ const RefuelingOrderModal = ({
         );
     }, [formData.vehicleId, refuelings, isEditing, orderToEdit]);
 
-    const duplicateBlocked = !!openOrderForVehicle && !isWeekendOrHoliday;
+    // Veículos fictícios (gerador, lava-jato, ajuda de custo etc.) marcados em
+    // Admin > Abastecimento ignoram a regra de duplicidade.
+    const vehicleAllowsMultiple = useMemo(() => {
+        if (!formData.vehicleId) return false;
+        const v = vehicles.find(x => x.id === formData.vehicleId);
+        return !!(v && (v.permiteMultiplosAbastecimentos == 1 || v.permiteMultiplosAbastecimentos === true));
+    }, [formData.vehicleId, vehicles]);
+
+    const duplicateBlocked = !!openOrderForVehicle && !isWeekendOrHoliday && !vehicleAllowsMultiple;
 
     useEffect(() => {
         if (formData.obraId && obras.length > 0) { 
@@ -555,11 +563,20 @@ const RefuelingOrderModal = ({
                         </div>
                     )}
 
-                    {openOrderForVehicle && isWeekendOrHoliday && (
+                    {openOrderForVehicle && isWeekendOrHoliday && !vehicleAllowsMultiple && (
                         <div className="flex items-start gap-2 p-1.5 bg-amber-50 border border-amber-300 text-amber-900 rounded text-[10px] font-bold leading-snug">
                             <Info size={12} className="mt-0.5 flex-shrink-0"/>
                             <span>
                                 Exceção aplicada: já existe ordem aberta Nº {openOrderForVehicle.authNumber || openOrderForVehicle.id}, mas a nova é para <u>fim de semana/feriado</u> ({formatDateDisplay(formData.date)}) — antecipação permitida.
+                            </span>
+                        </div>
+                    )}
+
+                    {openOrderForVehicle && vehicleAllowsMultiple && (
+                        <div className="flex items-start gap-2 p-1.5 bg-blue-50 border border-blue-300 text-blue-900 rounded text-[10px] font-bold leading-snug">
+                            <Info size={12} className="mt-0.5 flex-shrink-0"/>
+                            <span>
+                                Veículo fictício liberado para múltiplos abastecimentos abertos (já existe ordem Nº {openOrderForVehicle.authNumber || openOrderForVehicle.id}). Regra de duplicidade não se aplica.
                             </span>
                         </div>
                     )}

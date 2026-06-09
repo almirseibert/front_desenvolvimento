@@ -1,6 +1,7 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
-import { Fuel, CheckCircle, Loader, AlertTriangle, RefreshCw, Gauge, Wallet, XCircle } from 'lucide-react';
+import { Fuel, CheckCircle, Loader, AlertTriangle, RefreshCw, Gauge, Wallet, XCircle, Settings, Plus, X } from 'lucide-react';
 import apiClient from '../../services/apiClient';
+import SearchableSelect from '../SearchableSelect';
 
 const TIPO_LABEL = {
     BloqueadoLeitura:   { label: 'Leitura Inválida',   cor: 'bg-red-100 text-red-800',    icon: Gauge  },
@@ -17,6 +18,8 @@ const AbastecimentoAdminTab = () => {
     const [negando, setNegando]       = useState(null);
     const [mensagem, setMensagem]     = useState(null);
     const [filtro, setFiltro]         = useState('Todos');
+    const [vehicleToAdd, setVehicleToAdd] = useState(null);
+    const [togglingId, setTogglingId] = useState(null);
 
     const load = async () => {
         setLoading(true);
@@ -57,6 +60,46 @@ const AbastecimentoAdminTab = () => {
     const getObra     = id => obras.find(o => o.id === id);
     const getVehicle  = id => vehicles.find(v => v.id === id);
     const getEmployee = id => employees.find(e => e.id === id);
+
+    const veiculosFicticios = useMemo(
+        () => vehicles
+            .filter(v => v.permiteMultiplosAbastecimentos == 1 || v.permiteMultiplosAbastecimentos === true)
+            .sort((a, b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')),
+        [vehicles]
+    );
+
+    const veiculosDisponiveisParaLiberar = useMemo(
+        () => vehicles
+            .filter(v =>
+                !(v.permiteMultiplosAbastecimentos == 1 || v.permiteMultiplosAbastecimentos === true)
+                && v.status !== 'Inativo' && v.status !== 'Sucata'
+            )
+            .sort((a, b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')),
+        [vehicles]
+    );
+
+    const toggleVeiculoFicticio = async (vehicle, liberar) => {
+        if (!vehicle) return;
+        setTogglingId(vehicle.id);
+        setMensagem(null);
+        try {
+            await apiClient.updateVehicle(vehicle.id, { permiteMultiplosAbastecimentos: liberar ? 1 : 0 });
+            setVehicles(prev => prev.map(v => v.id === vehicle.id
+                ? { ...v, permiteMultiplosAbastecimentos: liberar ? 1 : 0 }
+                : v));
+            setMensagem({
+                tipo: 'ok',
+                texto: liberar
+                    ? `${vehicle.registroInterno || vehicle.placa} liberado para múltiplos abastecimentos abertos.`
+                    : `Liberação removida de ${vehicle.registroInterno || vehicle.placa}.`,
+            });
+            if (liberar) setVehicleToAdd(null);
+        } catch (e) {
+            setMensagem({ tipo: 'erro', texto: `Erro ao atualizar veículo: ${e.message}` });
+        } finally {
+            setTogglingId(null);
+        }
+    };
 
     const formatDate = d => {
         if (!d) return 'N/A';
@@ -129,6 +172,88 @@ const AbastecimentoAdminTab = () => {
                 <button onClick={load} className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg border hover:bg-gray-50 transition shrink-0">
                     <RefreshCw size={14} /> Atualizar
                 </button>
+            </div>
+
+            {/* Card de Veículos Fictícios — Liberação de Múltiplos Abastecimentos */}
+            <div className="bg-white border rounded-xl p-4 shadow-sm">
+                <div className="flex items-start gap-3 mb-3">
+                    <div className="p-2 rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                        <Settings size={18} />
+                    </div>
+                    <div className="flex-1">
+                        <h3 className="text-sm font-bold text-gray-800">
+                            Veículos com liberação de múltiplos abastecimentos abertos
+                        </h3>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-snug">
+                            Ignoram a regra que bloqueia nova ordem quando há outra em aberto. Use para veículos fictícios
+                            destinados a ajuda de custo, adiantamento de salário em combustível ou abastecimento de
+                            equipamentos sem registro interno (bombas, lava-jato, geradores etc.).
+                        </p>
+                    </div>
+                </div>
+
+                {/* Adicionar veículo */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:items-end mb-3">
+                    <div className="flex-1">
+                        <label className="block text-[11px] font-bold text-gray-600 mb-1">Adicionar veículo</label>
+                        <SearchableSelect
+                            items={veiculosDisponiveisParaLiberar}
+                            value={vehicleToAdd?.id || ''}
+                            onChange={(v) => setVehicleToAdd(v || null)}
+                            getLabel={(v) => `${v.registroInterno || 's/registro'} - ${v.placa || 's/placa'}`}
+                            getSubLabel={(v) => [v.tipo, v.modelo].filter(Boolean).join(' • ')}
+                            placeholder="Buscar veículo para liberar..."
+                        />
+                    </div>
+                    <button
+                        onClick={() => toggleVeiculoFicticio(vehicleToAdd, true)}
+                        disabled={!vehicleToAdd || togglingId === vehicleToAdd?.id}
+                        className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                    >
+                        {togglingId === vehicleToAdd?.id
+                            ? <Loader size={14} className="animate-spin" />
+                            : <Plus size={14} />}
+                        Liberar
+                    </button>
+                </div>
+
+                {/* Lista de veículos atualmente liberados */}
+                {veiculosFicticios.length === 0 ? (
+                    <p className="text-xs text-gray-400 italic text-center py-3 border-t">
+                        Nenhum veículo liberado para múltiplos abastecimentos.
+                    </p>
+                ) : (
+                    <div className="border-t pt-3">
+                        <p className="text-[11px] text-gray-500 mb-2 font-semibold">
+                            {veiculosFicticios.length} veículo{veiculosFicticios.length === 1 ? '' : 's'} liberado{veiculosFicticios.length === 1 ? '' : 's'}:
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {veiculosFicticios.map(v => (
+                                <div
+                                    key={v.id}
+                                    className="inline-flex items-center gap-2 bg-blue-50 border border-blue-200 text-blue-900 rounded-lg px-2.5 py-1.5 text-xs"
+                                >
+                                    <div className="flex flex-col leading-tight">
+                                        <span className="font-bold">{v.registroInterno || 's/registro'}</span>
+                                        <span className="text-[10px] text-blue-700">
+                                            {v.placa || 's/placa'}{v.modelo ? ` • ${v.modelo}` : ''}
+                                        </span>
+                                    </div>
+                                    <button
+                                        onClick={() => toggleVeiculoFicticio(v, false)}
+                                        disabled={togglingId === v.id}
+                                        title="Remover liberação"
+                                        className="ml-1 p-1 rounded-full hover:bg-blue-200 transition disabled:opacity-50"
+                                    >
+                                        {togglingId === v.id
+                                            ? <Loader size={12} className="animate-spin" />
+                                            : <X size={12} />}
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Filtros */}
