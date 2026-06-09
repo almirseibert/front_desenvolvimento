@@ -16,6 +16,7 @@ const EVENT_TYPES = [
     { id: 'ordem_gerada',                label: 'Ordem de abastecimento gerada',        desc: 'Ao criar ordem (com PDF em anexo).' },
     { id: 'multa_lancada',               label: 'Multa lançada',                        desc: 'Ao registrar multa (com PDF de ciência).' },
     { id: 'documento_veiculo_vencido',   label: 'Documento de veículo vencido',         desc: 'Cron diário.' },
+    { id: 'operador_placeholder_obra_7dias', label: 'Operador fictício em obra >7 dias', desc: 'Cron diário. Lista veículos com COLABORADOR/TESTE/etc. há mais de 7 dias.' },
 ];
 
 const CHANNELS = [

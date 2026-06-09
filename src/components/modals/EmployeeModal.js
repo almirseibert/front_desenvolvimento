@@ -28,12 +28,13 @@ const EmployeeModal = ({
         contato: '',
         email: '',
         status: 'ativo',
+        isPlaceholder: 0,
         // CNH: Mapeamos para um objeto para facilitar a UI
         cnh: { numero: '', categoria: '', validade: '', emissao: '', exameToxicologicoVencimento: '', anexo: null },
         // ASO: Nova aba
         aso: { dataEmissao: '', validade: '', anexo: null, observacao: '' },
         epi: { dataEntrega: '', anexo: null },
-        certificados: [] 
+        certificados: []
     });
 
     useEffect(() => {
@@ -62,8 +63,9 @@ const EmployeeModal = ({
                 contato: employee.contato || employee.telefone || '',
                 email: employee.email || '',
                 status: employee.status || 'ativo',
-                
-                cnh: { 
+                isPlaceholder: (employee.isPlaceholder == 1 || employee.isPlaceholder === true) ? 1 : 0,
+
+                cnh: {
                     numero: cnhNumero,
                     categoria: cnhCategoria,
                     validade: cnhValidade,
@@ -258,6 +260,25 @@ const EmployeeModal = ({
                                     <option value="Supervisor de Obras">Supervisor de Obras</option>
                                     <option value="Outro">Outro</option>
                                 </select>
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <label className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition ${formData.isPlaceholder ? 'bg-amber-50 border-amber-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
+                                    <input
+                                        type="checkbox"
+                                        checked={!!formData.isPlaceholder}
+                                        onChange={(e) => setFormData(p => ({ ...p, isPlaceholder: e.target.checked ? 1 : 0 }))}
+                                        className="mt-0.5 h-4 w-4 accent-amber-600"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="text-xs font-bold text-gray-800">Funcionário fictício (placeholder)</div>
+                                        <div className="text-[11px] text-gray-600 leading-snug mt-0.5">
+                                            Marca este cadastro como operador <u>temporário</u> (COLABORADOR, TESTE, MAK SERVIÇOS etc.).
+                                            Veículos alocados em obra com um operador fictício por mais de 7 dias têm
+                                            <strong> emissão de ordens de abastecimento bloqueada</strong> até que o operador real seja informado.
+                                        </div>
+                                    </div>
+                                </label>
                             </div>
 
                             <div className="md:col-span-2">
