@@ -112,6 +112,12 @@ const ComboioEntradaModal = ({
         const liters = parseFloat(formData.liters);
         
         // CORREÇÃO DO ERRO 500: Passando null explicitamente para campos opcionais removidos (obraId)
+        // Timestamp de emissão = data escolhida + horário REAL atual em BRT (GMT-3).
+        // 'T12:00:00Z' antigo virava 09:00:00 BRT em todas as entradas.
+        const pad = n => String(n).padStart(2, '0');
+        const nowBrt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        const timeBrt = `${pad(nowBrt.getHours())}:${pad(nowBrt.getMinutes())}:${pad(nowBrt.getSeconds())}`;
+
         const payload = {
             id: isEditing ? transactionData.id : undefined,
             comboioVehicleId: comboioVehicle.id,
@@ -119,7 +125,7 @@ const ComboioEntradaModal = ({
             employeeId: formData.employeeId,
             obraId: null, // Fix: Envia NULL explicitamente
             liters: liters,
-            date: new Date(formData.date + 'T12:00:00Z').toISOString(),
+            date: `${formData.date}T${timeBrt}-03:00`,
             fuelType: formData.fuelType,
             odometro: null, 
             horimetro: null, 

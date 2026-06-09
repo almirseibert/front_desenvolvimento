@@ -450,6 +450,13 @@ const RefuelingOrderModal = ({
         const finalOdometro = allowed.includes('odometro') ? safeFloat(formData.odometro) : null;
         const finalHorimetro = allowed.includes('horimetro') ? safeFloat(formData.horimetro) : null;
 
+        // Timestamp de emissão = data escolhida + horário REAL atual em BRT (GMT-3).
+        // Antes usávamos 'T12:00:00Z' (meio-dia UTC), que ao converter para BRT
+        // virava 09:00:00 — todas as ordens ficavam com o mesmo horário.
+        const pad = n => String(n).padStart(2, '0');
+        const nowBrt = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        const timeBrt = `${pad(nowBrt.getHours())}:${pad(nowBrt.getMinutes())}:${pad(nowBrt.getSeconds())}`;
+
         const payload = {
             ...formData,
             odometro: finalOdometro,
@@ -457,9 +464,9 @@ const RefuelingOrderModal = ({
             litrosLiberados: safeFloat(formData.litrosLiberados) || 0,
             litrosLiberadosArla: safeFloat(formData.litrosLiberadosArla) || 0,
             outrosValor: safeFloat(formData.outrosValor) || 0,
-            date: new Date(formData.date + 'T12:00:00Z').toISOString(),
+            date: `${formData.date}T${timeBrt}-03:00`,
             createdBy: user,
-            solicitacaoId: solicitacaoData ? solicitacaoData.id : null 
+            solicitacaoId: solicitacaoData ? solicitacaoData.id : null
         };
 
         const currentStatus = orderToEdit?.status ? orderToEdit.status.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") : "";
