@@ -72,6 +72,7 @@ const OperacionalPage = ({
     const [obraSort, setObraSort] = useState('risco');
     const [obraDetailStatus, setObraDetailStatus] = useState('todos');
     const [obraDetailSort, setObraDetailSort] = useState('padrao');
+    const [showCentrosCusto, setShowCentrosCusto] = useState(false);
 
     useEffect(() => {
         if (obraId && activeView === 'obra') fetchObraData();
@@ -105,7 +106,10 @@ const OperacionalPage = ({
     };
 
     const obrasComRisco = useMemo(() => {
-        return obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo').map(obra => {
+        return obras
+            .filter(o => showCentrosCusto || (o.tipo_registro || 'obra') !== 'centro_custo')
+            .map(obra => {
+            const isCentroCusto = obra.tipo_registro === 'centro_custo';
             const isFinished = obra.status === 'finalizada' || obra.status === 'Finalizada' ||
                 obra.status === 'Concluída' || obra.status === 'Inativa' ||
                 (obra.dataFim && new Date(obra.dataFim) < today);
@@ -171,14 +175,14 @@ const OperacionalPage = ({
             else if (riskScore >= 3) riskLevel = 'atencao';
             else riskLevel = 'ok';
 
-            return { obra, isFinished, ativos, inativos, equipSemLancamento10d, totalUnicos, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons };
+            return { obra, isFinished, ativos, inativos, equipSemLancamento10d, totalUnicos, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons, isCentroCusto };
         }).sort((a, b) => {
             if (a.isFinished !== b.isFinished) return a.isFinished ? 1 : -1;
             if (b.riskScore !== a.riskScore) return b.riskScore - a.riskScore;
             if (b.ativos !== a.ativos) return b.ativos - a.ativos;
             return a.obra.nome.localeCompare(b.obra.nome);
         });
-    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today]);
+    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today, showCentrosCusto]);
 
     const obrasFiltradas = useMemo(() => {
         let result = [...obrasComRisco];
@@ -645,7 +649,14 @@ const OperacionalPage = ({
                                         ))}
                                     </div>
                                     <div className="ml-auto flex items-center gap-3">
-                                        <span className="text-xs text-gray-400">{obrasFiltradas.length} {obrasFiltradas.length === 1 ? 'obra' : 'obras'}</span>
+                                        <button
+                                            onClick={() => setShowCentrosCusto(v => !v)}
+                                            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${showCentrosCusto ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-gray-500 border-gray-300 hover:border-purple-300 hover:text-purple-600'}`}
+                                        >
+                                            <span className={`w-2 h-2 rounded-full ${showCentrosCusto ? 'bg-purple-500' : 'bg-gray-300'}`} />
+                                            Centros de Custo
+                                        </button>
+                                        <span className="text-xs text-gray-400">{obrasFiltradas.length} {obrasFiltradas.length === 1 ? 'resultado' : 'resultados'}</span>
                                         {hasObraFilters && (
                                             <button onClick={clearObraFilters} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium">
                                                 <X size={13} /> Limpar filtros
@@ -657,18 +668,23 @@ const OperacionalPage = ({
 
                             {/* Grid de cards de obras */}
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {obrasFiltradas.map(({ obra, isFinished, ativos, equipSemLancamento10d, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons }) => {
+                                {obrasFiltradas.map(({ obra, isFinished, ativos, equipSemLancamento10d, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons, isCentroCusto }) => {
                                     const cfg = riskConfig[riskLevel];
                                     return (
                                         <div key={obra.id} onClick={() => setObraId(obra.id)}
-                                            className={`bg-white rounded-xl shadow-sm border-l-4 ${cfg.border} hover:shadow-md transition-all cursor-pointer p-5 flex flex-col justify-between`}
+                                            className={`bg-white rounded-xl shadow-sm border-l-4 ${isCentroCusto ? 'border-purple-400' : cfg.border} hover:shadow-md transition-all cursor-pointer p-5 flex flex-col justify-between`}
                                         >
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex-1 min-w-0">
-                                                    <h3 className="text-base font-bold text-gray-800 truncate" title={obra.nome}>{obra.nome}</h3>
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <h3 className="text-base font-bold text-gray-800 truncate" title={obra.nome}>{obra.nome}</h3>
+                                                        {isCentroCusto && (
+                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 shrink-0">Centro de Custo</span>
+                                                        )}
+                                                    </div>
                                                     <p className="text-xs text-gray-400 mt-0.5">{isFinished ? 'Finalizada' : `Em andamento · ${diasDeObra}d`}</p>
                                                 </div>
-                                                <div className="ml-3 shrink-0">{renderRiskBadge(riskLevel, riskScore, riskReasons)}</div>
+                                                {!isCentroCusto && <div className="ml-3 shrink-0">{renderRiskBadge(riskLevel, riskScore, riskReasons)}</div>}
                                             </div>
                                             <div className="space-y-2 text-sm mb-4">
                                                 <div className="flex justify-between border-b border-dashed border-gray-100 pb-2">
