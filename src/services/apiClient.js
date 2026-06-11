@@ -264,6 +264,13 @@ const apiClient = {
     updateInactivityAlert: async (id, data) => apiFetch(`/inactivityAlerts/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteInactivityAlert: async (id) => apiFetch(`/inactivityAlerts/${id}`, { method: 'DELETE' }),
 
+    // --- Requisições Operacionais (mudança de obra/operador) ---
+    getOperationalRequests: async () => apiFetch('/operationalRequests'),
+    createOperationalRequest: async (data) => apiFetch('/operationalRequests', { method: 'POST', body: JSON.stringify(data) }),
+    resolveOperationalRequest: async (id) => apiFetch(`/operationalRequests/${id}/resolver`, { method: 'PUT' }),
+    solicitarRelatorioHoras: async (data) => apiFetch('/operationalRequests/solicitar-relatorio', { method: 'POST', body: JSON.stringify(data) }),
+    deleteOperationalRequest: async (id) => apiFetch(`/operationalRequests/${id}`, { method: 'DELETE' }),
+
     // --- Usuários (Admin) ---
     getUsers: async () => apiFetch('/users'), 
 

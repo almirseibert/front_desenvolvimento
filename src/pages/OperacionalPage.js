@@ -1,12 +1,14 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import {
     Activity, Search, X, ArrowRight, AlertTriangle,
-    BarChart2, ChevronLeft, PackageX, Truck, TrendingUp
+    BarChart2, ChevronLeft, PackageX, Truck, TrendingUp,
+    Gauge, MapPin, User, Clock, Fuel, FileText
 } from 'lucide-react';
 import apiClientModule from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatObraNome } from '../utils/obraFormat';
+import { getAllowedReadingTypes } from '../utils/vehicleRules';
 
 const GAP_THRESHOLD_DAYS = 10;
 
@@ -23,6 +25,7 @@ const OperacionalPage = ({
     employees = [],
     vehicleGroups = {},
     dailyWorkLogs = [],
+    refuelings = [],
     setAlertMessage,
     navigate,
     apiClient = apiClientModule,
@@ -411,6 +414,72 @@ const OperacionalPage = ({
     const [maqObraId, setMaqObraId] = useState('');
     const [showWithoutObra, setShowWithoutObra] = useState(false);
     const [maqSort, setMaqSort] = useState('dias');
+    const [selectedMachineId, setSelectedMachineId] = useState(null);
+    const [requestForm, setRequestForm] = useState(null); // null | 'obra' | 'operador'
+    const [requestValue, setRequestValue] = useState(null); // obra ou employee sugerido
+    const [requestObs, setRequestObs] = useState('');
+    const [requestSubmitting, setRequestSubmitting] = useState(false);
+
+    const closeMachineModal = () => {
+        setSelectedMachineId(null);
+        setRequestForm(null);
+        setRequestValue(null);
+        setRequestObs('');
+    };
+
+    const openRequestForm = (tipo) => {
+        setRequestForm(tipo);
+        setRequestValue(null);
+        setRequestObs('');
+    };
+
+    const [relatorioSubmitting, setRelatorioSubmitting] = useState(false);
+
+    const solicitarRelatorio = async () => {
+        if (!selectedMachine?.operator) return;
+        setRelatorioSubmitting(true);
+        try {
+            const res = await apiClient.solicitarRelatorioHoras({
+                employeeId: selectedMachine.operator.id,
+                veiculo_registro: selectedMachine.vehicle.registroInterno || null,
+                obra_nome: selectedMachine.currentObra ? formatObraNome(selectedMachine.currentObra) : null,
+                dias: selectedMachine.daysSinceLastLog,
+            });
+            const canais = (res?.enviados || []).map(c => c === 'whatsapp' ? 'WhatsApp' : 'e-mail').join(' e ');
+            setAlertMessage(canais ? `Cobrança enviada ao operador por ${canais}.` : 'Cobrança enviada ao operador.');
+        } catch (e) {
+            setAlertMessage(e.message || 'Erro ao enviar a cobrança ao operador.');
+        } finally {
+            setRelatorioSubmitting(false);
+        }
+    };
+
+    const submitOperationalRequest = async () => {
+        if (!selectedMachine || !requestValue) return;
+        setRequestSubmitting(true);
+        try {
+            const isObra = requestForm === 'obra';
+            await apiClient.createOperationalRequest({
+                tipo: isObra ? 'mudanca_obra' : 'mudanca_operador',
+                veiculo_id: selectedMachine.vehicle.id,
+                veiculo_registro: selectedMachine.vehicle.registroInterno || null,
+                obra_atual_id: selectedMachine.currentObra?.id || null,
+                obra_atual_nome: selectedMachine.currentObra ? formatObraNome(selectedMachine.currentObra) : null,
+                operador_atual_nome: selectedMachine.operator?.nome || selectedMachine.operator?.name || null,
+                valor_sugerido_id: requestValue.id || null,
+                valor_sugerido_nome: isObra ? formatObraNome(requestValue) : (requestValue.nome || requestValue.name),
+                observacao: requestObs.trim() || null,
+            });
+            setAlertMessage('Requisição enviada ao administrador.');
+            setRequestForm(null);
+            setRequestValue(null);
+            setRequestObs('');
+        } catch (e) {
+            setAlertMessage('Erro ao enviar requisição. Tente novamente.');
+        } finally {
+            setRequestSubmitting(false);
+        }
+    };
 
     // ==========================================================
     // VIEW: POR MÁQUINA — memos
@@ -499,6 +568,38 @@ const OperacionalPage = ({
         semObra: machineData.filter(m => m.criticality === 'sem_obra').length,
         gap: machineData.filter(m => m.gapAfterReallocation).length,
     }), [machineData]);
+
+    const selectedMachine = useMemo(() => {
+        if (!selectedMachineId) return null;
+        const base = machineData.find(m => String(m.vehicle.id) === String(selectedMachineId));
+        if (!base) return null;
+
+        // Total de horas registradas (todos os lançamentos do veículo)
+        const vehicleLogs = (dailyWorkLogs || []).filter(l => String(l.vehicleId) === String(selectedMachineId));
+        const totalHoras = vehicleLogs.reduce((acc, l) => acc + parseFloat(l.totalHours || 0), 0);
+        const totalLancamentos = vehicleLogs.filter(l => parseFloat(l.totalHours || 0) > 0).length;
+
+        // Última leitura registrada no abastecimento (horímetro/odômetro)
+        const usaKm = getAllowedReadingTypes(base.vehicle.tipo).includes('odometro');
+        const leituraLabel = usaKm ? 'Odômetro' : 'Horímetro';
+        const leituraUnidade = usaKm ? 'Km' : 'h';
+        const vehicleRefuelings = (refuelings || [])
+            .filter(r => String(r.vehicleId) === String(selectedMachineId))
+            .map(r => ({ ...r, leitura: usaKm ? parseFloat(r.odometro || 0) : parseFloat(r.horimetro || 0) }))
+            .filter(r => r.leitura > 0)
+            .sort((a, b) => new Date(b.data) - new Date(a.data));
+        const ultimoAbastecimento = vehicleRefuelings[0] || null;
+
+        return {
+            ...base,
+            totalHoras,
+            totalLancamentos,
+            leituraLabel,
+            leituraUnidade,
+            ultimaLeitura: ultimoAbastecimento ? ultimoAbastecimento.leitura : null,
+            ultimaLeituraData: ultimoAbastecimento ? ultimoAbastecimento.data : null,
+        };
+    }, [selectedMachineId, machineData, dailyWorkLogs, refuelings]);
 
     const activeObras = useMemo(() =>
         obras.filter(o => {
@@ -990,7 +1091,8 @@ const OperacionalPage = ({
                                     {maqFiltered.map(({ vehicle, currentObra, operator, lastLogDate, daysSinceLastLog, criticality, gapAfterReallocation, recentDepartureObra }) => {
                                         const cfg = maqCritConfig[criticality] || maqCritConfig.sem_obra;
                                         return (
-                                            <tr key={vehicle.id} className={`border-b last:border-b-0 hover:brightness-95 transition-all ${cfg.row}`}>
+                                            <tr key={vehicle.id} onClick={() => setSelectedMachineId(vehicle.id)} title="Ver detalhes do equipamento"
+                                                className={`border-b last:border-b-0 hover:brightness-95 transition-all cursor-pointer ${cfg.row}`}>
                                                 <td className="px-4 py-3">
                                                     <div className="font-semibold text-gray-800">{vehicle.registroInterno || '—'}</div>
                                                     <div className="text-xs text-gray-500">{vehicle.tipo}{vehicle.modelo ? ` · ${vehicle.modelo}` : ''}</div>
@@ -1024,7 +1126,7 @@ const OperacionalPage = ({
                                                 {!isViewer && (
                                                     <td className="px-4 py-3 text-center">
                                                         {currentObra
-                                                            ? <button onClick={() => navigate('billing', { tab: 'lancamentos', obraId: currentObra.id, vehicleId: vehicle.id })}
+                                                            ? <button onClick={(e) => { e.stopPropagation(); navigate('billing', { tab: 'lancamentos', obraId: currentObra.id, vehicleId: vehicle.id }); }}
                                                                 className="inline-flex items-center gap-1 px-3 py-1.5 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 text-xs font-semibold rounded-lg transition-colors">
                                                                 Lançar <ArrowRight size={12} />
                                                               </button>
@@ -1048,6 +1150,155 @@ const OperacionalPage = ({
                                 ))}
                             </div>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* ===== MODAL: DETALHES DO EQUIPAMENTO ===== */}
+            {selectedMachine && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+                    onClick={closeMachineModal}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto"
+                        onClick={e => e.stopPropagation()}>
+                        {/* Cabeçalho */}
+                        <div className="flex items-start justify-between p-5 border-b border-gray-100">
+                            <div className="flex items-center gap-3 min-w-0">
+                                <div className="w-11 h-11 rounded-xl bg-yellow-100 flex items-center justify-center shrink-0">
+                                    <Truck size={22} className="text-yellow-600" />
+                                </div>
+                                <div className="min-w-0">
+                                    <h3 className="text-lg font-bold text-gray-800 truncate">{selectedMachine.vehicle.registroInterno || 'Equipamento'}</h3>
+                                    <p className="text-xs text-gray-500 truncate">
+                                        {selectedMachine.vehicle.tipo}
+                                        {selectedMachine.vehicle.modelo ? ` · ${selectedMachine.vehicle.modelo}` : ''}
+                                        {selectedMachine.vehicle.placa ? ` · ${selectedMachine.vehicle.placa}` : ''}
+                                    </p>
+                                </div>
+                            </div>
+                            <button onClick={closeMachineModal} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 shrink-0">
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        {/* Corpo — informações */}
+                        <div className="p-5 space-y-3">
+                            {/* Última leitura no abastecimento — destaque */}
+                            <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
+                                <div className="flex items-center gap-2 mb-1">
+                                    <Gauge size={16} className="text-yellow-600" />
+                                    <span className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">
+                                        Último {selectedMachine.leituraLabel} (abastecimento)
+                                    </span>
+                                </div>
+                                {selectedMachine.ultimaLeitura !== null ? (
+                                    <>
+                                        <p className="text-2xl font-bold text-gray-800">
+                                            {selectedMachine.ultimaLeitura.toLocaleString('pt-BR')} <span className="text-base font-semibold text-gray-500">{selectedMachine.leituraUnidade}</span>
+                                        </p>
+                                        <p className="text-xs text-gray-500 mt-0.5 flex items-center gap-1">
+                                            <Fuel size={12} /> Registrado em {formatDate(selectedMachine.ultimaLeituraData)}
+                                        </p>
+                                    </>
+                                ) : (
+                                    <p className="text-sm text-gray-400 italic">Nenhuma leitura de abastecimento registrada.</p>
+                                )}
+                            </div>
+
+                            {/* Grade de infos */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold uppercase mb-1"><MapPin size={13} /> Obra atual</div>
+                                    {selectedMachine.currentObra
+                                        ? <p className="text-sm font-medium text-gray-800">{formatObraNome(selectedMachine.currentObra)}</p>
+                                        : selectedMachine.recentDepartureObra
+                                            ? <p className="text-sm text-gray-400 italic">Saiu de: {formatObraNome(selectedMachine.recentDepartureObra)}</p>
+                                            : <p className="text-sm text-gray-400 italic">Sem obra vinculada</p>}
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold uppercase mb-1"><User size={13} /> Operador</div>
+                                    {selectedMachine.operator
+                                        ? <p className="text-sm font-medium text-gray-800">{selectedMachine.operator.nome || selectedMachine.operator.name || '—'}</p>
+                                        : <p className="text-sm text-gray-400 italic">Não definido</p>}
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold uppercase mb-1"><Clock size={13} /> Horas registradas</div>
+                                    <p className="text-sm font-medium text-gray-800">
+                                        {formatDecimalToTime(selectedMachine.totalHoras)}
+                                        <span className="text-xs text-gray-400 font-normal"> · {selectedMachine.totalLancamentos} lançamento{selectedMachine.totalLancamentos === 1 ? '' : 's'}</span>
+                                    </p>
+                                </div>
+                                <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
+                                    <div className="flex items-center gap-1.5 text-xs text-gray-500 font-semibold uppercase mb-1"><Activity size={13} /> Último lançamento</div>
+                                    {selectedMachine.lastLogDate ? (
+                                        <p className="text-sm font-medium text-gray-800">
+                                            {formatDate(selectedMachine.lastLogDate)}
+                                            {selectedMachine.daysSinceLastLog !== null && (
+                                                <span className={`text-xs font-normal ${selectedMachine.daysSinceLastLog > 7 ? 'text-red-500' : selectedMachine.daysSinceLastLog > 3 ? 'text-orange-500' : 'text-gray-400'}`}> · {selectedMachine.daysSinceLastLog}d atrás</span>
+                                            )}
+                                        </p>
+                                    ) : (
+                                        <p className="text-sm text-red-500 font-medium">Nunca lançou</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Ações — solicitações ao administrador */}
+                            {!isViewer && (
+                                <div className="pt-3 border-t border-gray-100 space-y-3">
+                                    {!requestForm ? (
+                                        <div className="space-y-2">
+                                        {selectedMachine.operator && (
+                                            <button onClick={solicitarRelatorio} disabled={relatorioSubmitting}
+                                                title={selectedMachine.daysSinceLastLog === null ? 'Operador nunca lançou horas' : `Cobrar lançamento (${selectedMachine.daysSinceLastLog}d pendente)`}
+                                                className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-bold rounded-lg transition-colors disabled:opacity-50">
+                                                <FileText size={14} /> {relatorioSubmitting ? 'Enviando cobrança...' : 'Solicitar Relatório de Horas'}
+                                            </button>
+                                        )}
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                            <button onClick={() => openRequestForm('obra')}
+                                                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-blue-200 text-blue-700 bg-blue-50 hover:bg-blue-100 text-sm font-semibold rounded-lg transition-colors">
+                                                <MapPin size={14} /> Solicitar mudança de obra
+                                            </button>
+                                            <button onClick={() => openRequestForm('operador')}
+                                                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-purple-200 text-purple-700 bg-purple-50 hover:bg-purple-100 text-sm font-semibold rounded-lg transition-colors">
+                                                <User size={14} /> Solicitar mudança de operador
+                                            </button>
+                                        </div>
+                                        </div>
+                                    ) : (
+                                        <div className="rounded-xl border border-gray-200 p-3 space-y-2.5 bg-gray-50">
+                                            <p className="text-sm font-semibold text-gray-700">
+                                                {requestForm === 'obra' ? 'Sugerir a real obra do equipamento' : 'Sugerir o real operador'}
+                                            </p>
+                                            <SearchableSelect
+                                                items={requestForm === 'obra' ? activeObras : employees}
+                                                value={requestValue?.id || ''}
+                                                onChange={(item) => setRequestValue(item)}
+                                                getLabel={(o) => requestForm === 'obra' ? formatObraNome(o) : (o.nome || o.name || '—')}
+                                                placeholder={requestForm === 'obra' ? 'Selecione a obra...' : 'Selecione o operador...'}
+                                            />
+                                            <textarea
+                                                value={requestObs}
+                                                onChange={e => setRequestObs(e.target.value)}
+                                                rows={2}
+                                                placeholder="Observação (opcional)"
+                                                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-yellow-400 outline-none resize-none"
+                                            />
+                                            <div className="flex items-center gap-2 justify-end">
+                                                <button onClick={() => { setRequestForm(null); setRequestValue(null); setRequestObs(''); }}
+                                                    className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium">
+                                                    Cancelar
+                                                </button>
+                                                <button onClick={submitOperationalRequest} disabled={!requestValue || requestSubmitting}
+                                                    className="px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-bold rounded-lg disabled:opacity-50 transition-colors">
+                                                    {requestSubmitting ? 'Enviando...' : 'Enviar requisição'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
