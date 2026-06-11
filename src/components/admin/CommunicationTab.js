@@ -381,7 +381,9 @@ const CommunicationTab = ({ socket, users = [] }) => {
                   <code className="bg-gray-100 px-1 rounded">{'{{obra}}'}</code>{' '}
                   <code className="bg-gray-100 px-1 rounded">{'{{data}}'}</code>{' '}
                   <code className="bg-gray-100 px-1 rounded">{'{{responsavel}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{valor}}'}</code>
+                  <code className="bg-gray-100 px-1 rounded">{'{{valor}}'}</code>{' '}
+                  <code className="bg-gray-100 px-1 rounded">{'{{primeiro_nome}}'}</code>{' '}
+                  <code className="bg-gray-100 px-1 rounded">{'{{dias}}'}</code>
                 </p>
               </div>
               <button type="submit" disabled={savingTpl} className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
