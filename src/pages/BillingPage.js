@@ -26,8 +26,9 @@ const BillingPage = ({
     vehicles = [], 
     employees = [], 
     vehicleGroups = {}, 
-    setAlertMessage, 
-    PasswordConfirmationModal
+    setAlertMessage,
+    PasswordConfirmationModal,
+    initialFilter = null,
 }) => {
     // Pega a permissão de visualizador do contexto
     const { isViewer } = useAuth();
@@ -442,6 +443,27 @@ const BillingPage = ({
     const handleObraClear = () => {
         setSelectedObraId('');
     };
+
+    const appliedInitialFilterRef = useRef(null);
+    useEffect(() => {
+        if (!initialFilter) return;
+        if (appliedInitialFilterRef.current === initialFilter) return;
+        appliedInitialFilterRef.current = initialFilter;
+
+        const { obraId, vehicleId, tab } = initialFilter;
+        const targetTab = tab === 'lancamentos' ? 'controle' : tab;
+        if (targetTab && !(isViewer && targetTab === 'controle')) {
+            setActiveTab(targetTab);
+        }
+        if (obraId) {
+            setSelectedObraId(obraId);
+            saveRecentObra(obraId);
+        }
+        if (vehicleId) {
+            setControlVehicleId(vehicleId);
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initialFilter]);
 
     // --- API CALLS ---
 

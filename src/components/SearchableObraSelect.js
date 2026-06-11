@@ -47,8 +47,14 @@ const SearchableObraSelect = ({
     const { activeObras, inactiveObras } = useMemo(() => {
         const active = [];
         const inactive = [];
+        const now = new Date();
         obras.forEach(o => {
-            const isInactive = o.status === 'Finalizada' || o.status === 'Concluída' || o.status === 'Inativa';
+            let isInactive = o.status === 'Finalizada' || o.status === 'Concluída' || o.status === 'Inativa';
+            if (!isInactive && o.dataFim) {
+                const fim = new Date(o.dataFim);
+                fim.setHours(23, 59, 59, 999);
+                if (fim < now) isInactive = true;
+            }
             if (isInactive) inactive.push(o);
             else active.push(o);
         });
