@@ -475,7 +475,8 @@ const OperacionalPage = ({
             setRequestValue(null);
             setRequestObs('');
         } catch (e) {
-            setAlertMessage('Erro ao enviar requisição. Tente novamente.');
+            const detail = e?.data?.detail || e?.data?.code || e?.message || '';
+            setAlertMessage('Erro ao enviar requisição.' + (detail ? ` Detalhe: ${detail}` : ''));
         } finally {
             setRequestSubmitting(false);
         }
