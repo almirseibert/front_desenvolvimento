@@ -223,6 +223,8 @@ const apiClient = {
     deleteComboioTransaction: async (id) => apiFetch(`/comboioTransactions/${id}`, { method: 'DELETE' }),
     createComboioEntrada: async (data) => apiFetch('/comboioTransactions/entrada', { method: 'POST', body: JSON.stringify(data) }),
     createComboioSaida: async (data) => apiFetch('/comboioTransactions/saida', { method: 'POST', body: JSON.stringify(data) }),
+    // Distribuição do operador do comboio (com fotos). Recebe um FormData já montado.
+    createComboioSaidaComFotos: async (formData) => apiFetch('/comboioTransactions/saida', { method: 'POST', body: formData }),
     createComboioDrenagem: async (data) => apiFetch('/comboioTransactions/drenagem', { method: 'POST', body: JSON.stringify(data) }),
 
     // --- Multas ---

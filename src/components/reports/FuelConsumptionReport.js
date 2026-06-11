@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { Fuel, Download, Filter } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const fmt = (n) => n != null ? Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '-';
 const fmtL = (n) => n != null ? Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' L' : '-';
@@ -44,7 +45,7 @@ const FuelConsumptionReport = ({ obras = [], vehicles = [], refuelings = [], exp
                 const obra = obras.find(o => o.id === obraId);
                 byObra[obraId] = {
                     obraId,
-                    obraNome: obra?.nome || (obraId === '__sem_obra__' ? 'Sem obra vinculada' : 'Obra não encontrada'),
+                    obraNome: formatObraNome(obra) || (obraId === '__sem_obra__' ? 'Sem obra vinculada' : 'Obra não encontrada'),
                     byFuel: {},
                     totalLitros: 0,
                     totalValor: 0,
@@ -137,7 +138,7 @@ const FuelConsumptionReport = ({ obras = [], vehicles = [], refuelings = [], exp
                     <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Obra</label>
                     <select value={filterObraId} onChange={e => setFilterObraId(e.target.value)} className="p-2 border rounded w-full text-sm bg-white">
                         <option value="">Todas as Obras</option>
-                        {obraOptions.map(o => <option key={o.id} value={o.id}>{o.nome}</option>)}
+                        {obraOptions.map(o => <option key={o.id} value={o.id}>{formatObraNome(o)}</option>)}
                     </select>
                 </div>
                 <div>

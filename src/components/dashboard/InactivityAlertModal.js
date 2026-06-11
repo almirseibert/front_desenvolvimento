@@ -1,5 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { X, Clock, CheckCircle, Loader, AlertTriangle, ShieldCheck, Fuel } from 'lucide-react';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const InactivityAlertModal = ({ 
     alert, 
@@ -20,11 +21,11 @@ const InactivityAlertModal = ({
     // 1. RESOLUÇÃO DE NOMES (Lookup Robust)
     const alertData = useMemo(() => {
         // --- Obra ---
-        let obraNome = alert.obra?.nome || alert.obra_nome;
+        let obraNome = alert.obra ? formatObraNome(alert.obra) : alert.obra_nome;
         if (!obraNome) {
             const obraId = alert.obraId || alert.obra_id;
             const foundObra = obras.find(o => String(o.id) === String(obraId));
-            if (foundObra) obraNome = foundObra.nome;
+            if (foundObra) obraNome = formatObraNome(foundObra);
         }
 
         // --- Veículo ---

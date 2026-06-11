@@ -6,6 +6,7 @@ import {
 import apiClientModule from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext';
 import SearchableSelect from '../components/SearchableSelect';
+import { formatObraNome } from '../utils/obraFormat';
 
 const GAP_THRESHOLD_DAYS = 10;
 
@@ -72,7 +73,6 @@ const OperacionalPage = ({
     const [obraSort, setObraSort] = useState('risco');
     const [obraDetailStatus, setObraDetailStatus] = useState('todos');
     const [obraDetailSort, setObraDetailSort] = useState('padrao');
-    const [showCentrosCusto, setShowCentrosCusto] = useState(false);
 
     useEffect(() => {
         if (obraId && activeView === 'obra') fetchObraData();
@@ -106,10 +106,7 @@ const OperacionalPage = ({
     };
 
     const obrasComRisco = useMemo(() => {
-        return obras
-            .filter(o => showCentrosCusto || (o.tipo_registro || 'obra') !== 'centro_custo')
-            .map(obra => {
-            const isCentroCusto = obra.tipo_registro === 'centro_custo';
+        return obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo').map(obra => {
             const isFinished = obra.status === 'finalizada' || obra.status === 'Finalizada' ||
                 obra.status === 'Concluída' || obra.status === 'Inativa' ||
                 (obra.dataFim && new Date(obra.dataFim) < today);
@@ -175,14 +172,14 @@ const OperacionalPage = ({
             else if (riskScore >= 3) riskLevel = 'atencao';
             else riskLevel = 'ok';
 
-            return { obra, isFinished, ativos, inativos, equipSemLancamento10d, totalUnicos, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons, isCentroCusto };
+            return { obra, isFinished, ativos, inativos, equipSemLancamento10d, totalUnicos, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons };
         }).sort((a, b) => {
             if (a.isFinished !== b.isFinished) return a.isFinished ? 1 : -1;
             if (b.riskScore !== a.riskScore) return b.riskScore - a.riskScore;
             if (b.ativos !== a.ativos) return b.ativos - a.ativos;
             return a.obra.nome.localeCompare(b.obra.nome);
         });
-    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today, showCentrosCusto]);
+    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today]);
 
     const obrasFiltradas = useMemo(() => {
         let result = [...obrasComRisco];
@@ -649,14 +646,7 @@ const OperacionalPage = ({
                                         ))}
                                     </div>
                                     <div className="ml-auto flex items-center gap-3">
-                                        <button
-                                            onClick={() => setShowCentrosCusto(v => !v)}
-                                            className={`flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-full border transition-all ${showCentrosCusto ? 'bg-purple-100 text-purple-700 border-purple-300' : 'bg-white text-gray-500 border-gray-300 hover:border-purple-300 hover:text-purple-600'}`}
-                                        >
-                                            <span className={`w-2 h-2 rounded-full ${showCentrosCusto ? 'bg-purple-500' : 'bg-gray-300'}`} />
-                                            Centros de Custo
-                                        </button>
-                                        <span className="text-xs text-gray-400">{obrasFiltradas.length} {obrasFiltradas.length === 1 ? 'resultado' : 'resultados'}</span>
+                                        <span className="text-xs text-gray-400">{obrasFiltradas.length} {obrasFiltradas.length === 1 ? 'obra' : 'obras'}</span>
                                         {hasObraFilters && (
                                             <button onClick={clearObraFilters} className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 font-medium">
                                                 <X size={13} /> Limpar filtros
@@ -668,23 +658,18 @@ const OperacionalPage = ({
 
                             {/* Grid de cards de obras */}
                             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                                {obrasFiltradas.map(({ obra, isFinished, ativos, equipSemLancamento10d, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons, isCentroCusto }) => {
+                                {obrasFiltradas.map(({ obra, isFinished, ativos, equipSemLancamento10d, totalHoras, diasDeObra, riskLevel, riskScore, riskReasons }) => {
                                     const cfg = riskConfig[riskLevel];
                                     return (
                                         <div key={obra.id} onClick={() => setObraId(obra.id)}
-                                            className={`bg-white rounded-xl shadow-sm border-l-4 ${isCentroCusto ? 'border-purple-400' : cfg.border} hover:shadow-md transition-all cursor-pointer p-5 flex flex-col justify-between`}
+                                            className={`bg-white rounded-xl shadow-sm border-l-4 ${cfg.border} hover:shadow-md transition-all cursor-pointer p-5 flex flex-col justify-between`}
                                         >
                                             <div className="flex justify-between items-start mb-4">
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                        <h3 className="text-base font-bold text-gray-800 truncate" title={obra.nome}>{obra.nome}</h3>
-                                                        {isCentroCusto && (
-                                                            <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 shrink-0">Centro de Custo</span>
-                                                        )}
-                                                    </div>
+                                                    <h3 className="text-base font-bold text-gray-800 truncate" title={formatObraNome(obra)}>{formatObraNome(obra)}</h3>
                                                     <p className="text-xs text-gray-400 mt-0.5">{isFinished ? 'Finalizada' : `Em andamento · ${diasDeObra}d`}</p>
                                                 </div>
-                                                {!isCentroCusto && <div className="ml-3 shrink-0">{renderRiskBadge(riskLevel, riskScore, riskReasons)}</div>}
+                                                <div className="ml-3 shrink-0">{renderRiskBadge(riskLevel, riskScore, riskReasons)}</div>
                                             </div>
                                             <div className="space-y-2 text-sm mb-4">
                                                 <div className="flex justify-between border-b border-dashed border-gray-100 pb-2">
@@ -727,7 +712,7 @@ const OperacionalPage = ({
                             </button>
 
                             <div className="flex items-center justify-between">
-                                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">{obras.find(o => o.id === obraId)?.nome}</h2>
+                                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">{formatObraNome(obras.find(o => o.id === obraId))}</h2>
                                 {(() => {
                                     const r = obrasComRisco.find(o => o.obra.id === obraId);
                                     return r ? renderRiskBadge(r.riskLevel, r.riskScore, r.riskReasons, 'md') : null;
@@ -952,7 +937,7 @@ const OperacionalPage = ({
                                     items={activeObras}
                                     value={maqObraId}
                                     onChange={(item) => setMaqObraId(item?.id || '')}
-                                    getLabel={(o) => o.nome}
+                                    getLabel={(o) => formatObraNome(o)}
                                     placeholder="Todas as obras"
                                 />
                             </div>
@@ -1011,8 +996,8 @@ const OperacionalPage = ({
                                                     <div className="text-xs text-gray-500">{vehicle.tipo}{vehicle.modelo ? ` · ${vehicle.modelo}` : ''}</div>
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    {currentObra ? <span className="text-gray-700">{currentObra.nome}</span>
-                                                        : recentDepartureObra ? <span className="text-gray-400 text-xs italic">Saiu de: {recentDepartureObra.nome}</span>
+                                                    {currentObra ? <span className="text-gray-700">{formatObraNome(currentObra)}</span>
+                                                        : recentDepartureObra ? <span className="text-gray-400 text-xs italic">Saiu de: {formatObraNome(recentDepartureObra)}</span>
                                                         : <span className="text-gray-300">—</span>}
                                                 </td>
                                                 <td className="px-4 py-3"><MaqStatusBadge vehicle={vehicle} /></td>

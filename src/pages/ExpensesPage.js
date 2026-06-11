@@ -13,6 +13,7 @@ import apiClient from '../services/apiClient'; // Importa apiClient
 // Importa componentes necessários
 import ProtectedComponent from '../components/ProtectedComponent'; // Ajuste o caminho se necessário
 import SearchableSelect from '../components/SearchableSelect';
+import { formatObraNome } from '../utils/obraFormat';
 // import { useAuth } from '../contexts/AuthContext'; // Removido, user vem via props
 
 // ===================================================================================
@@ -198,7 +199,7 @@ const ExpensesPage = ({
                                     { id: 'Oficina',       nome: 'Oficina' },
                                     { id: 'Pátio',         nome: 'Pátio' },
                                     { id: 'Diversos',      nome: 'Diversos' },
-                                    ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                                    ...sortedObras.map(o => ({ ...o, nome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
                                 ]}
                                 value={selectedObra}
                                 onChange={(item) => setSelectedObra(item?.id || '')}
@@ -251,7 +252,7 @@ const ExpensesPage = ({
                 <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
                      {/* Título com nome da Obra */}
                      <h2 className="text-xl font-semibold text-gray-700">
-                         {selectedObra ? `Despesas: ${obras?.find(o => o.id === selectedObra)?.nome || selectedObra}` : "Selecione uma obra"}
+                         {selectedObra ? `Despesas: ${formatObraNome(obras?.find(o => o.id === selectedObra)) || selectedObra}` : "Selecione uma obra"}
                      </h2>
                      {/* Botão Exportar */}
                     <button onClick={exportExpensesToCSV} className="flex items-center gap-2 px-4 py-2 mak-btn mak-btn-dark" disabled={!selectedObra || obraExpenses.length === 0}>

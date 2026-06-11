@@ -1,0 +1,268 @@
+/**
+ * MAK Serviços — Design Tokens
+ * Tema: Terroso Mineral — paleta terrosa aquecida
+ * Framework: Tailwind CSS (o app mapeia estes tokens diretamente para utilitários Tailwind)
+ * Font: Roboto (Google Fonts)
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700;900&family=Roboto+Mono:wght@400;500;700&display=swap');
+
+/* ─── Base Reset ──────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ─── CSS Custom Properties ───────────────────────────────────── */
+:root {
+
+  /* ── Brand / Accent ─────────────────────────────────────────── */
+  /* Âmbar mineral — tom terroso principal */
+  --brand-amber:        #9E7A42;   /* âmbar terroso — CTA primário bg */
+  --brand-amber-hover:  #8a6a34;   /* hover CTA */
+  --brand-gold:         #facc15;   /* yellow-400 — destaque dourado */
+  --brand-gold-hover:   #eab308;   /* yellow-500 — hover destaque */
+
+  /* ── Sidebar (shell escuro — tom terroso profundo) ──────────── */
+  --sidebar-bg:         #1c1a17;   /* terroso escuro profundo */
+  --sidebar-surface:    #252018;   /* terroso escuro médio */
+  --sidebar-hover:      #2e2820;   /* hover de item */
+  --sidebar-border:     #3d3528;   /* borda interna */
+  --sidebar-text:       #8a7a68;   /* texto de nav */
+  --sidebar-text-dim:   #5a4e3a;   /* texto apagado / grupos */
+  --sidebar-text-hi:    #f0ebe3;   /* texto destacado / ativo */
+  --sidebar-active-bg:  #9E7A42;   /* bg item ativo */
+  --sidebar-active-text:#ffffff;   /* texto item ativo */
+
+  /* ── App Shell ──────────────────────────────────────────────── */
+  --app-bg:             #f5f3ef;   /* off-white terroso */
+  --surface:            #ffffff;   /* white — cards, modais, painéis */
+  --surface-subtle:     #faf9f7;   /* superfície levemente terrosa */
+  --surface-muted:      #f5f2ed;   /* cabeçalhos de tabela, filtros */
+
+  /* ── Foreground / Text ──────────────────────────────────────── */
+  --fg1:                #1e1a14;   /* quase-preto terroso — títulos de página */
+  --fg2:                #3d3528;   /* marrom escuro — títulos de card */
+  --fg3:                #6a5e4e;   /* marrom médio — texto secundário */
+  --fg4:                #9a8a78;   /* marrom claro — texto de suporte */
+  --fg5:                #b0a090;   /* marrom desbotado — placeholder, disabled */
+  --fg-inverse:         #ffffff;
+
+  /* ── Borders ────────────────────────────────────────────────── */
+  --border:             #e8e0d4;   /* borda padrão terrosa */
+  --border-subtle:      #f0ebe3;   /* borda de card */
+  --border-strong:      #d4c8b8;   /* borda forte */
+
+  /* ── Status: Estados de Veículos e Obras ─────────────────────── */
+  /* (cores de status mantidas para consistência semântica) */
+  --status-available-bg:    #d1fae5;
+  --status-available-text:  #065f46;
+  --status-available-dot:   #10b981;
+  --status-available-border:#a7f3d0;
+
+  --status-in-obra-bg:      #e0f2fe;
+  --status-in-obra-text:    #0c4a6e;
+  --status-in-obra-dot:     #0ea5e9;
+  --status-in-obra-border:  #bae6fd;
+
+  --status-in-op-bg:        #ede9fe;
+  --status-in-op-text:      #3730a3;
+  --status-in-op-dot:       #8b5cf6;
+  --status-in-op-border:    #ddd6fe;
+
+  --status-maint-bg:        #ffedd5;
+  --status-maint-text:      #9a3412;
+  --status-maint-dot:       #f97316;
+  --status-maint-border:    #fed7aa;
+
+  --status-waiting-bg:      #fef3c7;
+  --status-waiting-text:    #78350f;
+  --status-waiting-dot:     #fbbf24;
+  --status-waiting-border:  #fde68a;
+
+  --status-scrap-bg:        #f4f4f5;
+  --status-scrap-text:      #3f3f46;
+  --status-scrap-dot:       #71717a;
+  --status-scrap-border:    #d4d4d8;
+
+  --status-inactive-bg:     #f3f4f6;
+  --status-inactive-text:   #6b7280;
+  --status-inactive-dot:    #9ca3af;
+  --status-inactive-border: #e5e7eb;
+
+  --status-outsourced-bg:   #f3e8ff;
+  --status-outsourced-text: #6b21a8;
+  --status-outsourced-dot:  #a855f7;
+  --status-outsourced-border:#e9d5ff;
+
+  /* ── Semântico: Alertas / Feedback ──────────────────────────── */
+  --color-success:        #3d5a44;
+  --color-success-bg:     #f3f8f4;
+  --color-success-border: #b8d4bc;
+  --color-warning:        #a06828;
+  --color-warning-bg:     #fdf8ec;
+  --color-warning-border: #e8d8bc;
+  --color-danger:         #b03828;
+  --color-danger-bg:      #fdf0ec;
+  --color-danger-border:  #e8c8bc;
+  --color-info:           #2d5a8a;
+  --color-info-bg:        #eff5fc;
+  --color-info-border:    #c0d4e8;
+
+  /* ── Shadow System ──────────────────────────────────────────── */
+  --shadow-xs:   0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-sm:   0 1px 3px 0 rgb(0 0 0 / 0.10), 0 1px 2px -1px rgb(0 0 0 / 0.10);
+  --shadow-md:   0 4px 6px -1px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.10);
+  --shadow-lg:   0 10px 15px -3px rgb(0 0 0 / 0.10), 0 4px 6px -4px rgb(0 0 0 / 0.10);
+  --shadow-xl:   0 20px 25px -5px rgb(0 0 0 / 0.10), 0 8px 10px -6px rgb(0 0 0 / 0.10);
+  --shadow-modal:0 25px 50px -12px rgb(0 0 0 / 0.25);
+
+  /* ── Border Radius ──────────────────────────────────────────── */
+  --radius-sm:   0.375rem;  /* 6px  — badges, small tags */
+  --radius-md:   0.5rem;    /* 8px  — buttons, inputs, small cards */
+  --radius-lg:   0.75rem;   /* 12px — cards, modals, filters */
+  --radius-xl:   0.875rem;  /* 14px — large cards */
+  --radius-2xl:  1rem;      /* 16px — page-level panels */
+  --radius-full: 9999px;    /* pill — badges, status dots */
+
+  /* ── Spacing Scale ──────────────────────────────────────────── */
+  --space-1:  0.25rem;
+  --space-2:  0.5rem;
+  --space-3:  0.75rem;
+  --space-4:  1rem;
+  --space-5:  1.25rem;
+  --space-6:  1.5rem;
+  --space-8:  2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ── Typography ─────────────────────────────────────────────── */
+  --font-sans:  'Roboto', system-ui, -apple-system, sans-serif;
+  --font-mono:  'Roboto Mono', 'Courier New', monospace;
+
+  /* Size scale */
+  --text-2xs:  0.625rem;  /* 10px — micro labels, badges */
+  --text-xs:   0.75rem;   /* 12px — supporting text, table footnotes */
+  --text-sm:   0.875rem;  /* 14px — body, form labels */
+  --text-base: 1rem;      /* 16px — default body */
+  --text-lg:   1.125rem;  /* 18px — card titles */
+  --text-xl:   1.25rem;   /* 20px — section titles */
+  --text-2xl:  1.5rem;    /* 24px — page headers */
+  --text-3xl:  1.875rem;  /* 30px — main page titles */
+
+  /* Weight */
+  --font-normal:   400;
+  --font-medium:   500;
+  --font-semibold: 600;
+  --font-bold:     700;
+  --font-extrabold:900;
+
+  /* Leading */
+  --leading-tight:  1.25;
+  --leading-snug:   1.375;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.625;
+
+  /* Tracking */
+  --tracking-tight: -0.025em;
+  --tracking-normal: 0;
+  --tracking-wide:  0.025em;
+  --tracking-wider: 0.05em;
+  --tracking-widest:0.1em;
+}
+
+/* ─── Semantic Type Styles ────────────────────────────────────── */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  color: var(--fg2);
+  background: var(--app-bg);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Page title — e.g. "Gestão da Frota" */
+.t-page-title {
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--fg1);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--tracking-tight);
+}
+
+/* Section / card heading */
+.t-section-title {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--fg1);
+  line-height: var(--leading-tight);
+}
+
+/* Card title */
+.t-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--fg2);
+  line-height: var(--leading-snug);
+}
+
+/* Sub-heading / group header */
+.t-subheading {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--fg3);
+  line-height: var(--leading-normal);
+}
+
+/* Body */
+.t-body {
+  font-size: var(--text-sm);
+  font-weight: var(--font-normal);
+  color: var(--fg3);
+  line-height: var(--leading-relaxed);
+}
+
+/* Supporting text */
+.t-support {
+  font-size: var(--text-xs);
+  color: var(--fg4);
+  line-height: var(--leading-normal);
+}
+
+/* Micro label — ALL CAPS, spaced tracking */
+.t-label {
+  font-size: var(--text-2xs);
+  font-weight: var(--font-bold);
+  color: var(--fg5);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  line-height: var(--leading-tight);
+}
+
+/* Sidebar nav group header */
+.t-nav-group {
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+}
+
+/* Monospace — plate numbers, readings, codes */
+.t-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+/* KPI large number */
+.t-kpi {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--fg2);
+  line-height: 1;
+}
+
+/* ─── Utility: Custom Scrollbar ───────────────────────────────── */
+.mak-scrollbar::-webkit-scrollbar { width: 8px; }
+.mak-scrollbar::-webkit-scrollbar-track { background: #f5f2ed; border-radius: 10px; }
+.mak-scrollbar::-webkit-scrollbar-thumb { background: #d4c8b8; border-radius: 10px; }
+.mak-scrollbar::-webkit-scrollbar-thumb:hover { background: #b0a090; }
+.mak-scrollbar { scrollbar-width: thin; scrollbar-color: #d4c8b8 #f5f2ed; }

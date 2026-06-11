@@ -3,6 +3,7 @@ import { Loader, X, AlertTriangle, Shield, Calendar, Gauge, MapPin, ChevronDown,
 import FinishObraModal from './FinishObraModal';
 import { getAllowedReadingTypes, getVehicleMainReading, checkVehicleRestrictions, checkReadingConsistency } from '../utils/vehicleRules';
 import SearchableSelect from './SearchableSelect';
+import { formatObraNome } from '../utils/obraFormat';
 
 // --- Seletor de funcionário com pesquisa ---
 const EmployeeSelector = ({ employees, value, onChange, accentColor = 'green' }) => {
@@ -354,7 +355,7 @@ const ObraAllocationModal = ({
                                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 flex items-start gap-3">
                                     <Building2 size={16} className="text-gray-500 shrink-0 mt-0.5" />
                                     <div className="text-sm">
-                                        <p className="font-semibold text-gray-800">{currentObra?.nome || 'Obra não identificada'}</p>
+                                        <p className="font-semibold text-gray-800">{formatObraNome(currentObra) || 'Obra não identificada'}</p>
                                         <p className="text-xs text-gray-500 mt-0.5">
                                             Operador: <strong>{currentObraAllocation?.details?.employeeName || '—'}</strong>
                                             {realEntryDate && (
@@ -434,7 +435,7 @@ const ObraAllocationModal = ({
                                         <Building2 size={12} /> Obra Destino <span className="text-red-500">*</span>
                                     </label>
                                     <SearchableSelect
-                                        items={activeObras.map(o => ({ ...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
+                                        items={activeObras.map(o => ({ ...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
                                         value={obraId}
                                         onChange={(item) => setObraId(item?.id || '')}
                                         getLabel={(o) => o._displayNome || o.nome}

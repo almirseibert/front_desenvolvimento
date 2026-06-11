@@ -3,6 +3,7 @@ import { PlusCircle, Droplet, Users, X, Trash2, Edit2, CheckCircle, Loader } fro
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableObraSelect from '../SearchableObraSelect';
 import SearchableSelect from '../SearchableSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const getVehicleName = (id, vehicles) => {
     const v = vehicles.find(v => String(v.id) === String(id));
@@ -11,7 +12,7 @@ const getVehicleName = (id, vehicles) => {
 
 const getObraName = (id, obras) => {
     const o = obras.find(o => String(o.id) === String(id));
-    return o ? o.nome : 'Pátio / Não Alocado';
+    return o ? formatObraNome(o) : 'Pátio / Não Alocado';
 }
 
 const WashingsTab = ({ vehicles = [], obras = [], setAlertMessage, apiClient }) => {

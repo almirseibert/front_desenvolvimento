@@ -9,6 +9,7 @@ import autoTable from 'jspdf-autotable';
 import apiClient from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext'; // Importar Auth Context
 import SearchableObraSelect from '../components/SearchableObraSelect';
+import { formatObraNome } from '../utils/obraFormat';
 
 const RECENT_OBRAS_KEY = 'mak_billing_recent_obras';
 
@@ -702,7 +703,7 @@ const BillingPage = ({
         doc.setFont('helvetica', 'bold');
         doc.text("Obra:", 14, 40);
         doc.setFont('helvetica', 'normal');
-        doc.text(obra?.nome || '', 40, 40);
+        doc.text(formatObraNome(obra) || '', 40, 40);
 
         doc.setFont('helvetica', 'bold');
         doc.text("Equipamento:", 140, 40);
@@ -830,7 +831,7 @@ const BillingPage = ({
         });
 
         doc.setFontSize(16);
-        doc.text(`Resumo de Horas: ${obra?.nome || 'N/A'}`, 14, 15);
+        doc.text(`Resumo de Horas: ${formatObraNome(obra) || 'N/A'}`, 14, 15);
         doc.setFontSize(10);
         doc.text(`Filtro: ${vehicleInfo} | Período: ${formatDateToBR(reportStartDate)} a ${formatDateToBR(reportEndDate)}`, 14, 22);
 
@@ -893,7 +894,7 @@ const BillingPage = ({
                                                 ? 'bg-yellow-50 border-yellow-200 text-yellow-800 hover:bg-yellow-100'
                                                 : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
                                         }`}>
-                                        {obra.nome}
+                                        {formatObraNome(obra)}
                                         {!isActive && <span className="ml-1 opacity-50 text-[10px]">(finalizada)</span>}
                                     </button>
                                 );
@@ -905,7 +906,7 @@ const BillingPage = ({
                             {activeObras.slice(0, 4).map(obra => (
                                 <button key={obra.id} onClick={() => handleObraSelect(obra)}
                                     className="px-3 py-1.5 text-xs bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-full hover:bg-yellow-100 transition font-medium">
-                                    {obra.nome}
+                                    {formatObraNome(obra)}
                                 </button>
                             ))}
                         </div>
@@ -919,7 +920,7 @@ const BillingPage = ({
                     <div className={`flex flex-wrap items-center gap-4 px-4 py-3 rounded-lg mb-4 border ${obraIsActive ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
                         <Building2 size={20} className={obraIsActive ? 'text-green-600' : 'text-red-500'} />
                         <div className="flex-1 min-w-0">
-                            <p className={`font-bold text-sm truncate ${obraIsActive ? 'text-green-800' : 'text-red-700'}`}>{selectedObra?.nome}</p>
+                            <p className={`font-bold text-sm truncate ${obraIsActive ? 'text-green-800' : 'text-red-700'}`}>{formatObraNome(selectedObra)}</p>
                             <p className="text-xs text-gray-500">
                                 {selectedObra?.dataInicio ? formatDateToBR(selectedObra.dataInicio) : '?'}
                                 {' → '}

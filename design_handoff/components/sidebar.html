@@ -1,0 +1,78 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', sans-serif; background: #f5f3ef; padding: 0; display: flex; height: 220px; overflow: hidden; }
+.sidebar { width: 224px; background: #1c1a17; display: flex; flex-direction: column; flex-shrink: 0; overflow: hidden; }
+.sidebar-top { padding: 14px 12px 10px; border-bottom: 1px solid #3d3528; display: flex; align-items: center; gap: 8px; }
+.logo-box { background: #252018; border-radius: 8px; padding: 5px 8px; font-size: 14px; font-weight: 900; color: #9E7A42; letter-spacing: -0.02em; }
+.logo-sub { font-size: 10px; color: #5a4e3a; font-weight: 500; letter-spacing: 0.02em; text-transform: uppercase; }
+.nav { flex: 1; padding: 8px 6px; overflow: hidden; }
+.nav-group { margin-bottom: 6px; }
+.nav-group-label { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: #3d3528; padding: 4px 8px 2px; }
+.nav-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; font-size: 12px; font-weight: 500; color: #8a7a68; cursor: default; }
+.nav-item:hover { background: #2e2820; color: #f0ebe3; }
+.nav-item.active { background: #9E7A42; color: #ffffff; font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.25); }
+svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+.notif { background: #b03828; color: #fff; font-size: 8px; font-weight: 700; border-radius: 9999px; min-width: 14px; height: 14px; padding: 0 3px; display: inline-flex; align-items: center; justify-content: center; margin-left: auto; }
+.sidebar-bottom { padding: 8px 6px; border-top: 1px solid #3d3528; }
+.user-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px; cursor: default; }
+.avatar { width: 26px; height: 26px; border-radius: 50%; background: #9E7A42; color: #fff; font-size: 10px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.user-name { font-size: 11px; font-weight: 600; color: #f0ebe3; }
+.user-role { font-size: 9px; color: #5a4e3a; }
+</style>
+</head><body>
+<div class="sidebar">
+  <div class="sidebar-top">
+    <div class="logo-box">MAK</div>
+    <div class="logo-sub">Serviços</div>
+  </div>
+  <div class="nav">
+    <div class="nav-group">
+      <div class="nav-group-label">Principal</div>
+      <div class="nav-item active">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        Painel Geral
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M2 20h20"/><path d="M5 20V10l7-7 7 7v10"/></svg>
+        Obras
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Faturamento
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-label">Operações</div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7"/></svg>
+        Abastecimento
+        <span class="notif">2</span>
+      </div>
+      <div class="nav-item">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Relatórios
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-row">
+      <div class="avatar">AL</div>
+      <div>
+        <div class="user-name">Almir Seibert</div>
+        <div class="user-role">Administrador</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="flex:1;padding:16px;display:flex;flex-direction:column;gap:8px;background:#f5f3ef;">
+  <div style="font-size:11px;color:#9a8a78;font-weight:500;">← Sidebar em estado expandido (224px)</div>
+  <div style="font-size:10px;color:#b0a090;">• Item ativo: bg #9E7A42 (âmbar) · texto branco · font-bold</div>
+  <div style="font-size:10px;color:#b0a090;">• Hover: bg #2e2820 · texto #f0ebe3</div>
+  <div style="font-size:10px;color:#b0a090;">• Grupos: ALL CAPS · #3d3528 · 9px</div>
+  <div style="font-size:10px;color:#b0a090;">• Bottom: avatar âmbar + nome + role</div>
+</div>
+</body></html>

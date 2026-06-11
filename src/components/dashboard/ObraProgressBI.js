@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { HardHat, DollarSign, Clock } from 'lucide-react';
 import { vehicleGroups } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
     const [selectedObraId, setSelectedObraId] = useState('');
@@ -99,7 +100,7 @@ const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
         }
 
         return {
-            nome: obra.nome,
+            nome: formatObraNome(obra),
             real: type === 'prancha' ? totalExecutadoKmPrancha : totalExecutadoHoras,
             faturado: faturado,
             contratado: contratado,

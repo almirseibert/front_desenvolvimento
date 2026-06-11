@@ -2,6 +2,7 @@
 import { Fuel, CheckCircle, Loader, AlertTriangle, RefreshCw, Gauge, Wallet, XCircle, Settings, Plus, X } from 'lucide-react';
 import apiClient from '../../services/apiClient';
 import SearchableSelect from '../SearchableSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const TIPO_LABEL = {
     BloqueadoLeitura:   { label: 'Leitura Inválida',   cor: 'bg-red-100 text-red-800',    icon: Gauge  },
@@ -335,8 +336,8 @@ const AbastecimentoAdminTab = () => {
                                         <td className="px-4 py-3 text-gray-700">
                                             {employee?.nome || (typeof ordem.createdBy === 'object' ? ordem.createdBy?.nome : null) || 'N/A'}
                                         </td>
-                                        <td className="px-4 py-3 text-gray-700 max-w-[140px] truncate" title={obra?.nome}>
-                                            {obra?.nome || ordem.obraId || 'N/A'}
+                                        <td className="px-4 py-3 text-gray-700 max-w-[140px] truncate" title={formatObraNome(obra)}>
+                                            {formatObraNome(obra) || ordem.obraId || 'N/A'}
                                         </td>
                                         <td className="px-4 py-3 text-gray-600 whitespace-nowrap">
                                             {ordem.fuelType || 'N/A'}

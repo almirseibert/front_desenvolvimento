@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { ClipboardCheck, Printer, Loader } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
 import apiClient from '../../services/apiClient'; // Ajuste o caminho conforme necessidade
+import { formatObraNome } from '../../utils/obraFormat';
 import SearchableObraSelect from '../SearchableObraSelect';
 
 const BillingReport = ({ obras, vehicles }) => {
@@ -42,7 +43,7 @@ const BillingReport = ({ obras, vehicles }) => {
         if (!obra) return;
 
         const doc = new jsPDF();
-        doc.setFontSize(16); doc.text(`Relatório de Faturamento: ${obra.nome}`, 14, 20);
+        doc.setFontSize(16); doc.text(`Relatório de Faturamento: ${formatObraNome(obra)}`, 14, 20);
         doc.setFontSize(10); doc.text(`Comparativo: Contratado vs. Realizado (Apontamentos)`, 14, 26);
 
         const executedByType = {};

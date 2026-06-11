@@ -163,8 +163,10 @@ export const checkReadingConsistency = (vehicle, newValueStr, fieldType) => {
     if (fieldType === 'odometro') {
         currentValue = parseFloat(vehicle.odometro || 0);
         unit = 'Km';
-        limit = 1000; // Regra 2: Trava 1000km de salto
-    } 
+        // Regra 2: Trava 1000km de salto. Exceção: grupo "Caminhões de Trecho"
+        // (Caminhão Prancha / Semirreboques) pode deslocar até 2000km.
+        limit = getGroupForType(vehicle.tipo) === 'Caminhões de Trecho' ? 2000 : 1000;
+    }
     // Se o campo editado for horímetro (unificado)
     else if (fieldType === 'horimetro') {
         currentValue = parseFloat(vehicle.horimetro || 0);

@@ -9,6 +9,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { formatObraNome } from '../utils/obraFormat';
 
 // Fix Leaflet icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -824,7 +825,7 @@ function ObraPickerModal({ obras, onSelect, onClose }) {
             onClick={() => onSelect(obra.id)}
             className="w-full text-left px-4 py-2.5 hover:bg-[#fdf8f0] flex items-center justify-between gap-2 transition-colors"
         >
-            <span className="text-sm text-gray-800 font-medium">{obra.nome}</span>
+            <span className="text-sm text-gray-800 font-medium">{formatObraNome(obra)}</span>
             {obra.status === 'finalizada'
                 ? <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 flex-shrink-0">Finalizada</span>
                 : <span className="text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 flex-shrink-0">Ativa</span>
@@ -1024,7 +1025,7 @@ function TabConfrontoFaturamento({ apiClient, obras = [], vehicles = [] }) {
                         className="w-full border rounded-lg px-3 py-2 text-sm text-left flex items-center justify-between gap-2 hover:border-yellow-400 transition-colors bg-white"
                     >
                         {obraAtual ? (
-                            <span className="text-gray-800 font-medium truncate">{obraAtual.nome}</span>
+                            <span className="text-gray-800 font-medium truncate">{formatObraNome(obraAtual)}</span>
                         ) : (
                             <span className="text-gray-400">Selecionar obra...</span>
                         )}

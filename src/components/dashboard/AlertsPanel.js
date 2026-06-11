@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Bell, AlertTriangle, ShieldAlert, Wrench, FileText, Badge, Timer, CheckCircle } from 'lucide-react';
 // Importa a lógica unificada de restrições
 import { checkVehicleRestrictions } from '../../utils/vehicleRules';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const AlertsPanel = ({ vehicles = [], employees = [], inactivityAlerts = [], obras = [], navigate, setSelectedInactivityAlert, revisions = [], refuelings = [] }) => {
     const [activeTab, setActiveTab] = useState('todos');
@@ -107,7 +108,7 @@ const AlertsPanel = ({ vehicles = [], employees = [], inactivityAlerts = [], obr
 
                 let obraNome = 'Obra Desconhecida';
                 const foundObra = obras.find(o => String(o.id) === String(v.obraAtualId));
-                if (foundObra) obraNome = foundObra.nome;
+                if (foundObra) obraNome = formatObraNome(foundObra);
 
                 const msgContext = isBasedOnAllocation ? 'desde a chegada na obra' : 'sem abastecer na obra';
 

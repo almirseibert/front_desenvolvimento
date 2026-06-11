@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { FileText, Printer, Droplet, AlertCircle, RefreshCw, Search } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 import SearchableSelect from '../SearchableSelect';
 
 const SupplyOrdersReport = ({ 
@@ -95,7 +96,7 @@ const SupplyOrdersReport = ({
                 id: order.id,
                 vehicleName: vehicle ? `${vehicle.registroInterno} - ${vehicle.modelo}` : (order.vehicleName || 'N/A'),
                 partnerName: partner ? (partner.razaoSocial || partner.nome) : (order.partnerName || order.postoNome || 'Posto N/A'),
-                obraName: obra ? obra.nome : 'N/A',
+                obraName: obra ? formatObraNome(obra) : 'N/A',
                 driverName: employee ? employee.nome : (order.employeeName || 'N/A'),
                 formattedDate: dateObj.getTime() > 0 ? dateObj.toLocaleDateString('pt-BR') : 'Data Inválida',
                 rawDate: dateObj,

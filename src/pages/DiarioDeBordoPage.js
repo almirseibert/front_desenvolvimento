@@ -5,6 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Play, Coffee, StopCircle, LogOut, Loader, History, AlertCircle, Truck, ChevronLeft, X } from 'lucide-react'; // Ícones mantidos
 // REMOVIDO: signOut
 import ProtectedComponent from '../components/ProtectedComponent'; // Ajuste o caminho se necessário
+import { formatObraNome } from '../utils/obraFormat';
 // Importa apiClient (será passado via props)
 // import apiClient from '../services/apiClient'; // Não precisa importar, vem via props
 
@@ -539,7 +540,7 @@ const DiarioDeBordoPage = ({
                                         <Truck size={40} className="text-gray-500 flex-shrink-0"/>
                                         <div className="overflow-hidden">
                                             <p className="font-bold text-gray-900 truncate">{vehicle.registroInterno} - {vehicle.modelo}</p>
-                                            <p className="text-sm text-gray-600 truncate">{obra ? `Obra: ${obra.nome}` : 'Operacional / Pátio'}</p>
+                                            <p className="text-sm text-gray-600 truncate">{obra ? `Obra: ${formatObraNome(obra)}` : 'Operacional / Pátio'}</p>
                                         </div>
                                     </button>
                                 );

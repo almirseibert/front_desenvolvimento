@@ -2,6 +2,7 @@
 import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clock, RefreshCw, User, ClipboardList, Trash2 } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableSelect from '../SearchableSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 
 // --- COMPONENTES AUXILIARES INTERNOS ---
 
@@ -472,7 +473,7 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
                 {/* Header */}
                 <div className="p-6 border-b flex justify-between items-start bg-white rounded-t-xl sticky top-0 z-10">
                     <div className="flex-1">
-                        <h2 className="text-2xl font-bold text-gray-800">{detailedObra.nome}</h2>
+                        <h2 className="text-2xl font-bold text-gray-800">{formatObraNome(detailedObra)}</h2>
                         <div className="flex flex-wrap gap-4 mt-2">
                             <div className="flex items-center gap-1 text-gray-500 text-sm">
                                 <MapPin size={14}/> <span>{detailedObra.localizacao || 'Localização não definida'}</span>

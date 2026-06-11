@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { X, MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
+import { formatObraNome } from '../../utils/obraFormat';
 
 // Fix Leaflet Icons
 delete L.Icon.Default.prototype._getIconUrl;
@@ -114,7 +115,7 @@ const AllocationMap = ({ obras = [], vehicles = [], vehicleGroups = {}, isExpand
                     <Marker key={obra.id} position={[parseFloat(obra.latitude), parseFloat(obra.longitude)]} icon={icon}>
                         <Popup>
                             <div className="min-w-[200px]">
-                                <strong className="block text-sm text-gray-900 uppercase mb-1">{obra.nome}</strong>
+                                <strong className="block text-sm text-gray-900 uppercase mb-1">{formatObraNome(obra)}</strong>
                                 <span className="text-xs text-gray-500 block mb-2">{obra.cliente || 'Cliente N/A'}</span>
                                 
                                 {progress.hasPlan ? (

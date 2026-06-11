@@ -13,6 +13,7 @@ import {
 import ProtectedComponent from '../components/ProtectedComponent';
 import { PasswordConfirmationModal } from '../App';
 import SearchableSelect from '../components/SearchableSelect';
+import { formatObraNome } from '../utils/obraFormat';
 
 // ===================================================================================
 // HELPERS DE PARSE E FORMATAÇÃO
@@ -348,7 +349,7 @@ const generateOrderPDF = (order, vehicle, employee, operator, obra, logoDataUrl,
     doc.text('Obra de Destino:', midX, infoStartY);
     doc.setFont('helvetica', 'normal');
     doc.text(order.supplier || 'N/A', margin + 25, infoStartY);
-    doc.text(obra?.nome || order.obraId || 'Não especificada', midX + 30, infoStartY);
+    doc.text(formatObraNome(obra) || order.obraId || 'Não especificada', midX + 30, infoStartY);
 
     doc.setFont('helvetica', 'bold');
     doc.text('Func. Autorizado:', margin, infoStartY + 7);
@@ -657,7 +658,7 @@ const OrdersPage = ({
                     items={[
                         { id: 'Administração', nome: 'Administração' },
                         { id: 'Oficina', nome: 'Oficina Central' },
-                        ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                        ...sortedObras.map(o => ({ ...o, nome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
                     ]}
                     value={filters.obra}
                     onChange={(item) => setFilters({...filters, obra: item?.id || ''})}
@@ -716,7 +717,7 @@ const OrdersPage = ({
                                         {String(order.orderNumber || '').padStart(6, '0')}
                                         {anexosList.length > 0 && <span title={`${anexosList.length} anexo(s)`} className="inline-block ml-2 text-gray-400"><Paperclip size={12}/></span>}
                                     </td>
-                                    <td className="p-3">{obra?.nome || order.obraId || 'N/A'}</td>
+                                    <td className="p-3">{formatObraNome(obra) || order.obraId || 'N/A'}</td>
                                     <td className="p-3">{vehicle ? <span className="bg-gray-200 px-2 py-0.5 rounded text-xs font-mono">{vehicle.registroInterno}</span> : 'N/A'}</td>
                                     <td className="p-3 max-w-[150px] truncate" title={order.supplier}>{order.supplier}</td>
                                     <td className="p-3 text-xs leading-tight">
@@ -871,7 +872,7 @@ const OrderDetailsModal = ({ order, onClose, vehicles, employees, obras }) => {
                         <div className="bg-gray-50 p-4 rounded-lg border">
                             <h3 className="text-xs font-black text-gray-400 uppercase mb-3">Vínculos de Fornecimento</h3>
                             <p className="text-sm mb-2"><strong className="text-gray-700">Fornecedor:</strong> {order.supplier || 'N/A'}</p>
-                            <p className="text-sm mb-2"><strong className="text-gray-700">Obra/Local (Custo):</strong> {obra?.nome || order.obraId || 'N/A'}</p>
+                            <p className="text-sm mb-2"><strong className="text-gray-700">Obra/Local (Custo):</strong> {formatObraNome(obra) || order.obraId || 'N/A'}</p>
                             <p className="text-sm"><strong className="text-gray-700">Veículo:</strong> {vehicle ? `${vehicle.registroInterno} - ${vehicle.placa}` : 'Uso Geral'}</p>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg border">
@@ -1433,7 +1434,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
                                     items={[
                                         { id: 'Administração', nome: 'Administração' },
                                         { id: 'Oficina', nome: 'Oficina Central' },
-                                        ...sortedObras.map(o => ({ ...o, nome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
+                                        ...sortedObras.map(o => ({ ...o, nome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` })),
                                     ]}
                                     value={formData.obraId}
                                     onChange={(item) => setFormData({...formData, obraId: item?.id || ''})}

@@ -9,6 +9,7 @@ import ProtectedComponent from '../components/ProtectedComponent';
 import ObraModal from '../components/modals/ObraModal'; 
 import ObraDetailModal from '../components/modals/ObraDetailModal';
 import ManualFinishObraModal from '../components/modals/ManualFinishObraModal';
+import { formatObraNome } from '../utils/obraFormat';
 
 const ObrasPage = ({
     user,
@@ -255,11 +256,8 @@ const ObrasPage = ({
                                             ⚠ Informações Pendentes
                                         </span>
                                     )}
-                                    <h3 className="line-clamp-1" style={{ fontSize: 14, fontWeight: 700, color: '#3d3528' }} title={obra.nome}>
-                                        {obra.orgao_contratante && (
-                                            <span style={{ color: '#b0a090', fontWeight: 400 }}>[{obra.orgao_contratante}] </span>
-                                        )}
-                                        {obra.nome}
+                                    <h3 className="line-clamp-1" style={{ fontSize: 14, fontWeight: 700, color: '#3d3528' }} title={formatObraNome(obra)}>
+                                        {formatObraNome(obra)}
                                     </h3>
                                     {obra.latitude && (
                                         <a href={`https://www.google.com/maps/search/?api=1&query=${obra.latitude},${obra.longitude}`} target="_blank" rel="noreferrer"

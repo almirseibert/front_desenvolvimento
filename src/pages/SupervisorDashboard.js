@@ -4,6 +4,7 @@ import apiClient from '../services/apiClient';
 import ObraCard from '../components/supervisor/ObraCard';
 import ContractConfigModal from '../components/supervisor/ContractConfigModal';
 import SearchableSelect from '../components/SearchableSelect';
+import { formatObraNome } from '../utils/obraFormat';
 import AllocationForecastPage from './AllocationForecastPage';
 
 // ============================================================================
@@ -88,7 +89,7 @@ const ProductionBI = ({ onBack }) => {
                             items={[{ id: 'geral', nome: '🌍 Visão Geral da Frota' }, ...obras]}
                             value={filtroObra}
                             onChange={(item) => setFiltroObra(item?.id || 'geral')}
-                            getLabel={(o) => o.nome}
+                            getLabel={(o) => formatObraNome(o)}
                             placeholder="Selecione obra..."
                         />
                     </div>

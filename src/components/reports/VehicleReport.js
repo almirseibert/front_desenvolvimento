@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Truck, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 import SearchableSelect from '../SearchableSelect';
 
 const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
@@ -43,7 +44,7 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
                 else leituraPrincipal = `${v.odometro ?? 'N/A'} Km`;
 
                 const obra = obras.find(o => o.id === v.obraAtualId);
-                const obraAtual = obra ? obra.nome : (v.localizacaoAtual || 'N/A');
+                const obraAtual = obra ? formatObraNome(obra) : (v.localizacaoAtual || 'N/A');
                 
                 return { ...v, vehicleGroup, leituraPrincipal, obraAtual };
             }).filter(Boolean)

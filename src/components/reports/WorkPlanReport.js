@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { FileText, Download } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipmentTypesForHours = [] }) => {
     const [pdfWorkplanSelectedObras, setPdfWorkplanSelectedObras] = useState([]);
@@ -33,7 +34,7 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
                 if (index > 0) doc.addPage();
 
                 doc.setFontSize(18);
-                doc.text(`Plano de Trabalho: ${obra.nome}`, 14, 22);
+                doc.text(`Plano de Trabalho: ${formatObraNome(obra)}`, 14, 22);
                 doc.setFontSize(11); doc.setTextColor(100);
                 
                 let currentY = 30;
@@ -235,7 +236,7 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
                     <div className="flex-1">
                         <label className="block text-sm font-bold text-gray-700 mb-2">Selecione as Obras (Ctrl+Click)</label>
                         <select multiple value={pdfWorkplanSelectedObras} onChange={e => setPdfWorkplanSelectedObras(Array.from(e.target.selectedOptions, option => option.value))} className="w-full h-48 p-2 border rounded-lg bg-gray-50 custom-scrollbar">
-                            {obrasToDisplay.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
+                            {obrasToDisplay.map(o => <option key={o.id} value={o.id}>{formatObraNome(o)}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                         </select>
                     </div>
                 </div>

@@ -8,6 +8,7 @@ import apiClient from '../services/apiClient';
 // Importação das bibliotecas de PDF
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import { formatObraNome } from '../utils/obraFormat';
 
 // ============================================================================
 // CONFIGURAÇÃO DO LOGO
@@ -125,7 +126,7 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
         doc.setFont("helvetica", "bold");
         doc.setFontSize(12);
         doc.setTextColor(...colors.primary);
-        doc.text(obra.nome.toUpperCase(), 18, 53);
+        doc.text(formatObraNome(obra).toUpperCase(), 18, 53);
 
         doc.setFont("helvetica", "normal");
         doc.setFontSize(9);
@@ -281,7 +282,7 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
                 <div className="flex items-center gap-4">
                     <button onClick={onBack} className="p-2 hover:bg-slate-100 rounded-full"><ArrowLeft size={20}/></button>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-800">{obra?.nome}</h1>
+                        <h1 className="text-xl font-bold text-slate-800">{formatObraNome(obra)}</h1>
                         <p className="text-xs text-slate-500">Contrato: {formatCurrency(contract?.total_value)}</p>
                     </div>
                 </div>

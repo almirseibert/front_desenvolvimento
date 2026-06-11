@@ -3,6 +3,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { HardHat, Printer } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) => {
     const [statusFilter, setStatusFilter] = useState('ativa');
@@ -39,7 +40,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
             if (index > 0) doc.addPage();
 
             doc.setFontSize(16); doc.setTextColor(0);
-            doc.text(`Relatório de Obra: ${obra.nome}`, 14, 20);
+            doc.text(`Relatório de Obra: ${formatObraNome(obra)}`, 14, 20);
             doc.setFontSize(10); 
             doc.text(`Status: ${obra.status.toUpperCase()} | Local: ${obra.localizacao || 'N/A'}`, 14, 26);
 
@@ -158,7 +159,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
                     <div>
                         <label className="label">Selecionar Obras</label>
                         <select multiple value={selectedObraIds} onChange={e => setSelectedObraIds(Array.from(e.target.selectedOptions, o => o.value))} className="w-full h-32 p-2 border rounded text-sm custom-scrollbar">
-                            {filteredObras.map(o => <option key={o.id} value={o.id}>{o.nome}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
+                            {filteredObras.map(o => <option key={o.id} value={o.id}>{formatObraNome(o)}{o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}</option>)}
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Use Ctrl+Click para selecionar várias.</p>
                     </div>

@@ -35,7 +35,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import {
-    Bell, Loader, X, UserPlus
+    Bell, Loader, X, UserPlus, AlertTriangle, WifiOff, Fuel
 } from 'lucide-react';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -356,6 +356,44 @@ const AdminPendingRequestAlert = React.memo(({ pendingCount, onClose, navigate }
     </div>
 ));
 
+// Metadados de exibição por tipo de notificação administrativa.
+const ADMIN_NOTIF_META = {
+    nova_solicitacao:         { title: 'Nova solicitação de abastecimento', message: 'Há uma nova solicitação aguardando análise.', Icon: Fuel,          color: 'amber'  },
+    baixa_pendente:           { title: 'Baixa de abastecimento pendente',    message: 'Uma solicitação está aguardando baixa.',        Icon: Fuel,          color: 'amber'  },
+    ordem_bloqueada:          { title: 'Ordem de abastecimento bloqueada',   message: 'Uma ordem está bloqueada aguardando liberação.', Icon: AlertTriangle, color: 'red'    },
+    nova_solicitacao_cadastro:{ title: 'Nova solicitação de cadastro',       message: 'Um novo usuário aguarda aprovação de cadastro.', Icon: UserPlus,      color: 'blue'   },
+    whatsapp_desconectado:    { title: 'Serviço WhatsApp desconectado',      message: 'A conexão com o WhatsApp caiu. Reconecte o serviço.', Icon: WifiOff,    color: 'red'    },
+    whatsapp_nao_configurado: { title: 'WhatsApp não configurado',           message: 'O serviço de WhatsApp ainda não foi configurado.', Icon: WifiOff,     color: 'red'    },
+};
+
+const ADMIN_NOTIF_COLORS = {
+    amber: { border: 'border-amber-500', bg: 'bg-amber-100', text: 'text-amber-600' },
+    red:   { border: 'border-red-500',   bg: 'bg-red-100',   text: 'text-red-600'   },
+    blue:  { border: 'border-blue-500',  bg: 'bg-blue-100',  text: 'text-blue-600'  },
+};
+
+const AdminNotificationPopup = React.memo(({ popup, onClose }) => {
+    const meta = ADMIN_NOTIF_META[popup.tipo] || { title: 'Nova notificação', message: 'Há um novo evento na área administrativa.', Icon: Bell, color: 'blue' };
+    const c = ADMIN_NOTIF_COLORS[meta.color] || ADMIN_NOTIF_COLORS.blue;
+    const Icon = meta.Icon;
+    return (
+        <div className={`bg-white border-l-4 ${c.border} shadow-2xl rounded-lg p-4 max-w-sm w-full animate-bounce-in pointer-events-auto`}>
+            <div className="flex justify-between items-start">
+                <div className="flex items-center gap-3">
+                    <div className={`${c.bg} ${c.text} p-2 rounded-full`}>
+                        <Icon size={24} />
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-gray-800">{meta.title}</h3>
+                        <p className="text-sm text-gray-600 mt-1">{popup.message || meta.message}</p>
+                    </div>
+                </div>
+                <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={16} /></button>
+            </div>
+        </div>
+    );
+});
+
 // ==========================================
 // AppContent — conteúdo principal
 // ==========================================
@@ -385,6 +423,7 @@ const AppContent = () => {
     const [operadorTelaAtual, setOperadorTelaAtual] = useState(null); // null | 'comboio' | 'normal'
 
     const [agendaAlerts, setAgendaAlerts] = useState([]);
+    const [adminPopups, setAdminPopups] = useState([]); // pop-ups de notificação (somente admin)
 
     // ---------- Taxonomia de veículos (hidratada do banco) ----------
     // Incrementa a cada hidratação para forçar recompute dos consumidores.
@@ -470,13 +509,29 @@ const AppContent = () => {
         };
 
         const handleAdminNotification = (data) => {
-            if (!canAccessPage(user.roleNormalized, 'admin_solicitacoes')) return;
-            if (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente') {
+            const podeAbastecimento = canAccessPage(user.roleNormalized, 'admin_solicitacoes');
+
+            // Contador de solicitações pendentes (quem tem acesso à área de abastecimento).
+            if (podeAbastecimento && (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente')) {
+                setPendingSolicitacoesCount(prev => prev + 1);
+            }
+
+            // Pop-up + som: somente para administradores.
+            if (user.user_type === 'admin' && ADMIN_NOTIF_META[data.tipo]) {
                 try {
                     const audio = new Audio('/beep.mp3');
                     audio.play().catch(e => console.warn('Sem interação', e));
                 } catch (e) {}
-                setPendingSolicitacoesCount(prev => prev + 1);
+                setAdminPopups(prev => [
+                    ...prev,
+                    { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, tipo: data.tipo, message: data.mensagem || data.message || null },
+                ]);
+            } else if (podeAbastecimento && (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente')) {
+                // Não-admin com acesso a abastecimento: mantém apenas o beep do contador.
+                try {
+                    const audio = new Audio('/beep.mp3');
+                    audio.play().catch(e => console.warn('Sem interação', e));
+                } catch (e) {}
             }
         };
 
@@ -833,6 +888,18 @@ const AppContent = () => {
                     onClose={() => setPendingRequestsCount(0)}
                     navigate={setCurrentPage}
                 />
+            )}
+
+            {user.user_type === 'admin' && adminPopups.length > 0 && (
+                <div className="fixed top-4 right-4 z-[99999] flex flex-col gap-3 pointer-events-none">
+                    {adminPopups.map(popup => (
+                        <AdminNotificationPopup
+                            key={popup.id}
+                            popup={popup}
+                            onClose={() => setAdminPopups(prev => prev.filter(p => p.id !== popup.id))}
+                        />
+                    ))}
+                </div>
             )}
 
             <Sidebar

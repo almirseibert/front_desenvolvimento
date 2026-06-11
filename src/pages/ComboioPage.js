@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import { Droplet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Recycle, Edit, Trash2, MapPin, Truck, History } from 'lucide-react';
+import { Droplet, ArrowUpCircle, ArrowDownCircle, Plus, Minus, Recycle, Edit, Trash2, MapPin, Truck, History, Camera, Image as ImageIcon, X } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -8,9 +8,33 @@ import ComboioEntradaModal from '../components/modals/ComboioEntradaModal';
 import ComboioSaidaModal from '../components/modals/ComboioSaidaModal';
 import ComboioDrenagemModal from '../components/modals/ComboioDrenagemModal';
 import { getAllowedReadingTypes } from '../utils/vehicleRules';
+import { formatObraNome } from '../utils/obraFormat';
 
 import ProtectedComponent from '../components/ProtectedComponent';
 import SearchableSelect from '../components/SearchableSelect';
+
+// Base para servir imagens de /uploads (o backend serve estático fora de /api)
+const IMG_BASE = (process.env.REACT_APP_API_URL || '').replace('/api', '');
+
+// Normaliza a coluna `fotos` (mysql2 pode devolver objeto já parseado ou string).
+const parseFotos = (fotos) => {
+    if (!fotos) return null;
+    let obj = fotos;
+    if (typeof obj === 'string') {
+        try { obj = JSON.parse(obj); } catch { return null; }
+    }
+    if (!obj || typeof obj !== 'object') return null;
+    const labels = {
+        horimetro: 'Horímetro / Odômetro',
+        re: 'RE / Placa',
+        medidorZerado: 'Medidor zerado',
+        litragem: 'Medidor com litragem',
+    };
+    const list = Object.entries(labels)
+        .filter(([key]) => obj[key])
+        .map(([key, label]) => ({ key, label, url: `${IMG_BASE}${obj[key]}` }));
+    return list.length > 0 ? list : null;
+};
 
 // --- FUNÇÃO DE GERAÇÃO DE PDF (Padronizada A4 - Igual Abastecimento) ---
 const generateAuthorizationPDF = (orderData, vehicles = [], partners = [], employees = [], vehicleGroups = {}) => {
@@ -199,6 +223,7 @@ const ComboioPage = ({
     const [modalState, setModalState] = useState({ type: null, data: null, isEditing: false });
     const [deleteTransaction, setDeleteTransaction] = useState(null);
     const [selectedObraFilter, setSelectedObraFilter] = useState('todas');
+    const [viewPhotos, setViewPhotos] = useState(null); // { title, fotos: [{label,url}] } | null
 
     // Listas Filtradas
     const comboioVehicles = useMemo(() => vehicles.filter(v => v.isComboioVehicle).sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')), [vehicles]);
@@ -230,7 +255,7 @@ const ComboioPage = ({
             if (t.type !== 'saida') continue;
             const oid = t.obraId || '__sem_obra__';
             const obra = t.obraId ? obras.find(o => o.id === t.obraId) : null;
-            const nome = t.obraName || obra?.nome || (t.obraId ? t.obraId : 'Sem obra');
+            const nome = t.obraName || formatObraNome(obra) || (t.obraId ? t.obraId : 'Sem obra');
             const cur = map.get(oid) || { obraId: t.obraId || null, obraName: nome, totalLitros: 0, qtd: 0 };
             cur.totalLitros += parseFloat(t.liters) || 0;
             cur.qtd += 1;
@@ -301,7 +326,7 @@ const ComboioPage = ({
 
     const getObraName = (obraId) => {
         const obra = obras.find(o => o.id === obraId);
-        if (obra) return obra.nome;
+        if (obra) return formatObraNome(obra);
         if (extraObraOptions.includes(obraId)) return obraId;
         return 'Não definida';
     };
@@ -336,7 +361,7 @@ const ComboioPage = ({
                     getSubLabel={(v) => v.modelo || ''}
                     getBadge={(v) => {
                         const obra = obras.find(o => o.id === v.obraAtualId);
-                        return obra ? { text: obra.nome, color: 'bg-blue-100 text-blue-700' } : null;
+                        return obra ? { text: formatObraNome(obra), color: 'bg-blue-100 text-blue-700' } : null;
                     }}
                     placeholder={comboioVehicles.length === 0 ? 'Nenhum comboio cadastrado' : 'Busque por RE, placa ou modelo...'}
                     disabled={comboioVehicles.length === 0}
@@ -464,12 +489,21 @@ const ComboioPage = ({
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-1 ml-3 pl-3 border-l border-gray-100 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <button 
-                                        onClick={() => generateAuthorizationPDF(t, vehicles, partners, employees, vehicleGroups)} 
+                                    {parseFotos(t.fotos) && (
+                                        <button
+                                            onClick={() => setViewPhotos({ title: t.receivingVehicleName || 'Distribuição', fotos: parseFotos(t.fotos) })}
+                                            className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-md transition"
+                                            title="Ver fotos do abastecimento"
+                                        >
+                                            <Camera size={18}/>
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => generateAuthorizationPDF(t, vehicles, partners, employees, vehicleGroups)}
                                         className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition"
                                         title="PDF"
                                     >
-                                        <ArrowDownCircle size={18} className="transform rotate-180"/> 
+                                        <ArrowDownCircle size={18} className="transform rotate-180"/>
                                     </button>
                                     <ProtectedComponent requiredPermission="editor">
                                         <button 
@@ -565,6 +599,30 @@ const ComboioPage = ({
                     onClose={() => setDeleteTransaction(null)}
                     apiClient={apiClient}
                 />
+            )}
+
+            {/* Lightbox de fotos da distribuição feita pelo operador */}
+            {viewPhotos && (
+                <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setViewPhotos(null)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center px-5 py-3 border-b bg-gray-50">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <Camera size={18}/> Fotos do abastecimento — {viewPhotos.title}
+                            </h3>
+                            <button onClick={() => setViewPhotos(null)} className="p-1.5 bg-gray-100 rounded-full hover:bg-gray-200"><X size={20}/></button>
+                        </div>
+                        <div className="p-4 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            {viewPhotos.fotos.map(f => (
+                                <a key={f.key} href={f.url} target="_blank" rel="noopener noreferrer" className="block group">
+                                    <span className="text-xs font-bold text-gray-600 uppercase flex items-center gap-1 mb-1">
+                                        <ImageIcon size={13}/> {f.label}
+                                    </span>
+                                    <img src={f.url} alt={f.label} className="w-full h-56 object-cover rounded-lg border border-gray-200 group-hover:opacity-90 transition" />
+                                </a>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

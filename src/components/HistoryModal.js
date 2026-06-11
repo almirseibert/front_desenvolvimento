@@ -1,5 +1,6 @@
 ﻿import React, { useMemo, useState, useEffect } from 'react';
 import { X, Loader, MapPin, Wrench, FileText, AlertTriangle, User, ArrowRight, Disc } from 'lucide-react';
+import { formatObraNome } from '../utils/obraFormat';
 
 const HistoryModal = ({ vehicle, onClose, obras = [], apiClient, employees = [] }) => {
     
@@ -106,7 +107,7 @@ const HistoryModal = ({ vehicle, onClose, obras = [], apiClient, employees = [] 
         switch(h.normalizedType) { 
             case 'obra':
             case 'allocation': // Caso venha com nome diferente do backend
-                 const obraNome = details.obraNome || (obras.find(o => o.id === details.obraId)?.nome) || 'Obra Desconhecida';
+                 const obraNome = details.obraNome || formatObraNome(obras.find(o => o.id === details.obraId)) || 'Obra Desconhecida';
                  const employeeName = details.employeeName || (employees.find(e => e.id === details.employeeId)?.nome) || 'Não informado';
                 
                 return (

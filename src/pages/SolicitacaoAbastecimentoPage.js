@@ -8,6 +8,7 @@ import {
 
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import SearchableSelect from '../components/SearchableSelect';
+import { formatObraNome as formatObraNomeUtil } from '../utils/obraFormat';
 
 // --- INÍCIO DA LÓGICA DE REGRAS ---
 const vehicleGroups = {
@@ -873,7 +874,7 @@ const SolicitacaoAbastecimentoPage = ({
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-gray-500 uppercase ml-1">Sua Obra</label>
                             <SearchableSelect
-                                items={allowedObras.map(o => ({ ...o, _displayNome: `${o.nome}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
+                                items={allowedObras.map(o => ({ ...o, _displayNome: `${formatObraNomeUtil(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
                                 value={formData.obraId}
                                 onChange={(item) => setFormData({...formData, obraId: item?.id || '', veiculoId: '', funcionarioId: ''})}
                                 getLabel={(o) => o._displayNome || o.nome}

@@ -1,0 +1,70 @@
+<!-- @dsCard group="Components" -->
+<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Roboto', sans-serif; background: #f5f3ef; padding: 20px; }
+.section { margin-bottom: 18px; }
+.section-title { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #b0a090; margin-bottom: 10px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 9999px; padding: 4px 10px; font-size: 12px; font-weight: 700; border: 1px solid; white-space: nowrap; }
+.badge-micro { padding: 2px 7px; font-size: 10px; font-weight: 700; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-pulse { animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+.notif { background: #b03828; color: #fff; font-size: 10px; font-weight: 700; border-radius: 9999px; min-width: 18px; height: 18px; padding: 0 5px; display: inline-flex; align-items: center; justify-content: center; animation: pulse 1.5s ease-in-out infinite; }
+.progress-wrap { width: 180px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: #9a8a78; margin-bottom: 4px; }
+.progress-bar { height: 6px; border-radius: 9999px; background: #e8e0d4; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 9999px; }
+</style>
+</head><body>
+
+<div class="section">
+  <div class="section-title">Status Badges — Veículos</div>
+  <div class="row">
+    <span class="badge" style="background:#d1fae5;border-color:#a7f3d0;color:#065f46;"><span class="dot" style="background:#10b981;"></span>Disponível</span>
+    <span class="badge" style="background:#e0f2fe;border-color:#bae6fd;color:#0c4a6e;"><span class="dot" style="background:#0ea5e9;"></span>Em Obra</span>
+    <span class="badge" style="background:#ede9fe;border-color:#ddd6fe;color:#3730a3;"><span class="dot" style="background:#8b5cf6;"></span>Em Operação</span>
+    <span class="badge" style="background:#ffedd5;border-color:#fed7aa;color:#9a3412;"><span class="dot" style="background:#f97316;"></span>Em Manutenção</span>
+    <span class="badge" style="background:#fef3c7;border-color:#fde68a;color:#78350f;"><span class="dot dot-pulse" style="background:#fbbf24;"></span>Aguardando Manut.</span>
+    <span class="badge" style="background:#f4f4f5;border-color:#d4d4d8;color:#3f3f46;"><span class="dot" style="background:#71717a;"></span>Sucata</span>
+    <span class="badge" style="background:#f3f4f6;border-color:#e5e7eb;color:#6b7280;"><span class="dot" style="background:#9ca3af;"></span>Inativo</span>
+    <span class="badge" style="background:#f3e8ff;border-color:#e9d5ff;color:#6b21a8;"><span class="dot" style="background:#a855f7;"></span>Terceirizado</span>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Micro Badges</div>
+  <div class="row">
+    <span class="badge badge-micro" style="background:#d1fae5;border-color:#a7f3d0;color:#065f46;">Disponível</span>
+    <span class="badge badge-micro" style="background:#e0f2fe;border-color:#bae6fd;color:#0c4a6e;">Em Obra</span>
+    <span class="badge badge-micro" style="background:#ffedd5;border-color:#fed7aa;color:#9a3412;">Manutenção</span>
+    <span class="badge badge-micro" style="background:#fef3c7;border-color:#fde68a;color:#78350f;">Aguardando</span>
+    <span class="badge badge-micro" style="background:#fdf0ec;border-color:#e8c8bc;color:#b03828;">Vencido</span>
+    <span class="badge badge-micro" style="background:#f1f5f9;border-color:#cbd5e1;color:#475569;">Visualizador</span>
+    <span class="badge badge-micro" style="background:#fef9c3;border-color:#fef08a;color:#854d0e;">Editor</span>
+    <span class="badge badge-micro" style="background:#dbeafe;border-color:#bfdbfe;color:#1e40af;">Admin</span>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">Badge de Notificação + Progresso</div>
+  <div class="row" style="gap:20px;align-items:flex-start;">
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:12px;color:#6a5e4e;font-weight:600;">Alertas</span>
+      <span class="notif">3</span>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Progresso da Obra</span><span style="font-weight:700;color:#6a5e4e;">68%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:68%;background:#9E7A42;"></div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Capacidade do Tanque</span><span style="font-weight:700;color:#6a5e4e;">42%</span></div>
+      <div class="progress-bar"><div class="progress-fill" style="width:42%;background:#0ea5e9;"></div></div>
+    </div>
+  </div>
+</div>
+
+</body></html>

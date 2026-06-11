@@ -27,11 +27,15 @@ const TABS = [
   { id: 'sistema',       label: 'Sistema',           icon: <Server size={15} /> },
 ];
 
-const AdminPage = ({ socket }) => {
+const AdminPage = ({ socket, initialTab }) => {
   const { isAdmin } = useAuth();
-  const [activeTab, setActiveTab] = useState('usuarios');
+  const [activeTab, setActiveTab] = useState(initialTab || 'usuarios');
   const [users, setUsers] = useState([]);
   const [groups, setGroups] = useState([]);
+
+  useEffect(() => {
+    if (initialTab) setActiveTab(initialTab);
+  }, [initialTab]);
 
   useEffect(() => {
     loadUsers();

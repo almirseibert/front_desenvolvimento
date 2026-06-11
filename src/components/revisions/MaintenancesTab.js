@@ -3,6 +3,7 @@ import { PlusCircle, Wrench, X, CheckCircle, ArrowRight, Loader } from 'lucide-r
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableObraSelect from '../SearchableObraSelect';
 import SearchableSelect from '../SearchableSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const getVehicleName = (id, vehicles) => {
     const v = vehicles.find(v => String(v.id) === String(id));
@@ -11,7 +12,7 @@ const getVehicleName = (id, vehicles) => {
 
 const getObraName = (id, obras) => {
     const o = obras.find(o => String(o.id) === String(id));
-    return o ? o.nome : 'Pátio / Não Alocado';
+    return o ? formatObraNome(o) : 'Pátio / Não Alocado';
 }
 
 const MaintenancesTab = ({ vehicles = [], obras = [], setAlertMessage, apiClient }) => {

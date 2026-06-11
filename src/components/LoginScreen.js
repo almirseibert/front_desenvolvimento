@@ -69,9 +69,6 @@ const LoginScreen = () => {
                 <div className="flex justify-center">
                     <img src="https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png" alt="Logo MAK" className="w-48"/>
                 </div>
-                <div className="flex justify-center">
-                    <span className="text-white text-xs font-bold px-3 py-1 rounded-full tracking-widest uppercase" style={{background:'#9E7A42'}}>Desenvolvimento</span>
-                </div>
                 <h2 className="text-2xl font-bold text-center text-gray-900">Sistema de Frotas</h2>
                 
                 <form className="space-y-6" onSubmit={handleLogin}>

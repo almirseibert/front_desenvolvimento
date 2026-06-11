@@ -1,5 +1,6 @@
 ﻿import React, { useState } from 'react';
 import { X, Loader } from 'lucide-react';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const ManualFinishObraModal = ({ obra, onClose, apiClient, reloadData, setAlertMessage }) => {
     const [dataFim, setDataFim] = useState(obra?.dataFim ? new Date(obra.dataFim).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]);
@@ -28,7 +29,7 @@ const ManualFinishObraModal = ({ obra, onClose, apiClient, reloadData, setAlertM
                     <button onClick={onClose} className="p-1 rounded-full hover:bg-gray-200" disabled={isSubmitting}><X size={20}/></button>
                 </div>
                 <div className="p-6">
-                    <p className="text-gray-600 mb-4 text-sm">Tem certeza de que deseja finalizar a obra "{obra.nome}"?</p>
+                    <p className="text-gray-600 mb-4 text-sm">Tem certeza de que deseja finalizar a obra "{formatObraNome(obra)}"?</p>
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700">Data de Finalização *</label>
                         <input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="w-full p-2 border rounded mt-1 text-sm" required/>

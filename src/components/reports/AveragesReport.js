@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Activity, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import { getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
+import { formatObraNome } from '../../utils/obraFormat';
 import SearchableObraSelect from '../SearchableObraSelect';
 
 // Helper para ordenação alfanumérica
@@ -125,7 +126,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
         doc.setFontSize(10);
         doc.text(`Período: ${filters.startDate ? new Date(filters.startDate).toLocaleDateString('pt-BR') : 'Início'} até ${filters.endDate ? new Date(filters.endDate).toLocaleDateString('pt-BR') : 'Hoje'}`, 14, 22);
         
-        const obraNome = filters.obraId ? (obras.find(o => o.id === filters.obraId)?.nome || 'Todas') : 'Todas as Obras';
+        const obraNome = filters.obraId ? (formatObraNome(obras.find(o => o.id === filters.obraId)) || 'Todas') : 'Todas as Obras';
         doc.text(`Obra: ${obraNome}`, 14, 27);
         doc.text(`Total Litros Consumidos (Filtro): ${totalLitersGlobal.toFixed(2)} L`, 14, 32);
 

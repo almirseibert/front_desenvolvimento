@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Loader, FileText, Save, Stethoscope, Briefcase, User, Shield, PlusCircle } from 'lucide-react';
 
 const EmployeeModal = ({ 
@@ -12,6 +12,8 @@ const EmployeeModal = ({
     const [activeTab, setActiveTab] = useState('dados');
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
+
+    const isAdmin = user && user.user_type && user.user_type.toLowerCase() === 'admin';
 
     // Estado inicial
     const [formData, setFormData] = useState({
@@ -28,7 +30,7 @@ const EmployeeModal = ({
         contato: '',
         email: '',
         status: 'ativo',
-        isPlaceholder: 0,
+        isPlaceholder: false,
         // CNH: Mapeamos para um objeto para facilitar a UI
         cnh: { numero: '', categoria: '', validade: '', emissao: '', exameToxicologicoVencimento: '', anexo: null },
         // ASO: Nova aba
@@ -63,7 +65,7 @@ const EmployeeModal = ({
                 contato: employee.contato || employee.telefone || '',
                 email: employee.email || '',
                 status: employee.status || 'ativo',
-                isPlaceholder: (employee.isPlaceholder == 1 || employee.isPlaceholder === true) ? 1 : 0,
+                isPlaceholder: employee.isPlaceholder === 1 || employee.isPlaceholder === true,
 
                 cnh: {
                     numero: cnhNumero,
@@ -113,9 +115,9 @@ const EmployeeModal = ({
             // APENAS se o campo de toxicológico ainda estiver vazio
             if (val && !prev.cnh.exameToxicologicoVencimento) {
                 const [year, month, day] = val.split('-').map(Number);
-                // Aguarda ano completo (4 dígitos) e evita bugs de fuso horário
+                // Aguarda o ano estar completamente preenchido (4 dígitos) antes de calcular
                 if (year >= 1000 && month && day) {
-                    const totalMonths = (year * 12 + (month - 1)) + 30;
+                    let totalMonths = (year * 12 + (month - 1)) + 30;
                     const newYear = Math.floor(totalMonths / 12);
                     const newMonth = (totalMonths % 12) + 1;
                     newData.cnh.exameToxicologicoVencimento = `${newYear}-${String(newMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -152,8 +154,9 @@ const EmployeeModal = ({
         setLoading(true);
         try {
             // Prepara payload compatível com backend
-            const payload = { 
+            const payload = {
                 ...formData,
+                isPlaceholder: formData.isPlaceholder ? 1 : 0,
                 // Envia campos planos de CNH explicitamente para o backend salvar nas colunas do MySQL
                 cnhNumero: formData.cnh.numero,
                 cnhCategoria: formData.cnh.categoria,
@@ -161,6 +164,16 @@ const EmployeeModal = ({
                 cnhEmissao: formData.cnh.emissao,
                 exameToxicologicoVencimento: formData.cnh.exameToxicologicoVencimento
             };
+
+            // Apenas administradores podem alterar a flag de fictício.
+            // Para outros usuários, preservamos o valor já gravado no banco.
+            if (!isAdmin) {
+                if (employee) {
+                    payload.isPlaceholder = (employee.isPlaceholder === 1 || employee.isPlaceholder === true) ? 1 : 0;
+                } else {
+                    payload.isPlaceholder = 0;
+                }
+            }
 
             if (employee) {
                 await apiClient.updateEmployee(employee.id, payload);
@@ -179,10 +192,10 @@ const EmployeeModal = ({
     };
 
     return (
-        <div className="mak-modal-backdrop overflow-y-auto">
-            <div className="mak-modal max-w-4xl">
-                <div className="mak-modal-header">
-                    <h2 className="mak-modal-title">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col animate-fadeIn">
+                <div className="p-5 border-b flex justify-between items-center bg-gray-50 rounded-t-xl">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
                         {employee ? <User size={20}/> : <PlusCircle size={20}/>}
                         {employee ? 'Editar Funcionário' : 'Novo Funcionário'}
                     </h2>
@@ -263,25 +276,6 @@ const EmployeeModal = ({
                             </div>
 
                             <div className="md:col-span-2">
-                                <label className={`flex items-start gap-2 p-3 rounded-lg border cursor-pointer transition ${formData.isPlaceholder ? 'bg-amber-50 border-amber-300' : 'bg-gray-50 border-gray-200 hover:bg-gray-100'}`}>
-                                    <input
-                                        type="checkbox"
-                                        checked={!!formData.isPlaceholder}
-                                        onChange={(e) => setFormData(p => ({ ...p, isPlaceholder: e.target.checked ? 1 : 0 }))}
-                                        className="mt-0.5 h-4 w-4 accent-amber-600"
-                                    />
-                                    <div className="flex-1">
-                                        <div className="text-xs font-bold text-gray-800">Funcionário fictício (placeholder)</div>
-                                        <div className="text-[11px] text-gray-600 leading-snug mt-0.5">
-                                            Marca este cadastro como operador <u>temporário</u> (COLABORADOR, TESTE, MAK SERVIÇOS etc.).
-                                            Veículos alocados em obra com um operador fictício por mais de 7 dias têm
-                                            <strong> emissão de ordens de abastecimento bloqueada</strong> até que o operador real seja informado.
-                                        </div>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div className="md:col-span-2">
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Endereço</label>
                                 <input name="endereco" value={formData.endereco} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none" />
                             </div>
@@ -298,6 +292,26 @@ const EmployeeModal = ({
                                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
                                 <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none" />
                             </div>
+
+                            {isAdmin && (
+                                <div className="md:col-span-3 mt-2 bg-purple-50 border border-purple-200 rounded-lg p-3">
+                                    <label className="flex items-start gap-3 cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            name="isPlaceholder"
+                                            checked={!!formData.isPlaceholder}
+                                            onChange={e => setFormData(prev => ({ ...prev, isPlaceholder: e.target.checked }))}
+                                            className="mt-0.5 h-5 w-5 text-purple-600 rounded focus:ring-purple-500"
+                                        />
+                                        <span>
+                                            <span className="block text-sm font-bold text-purple-800">Funcionário fictício (placeholder)</span>
+                                            <span className="block text-xs text-purple-700 mt-0.5">
+                                                Marque para usar este cadastro apenas como vínculo temporário (ex: alocações sem motorista real). Visível somente para administradores.
+                                            </span>
+                                        </span>
+                                    </label>
+                                </div>
+                            )}
                         </div>
                     )}
 
@@ -408,12 +422,12 @@ const EmployeeModal = ({
                     )}
                 </form>
 
-                <div className="mak-modal-footer">
+                <div className="p-4 border-t bg-gray-50 flex justify-end gap-3 rounded-b-xl">
                     <button onClick={onClose} className="px-5 py-2.5 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 font-bold text-sm transition shadow-sm">Cancelar</button>
                     <button 
                         onClick={handleSubmit} 
                         disabled={loading || uploading} 
-                        className="px-6 py-2.5 bg-yellow-400 text-gray-900 rounded-lg hover:bg-[#fdf8f0]0 font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm transition transform active:scale-95"
+                        className="px-6 py-2.5 bg-yellow-400 text-gray-900 rounded-lg hover:bg-yellow-500 font-bold text-sm flex items-center gap-2 disabled:opacity-50 shadow-sm transition transform active:scale-95"
                     >
                         {loading ? <Loader className="animate-spin" size={18}/> : <Save size={18}/>}
                         {employee ? 'Salvar Alterações' : 'Cadastrar Funcionário'}
@@ -425,6 +439,3 @@ const EmployeeModal = ({
 };
 
 export default EmployeeModal;
-
-
-

@@ -3,134 +3,9 @@ import {
     Droplet, ArrowUpCircle, ArrowDownCircle, RefreshCw,
     LogOut, Lock, Loader, Clock
 } from 'lucide-react';
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
 
-import ComboioEntradaModal from '../components/modals/ComboioEntradaModal';
-import ComboioSaidaModal from '../components/modals/ComboioSaidaModal';
+import ComboioDistribuicaoModal from '../components/modals/ComboioDistribuicaoModal';
 import ChangePasswordModal from '../components/ChangePasswordModal';
-import { getAllowedReadingTypes } from '../utils/vehicleRules';
-import { useEnsureResources } from '../contexts/DataContext';
-
-// ─── PDF (mesma lógica do ComboioPage.js) ─────────────────────────────────────
-const generateAuthorizationPDF = (orderData, vehicles = [], partners = [], employees = [], vehicleGroups = {}) => {
-    const isValidDbDate = (d) => {
-        if (!d) return false;
-        const s = String(d);
-        return s.length > 5 && !s.startsWith('0000') && s !== '1970-01-01T00:00:00.000Z';
-    };
-    const formatDateSafe = (dateInput) => {
-        if (!isValidDbDate(dateInput)) return 'N/A';
-        try {
-            let date;
-            if (dateInput && typeof dateInput.toDate === 'function') {
-                date = dateInput.toDate();
-            } else {
-                let s = String(dateInput);
-                if (s.includes(' ') && !s.includes('T')) s = s.replace(' ', 'T');
-                date = new Date(s);
-            }
-            if (isNaN(date.getTime())) return 'Data Inválida';
-            return new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()).toLocaleDateString('pt-BR');
-        } catch { return 'Erro'; }
-    };
-
-    const buildPdf = (logoDataUrl) => {
-        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const effectivePageHeight = 148.5;
-        const margin = 10;
-
-        let vehicleId, partnerId;
-        if (orderData.isEntrada || orderData.type === 'entrada') {
-            vehicleId = orderData.comboioVehicleId || orderData.vehicleId;
-            partnerId = orderData.partnerId;
-        } else {
-            vehicleId = orderData.receivingVehicleId || orderData.vehicleId;
-            partnerId = null;
-        }
-
-        const vehicle = vehicles.find(v => v.id === vehicleId);
-        const partner = partners.find(p => p.id === partnerId);
-        const employee = employees.find(e => e.id === orderData.employeeId);
-        const dateToUse = orderData.data || orderData.date;
-
-        if (logoDataUrl) {
-            try { doc.addImage(logoDataUrl, 'PNG', margin, 10, 45, 16.875); } catch (e) { /* ignora */ }
-        }
-
-        doc.setFontSize(16);
-        doc.text('Autorização de Abastecimento', pageWidth - margin, 15, { align: 'right' });
-        doc.setFontSize(12);
-        doc.text(`Nº: ${String(orderData.authNumber || '0').padStart(6, '0')}`, pageWidth - margin, 22, { align: 'right' });
-
-        let leituraLabel = 'Leitura';
-        let leituraValue = 'N/A';
-        if (orderData.odometro && orderData.odometro > 0) {
-            leituraLabel = 'Odômetro'; leituraValue = orderData.odometro;
-        } else if (orderData.horimetro && orderData.horimetro > 0) {
-            leituraLabel = 'Horímetro'; leituraValue = orderData.horimetro;
-        } else if (vehicle) {
-            const allowed = getAllowedReadingTypes(vehicle.tipo);
-            if (allowed.includes('odometro')) {
-                leituraLabel = 'Odômetro'; leituraValue = vehicle.odometro || 'N/A';
-            } else {
-                leituraLabel = 'Horímetro'; leituraValue = vehicle.horimetro || 'N/A';
-            }
-        }
-
-        const body = [
-            ['Data de Emissão', formatDateSafe(dateToUse)],
-            ['Funcionário Autorizado', employee?.nome || 'Não especificado'],
-            ['Veículo Autorizado', `${vehicle?.registroInterno || 'N/A'} - ${vehicle?.placa || 'N/A'}`],
-            ['Modelo', `${vehicle?.marca || ''} ${vehicle?.modelo || ''}`.trim() || 'N/A'],
-            [leituraLabel, `${leituraValue}`],
-            ['Posto Autorizado', orderData.partnerName || partner?.razaoSocial || (orderData.type === 'saida' ? 'Comboio Interno' : 'N/A')],
-            ['Combustível Autorizado', orderData.fuelType === 'dieselS10' ? 'Diesel S10' : (orderData.fuelType === 'dieselComum' ? 'Diesel Comum' : orderData.fuelType) || 'N/A'],
-            ['Litros Liberados', `${parseFloat(orderData.litrosAbastecidos || orderData.liters || 0).toFixed(2)} L`],
-        ];
-        if (orderData.invoiceNumber) body.push(['Nota Fiscal (NF)', orderData.invoiceNumber]);
-
-        let issuer = 'N/A';
-        if (orderData.createdBy) {
-            issuer = typeof orderData.createdBy === 'string'
-                ? orderData.createdBy
-                : orderData.createdBy.nome || orderData.createdBy.name || orderData.createdBy.userEmail || 'Usuário do Sistema';
-        }
-        body.push(['Emitido por', issuer]);
-
-        autoTable(doc, {
-            startY: 35, body, theme: 'striped',
-            styles: { fontSize: 9, cellPadding: 1.5 },
-            headStyles: { fillColor: [24, 49, 83] },
-            columnStyles: { 0: { cellWidth: 40, fontStyle: 'bold' } }
-        });
-
-        const finalY = (doc.lastAutoTable?.finalY || 35) + 10;
-        const footerStartY = Math.max(finalY, effectivePageHeight - 20);
-        doc.setFontSize(8);
-        doc.setFont('helvetica', 'italic');
-        doc.text('*A presente ordem de abastecimento é válida exclusivamente para a placa/RE indicada e para o tipo de combustível previamente autorizado.', margin, footerStartY);
-        doc.text('*Estão autorizados somente os itens discriminados acima.', margin, footerStartY + 4);
-        doc.setLineDashPattern([1, 1], 0);
-        doc.setDrawColor(180, 180, 180);
-        doc.line(0, effectivePageHeight, pageWidth, effectivePageHeight);
-        doc.save(`Autorizacao_${orderData.authNumber || 'TEMP'}_${vehicle?.registroInterno || 'VEIC'}.pdf`);
-    };
-
-    const logo = new Image();
-    logo.crossOrigin = 'Anonymous';
-    logo.src = 'https://i.postimg.cc/pVnwyfRq/MAK-Servi-os-Logotipo.png';
-    logo.onload = () => {
-        try {
-            const canvas = document.createElement('canvas');
-            canvas.width = logo.width; canvas.height = logo.height;
-            canvas.getContext('2d').drawImage(logo, 0, 0);
-            buildPdf(canvas.toDataURL('image/png'));
-        } catch { buildPdf(null); }
-    };
-    logo.onerror = () => buildPdf(null);
-};
 
 // ─── Barra de Combustível ─────────────────────────────────────────────────────
 const FuelBar = ({ label, liters, capacity, colorClass }) => {
@@ -162,18 +37,13 @@ const ComboioMobilePage = ({
     obras = [],
     employees = [],
     partners = [],
-    expenses = [],
     setAlertMessage,
     socket,
-    PasswordConfirmationModal,
     onVoltar,
 }) => {
-    useEnsureResources(['expenses']);
-
     const [comboio, setComboio] = useState(initialComboio);
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(false);
-    const [showEntrada, setShowEntrada] = useState(false);
     const [showSaida, setShowSaida] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -292,21 +162,16 @@ const ComboioMobilePage = ({
                 </div>
             </div>
 
-            {/* ── Botões de ação ─────────────────────────────────────────── */}
-            <div className="px-4 -mt-5 relative z-20 flex gap-3">
-                <button
-                    onClick={() => setShowEntrada(true)}
-                    className="flex-1 py-5 bg-blue-600 text-white font-bold rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-blue-700 transition active:scale-95"
-                >
-                    <ArrowUpCircle size={28} />
-                    <span className="text-sm tracking-wide">+ ENTRADA</span>
-                </button>
+            {/* ── Botão de ação ──────────────────────────────────────────── */}
+            {/* Operador do comboio só distribui combustível (Abastecer). A entrada
+                (carregar o comboio no posto) é feita pelo setor de frotas. */}
+            <div className="px-4 -mt-5 relative z-20">
                 <button
                     onClick={() => setShowSaida(true)}
-                    className="flex-1 py-5 bg-yellow-400 text-gray-900 font-bold rounded-2xl shadow-lg flex flex-col items-center justify-center gap-2 hover:bg-yellow-300 transition active:scale-95"
+                    className="w-full py-5 bg-yellow-400 text-gray-900 font-bold rounded-2xl shadow-lg flex items-center justify-center gap-3 hover:bg-yellow-300 transition active:scale-95"
                 >
                     <ArrowDownCircle size={28} />
-                    <span className="text-sm tracking-wide">− ABASTECER</span>
+                    <span className="text-base tracking-wide">ABASTECER VEÍCULO</span>
                 </button>
             </div>
 
@@ -374,35 +239,18 @@ const ComboioMobilePage = ({
             </div>
 
             {/* ── Modais ─────────────────────────────────────────────────── */}
-            {showEntrada && (
-                <ComboioEntradaModal
-                    user={user}
-                    comboioVehicle={comboio}
-                    partners={partners}
-                    employees={employees}
-                    obras={obras}
-                    onClose={() => setShowEntrada(false)}
-                    setAlertMessage={setAlertMessage}
-                    apiClient={apiClient}
-                    generateAuthorizationPDF={generateAuthorizationPDF}
-                    reloadData={fetchData}
-                    comboioTransactions={transactions}
-                />
-            )}
-
             {showSaida && (
-                <ComboioSaidaModal
+                <ComboioDistribuicaoModal
                     user={user}
                     comboioVehicle={comboio}
                     vehicles={vehicles}
                     obras={obras}
                     employees={employees}
-                    expenses={expenses}
+                    transactions={transactions}
                     onClose={() => setShowSaida(false)}
                     setAlertMessage={setAlertMessage}
                     apiClient={apiClient}
                     reloadData={fetchData}
-                    PasswordConfirmationModal={PasswordConfirmationModal}
                 />
             )}
 

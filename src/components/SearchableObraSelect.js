@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
+import { formatObraNome } from '../utils/obraFormat';
 
 /**
  * Seletor de obras com busca por texto.
@@ -58,7 +59,7 @@ const SearchableObraSelect = ({
 
     const filtered = useMemo(() => {
         const q = normalize(search);
-        const match = (list) => q ? list.filter(o => normalize(o.nome).includes(q)) : list;
+        const match = (list) => q ? list.filter(o => normalize(formatObraNome(o)).includes(q)) : list;
         return { active: match(activeObras), inactive: includeInactive ? match(inactiveObras) : [] };
     }, [search, activeObras, inactiveObras, includeInactive]);
 
@@ -108,7 +109,7 @@ const SearchableObraSelect = ({
                     className="mak-bare-input flex-1 outline-none bg-transparent min-w-0"
                     style={{ border: 'none', background: 'transparent', boxShadow: 'none', padding: '7px 8px', fontSize: 13, color: '#3d3528', width: '100%' }}
                     placeholder={placeholder}
-                    value={open ? search : (selectedObra?.nome || '')}
+                    value={open ? search : (selectedObra ? formatObraNome(selectedObra) : '')}
                     onFocus={() => { setSearch(''); setOpen(true); }}
                     onChange={(e) => setSearch(e.target.value)}
                 />
@@ -151,7 +152,7 @@ const SearchableObraSelect = ({
                                         onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
                                     >
                                         <span className={`w-2 h-2 rounded-full flex-shrink-0 ${isInactive ? 'bg-red-400' : 'bg-green-400'}`} />
-                                        {obra.nome}
+                                        {formatObraNome(obra)}
                                         {obra.tipo_registro === 'centro_custo' && <span className="ml-auto" style={{ fontSize: 10, color: '#b0a090' }}>(CC)</span>}
                                         {isInactive && <span className="ml-auto opacity-60" style={{ fontSize: 10, color: '#b0a090' }}>(finalizada)</span>}
                                     </button>
@@ -178,7 +179,7 @@ const SearchableObraSelect = ({
                                         onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
                                     >
                                         <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-                                        {obra.nome}
+                                        {formatObraNome(obra)}
                                         {obra.tipo_registro === 'centro_custo' && <span className="ml-1" style={{ fontSize: 10, color: '#b0a090' }}>(CC)</span>}
                                     </button>
                                 );
@@ -204,7 +205,7 @@ const SearchableObraSelect = ({
                                         onMouseLeave={e => { if (!isSel) e.currentTarget.style.background = 'transparent'; }}
                                     >
                                         <span className="w-2 h-2 rounded-full bg-red-400 flex-shrink-0" />
-                                        {obra.nome}
+                                        {formatObraNome(obra)}
                                         <span className="opacity-60" style={{ fontSize: 11 }}>(Finalizada)</span>
                                     </button>
                                 );

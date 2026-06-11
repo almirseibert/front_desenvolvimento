@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, TrendingUp, Send } from 'lucide-react';
 
-import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
+import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption, getGroupForType } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
 import SearchableSelect from '../SearchableSelect';
 
@@ -362,8 +362,9 @@ const RefuelingOrderModal = ({
             const last = parseFloat(selectedVehicle.odometro || 0);
 
             if (!isNaN(current) && last > 0) {
+                 const limiteKm = getGroupForType(selectedVehicle.tipo) === 'Caminhões de Trecho' ? 2000 : 1000;
                  if (current < last) reason = `Odômetro (${current}) menor que o atual (${last}).`;
-                 else if (current - last > 1000) reason = `Salto excessivo de Km (> 1000).`;
+                 else if (current - last > limiteKm) reason = `Salto excessivo de Km (> ${limiteKm}).`;
             }
         }
 

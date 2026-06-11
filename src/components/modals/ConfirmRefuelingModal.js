@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Loader, TrendingDown, TrendingUp, Lock, AlertTriangle, CheckCircle } from 'lucide-react';
-import { getAllowedReadingTypes } from '../../utils/vehicleRules';
+import { getAllowedReadingTypes, getGroupForType } from '../../utils/vehicleRules';
 
 const ConfirmRefuelingModal = ({
     user,
@@ -162,8 +162,11 @@ const ConfirmRefuelingModal = ({
                 setReadingBlock(`Leitura (${current}) menor que a atual do sistema (${last}).`);
             } else if (isHr && (current - last) > 50) {
                 setReadingBlock(`Salto excessivo de Horímetro (> 50h). Diferença: ${(current - last).toFixed(1)}h.`);
-            } else if (isKm && (current - last) > 1000) {
-                setReadingBlock(`Salto excessivo de Km (> 1000).`);
+            } else {
+                const limiteKm = getGroupForType(vehicle.tipo) === 'Caminhões de Trecho' ? 2000 : 1000;
+                if (isKm && (current - last) > limiteKm) {
+                    setReadingBlock(`Salto excessivo de Km (> ${limiteKm}).`);
+                }
             }
         }
     }, [kmOuHrConfirmado, order.vehicleId, vehicles]);

@@ -3,7 +3,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { AlertTriangle, Download } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
-import { checkVehicleRestrictions } from '../../utils/vehicleRules'; 
+import { checkVehicleRestrictions } from '../../utils/vehicleRules';
+import { formatObraNome } from '../../utils/obraFormat';
 
 const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], obras = [], refuelings = [], revisions = [] }) => {
     const [filterType, setFilterType] = useState('Todos');
@@ -25,7 +26,7 @@ const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], ob
                 if (issue.category === 'documento') type = 'Documentação';
                 else if (issue.category === 'bloqueio') type = 'Bloqueio';
 
-                const obraNome = obras.find(o => o.id === v.obraAtualId)?.nome || 'Local N/A';
+                const obraNome = formatObraNome(obras.find(o => o.id === v.obraAtualId)) || 'Local N/A';
 
                 list.push({
                     entity: `${v.registroInterno} - ${v.placa}`,
@@ -193,7 +194,7 @@ const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], ob
 
                 let obraNome = 'Obra Desconhecida';
                 const foundObra = obras.find(o => String(o.id) === String(v.obraAtualId));
-                if (foundObra) obraNome = foundObra.nome;
+                if (foundObra) obraNome = formatObraNome(foundObra);
 
                 const msgContext = isBasedOnAllocation ? 'desde a chegada na obra' : 'sem abastecer na obra';
 

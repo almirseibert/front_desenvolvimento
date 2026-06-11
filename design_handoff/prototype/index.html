@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MAK Serviços — UI Kit</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  @keyframes mak-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Roboto', sans-serif; background: #f5f3ef; overflow: hidden; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c8b8a8; border-radius: 10px; }
+  ::-webkit-scrollbar-thumb:hover { background: #9a8a78; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="data.jsx"></script>
+<script type="text/babel" src="sidebar.jsx"></script>
+<script type="text/babel" src="dashboard.jsx"></script>
+<script type="text/babel" src="frota.jsx"></script>
+<script type="text/babel" src="pages.jsx"></script>
+
+<script type="text/babel">
+const PAGE_MAP = {
+  dashboard:    () => <DashboardPage />,
+  frota:        () => <FrotaPage />,
+  obras:        () => <ObrasPage />,
+  abastecimento:() => <AbastecimentoPage />,
+  faturamento:  () => <PlaceholderPage title="Faturamento"          icon="ClipboardCheck" />,
+  relatorios:   () => <PlaceholderPage title="Relatórios"           icon="FileText"       />,
+  funcionarios: () => <PlaceholderPage title="Funcionários"         icon="Users"          />,
+  manutencao:   () => <PlaceholderPage title="Revisões & Manutenções" icon="Wrench"       />,
+  multas:       () => <PlaceholderPage title="Multas"               icon="ShieldAlert"    />,
+  admin:        () => <PlaceholderPage title="Administração"        icon="Shield"         />,
+};
+
+function App() {
+  const [page, setPage]           = React.useState(() => localStorage.getItem('mak_page_v2') || 'dashboard');
+  const [collapsed, setCollapsed] = React.useState(() => localStorage.getItem('mak_collapsed_v2') === 'true');
+
+  function navigate(id) { setPage(id); localStorage.setItem('mak_page_v2', id); }
+  function toggleSidebar() {
+    const next = !collapsed;
+    setCollapsed(next);
+    localStorage.setItem('mak_collapsed_v2', String(next));
+  }
+
+  const PageComponent = PAGE_MAP[page] || PAGE_MAP.dashboard;
+  const currentLabel  = NAV_ITEMS.flatMap(g=>g.items).find(i=>i.id===page)?.label || page;
+
+  return (
+    <div style={{ display:'flex', height:'100vh', overflow:'hidden', background:'#f5f3ef' }}>
+      <Sidebar active={page} onNavigate={navigate} collapsed={collapsed} onToggle={toggleSidebar}/>
+
+      <main style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden', background:'#f5f3ef' }}>
+
+        {/* Top bar */}
+        <div style={{
+          height:50, background:'#ffffff',
+          borderBottom:'1px solid #e8e0d4',
+          display:'flex', alignItems:'center', justifyContent:'space-between',
+          padding:'0 20px', flexShrink:0,
+          boxShadow:'0 1px 2px rgba(0,0,0,0.04)',
+        }}>
+          <div style={{display:'flex', alignItems:'center', gap:8}}>
+            <span style={{fontSize:11, color:'#b0a090', fontWeight:400}}>MAK Serviços</span>
+            <span style={{color:'#d8d0c4', fontSize:12}}>/</span>
+            <span style={{fontSize:12, fontWeight:500, color:'#6a5e4e'}}>{currentLabel}</span>
+          </div>
+
+          <div style={{display:'flex', alignItems:'center', gap:12}}>
+            {/* Bell */}
+            <button style={{
+              position:'relative', background:'transparent', border:'none', cursor:'pointer',
+              color:'#b0a090', padding:4, borderRadius:6,
+            }}>
+              <Icon name="Bell" size={15}/>
+              <span style={{
+                position:'absolute', top:0, right:0,
+                width:7, height:7, borderRadius:'50%', background:'#b03828',
+                animation:'mak-pulse 1.5s ease-in-out infinite',
+              }}/>
+            </button>
+
+            {/* Avatar */}
+            <div style={{
+              width:30, height:30, borderRadius:'50%',
+              background:'#9E7A42', color:'#fff',
+              fontSize:11, fontWeight:600,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              cursor:'pointer',
+            }}>AS</div>
+          </div>
+        </div>
+
+        {/* Page content */}
+        <div style={{flex:1, overflow:'hidden', display:'flex', flexDirection:'column'}}>
+          <PageComponent />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>

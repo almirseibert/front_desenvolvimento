@@ -28,7 +28,7 @@ import EmployeeHistoryModal from '../components/modals/EmployeeHistoryModal';
 import EmployeeFinesModal from '../components/modals/EmployeeFinesModal';
 import StatusChangeModal from '../components/modals/StatusChangeModal';
 
-const EDITOR_ROLES_EMP = ['admin', 'gerencia', 'editor'];
+const EDITOR_ROLES_EMP = ['admin', 'gerencia', 'editor', 'rh'];
 const ProtectedComponent = ({ requiredPermission, user, children }) => {
     if (!user || !user.user_type) return null;
     const userRole = user.user_type.toLowerCase();
@@ -121,6 +121,9 @@ const EmployeesPage = ({
     reloadData, 
     PasswordConfirmationModal 
 }) => {
+    // Oficina: acesso somente-leitura — apenas a listagem e o botão Histórico.
+    const isOficinaView = (user?.user_type || '').toLowerCase() === 'oficina';
+
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('ativos');
     const [sortConfig, setSortConfig] = useState({ key: 'nome', direction: 'ascending' });
@@ -478,9 +481,11 @@ const EmployeesPage = ({
                                         {/* COLUNA: AÇÕES DE RH (Afastamento mantido) */}
                                         <td className="p-4 align-top">
                                             <div className="flex justify-center gap-1">
-                                                <button onClick={() => setLeaveModalEmp(emp)} className={`p-2 rounded-lg transition-colors ${isOnLeave ? 'text-orange-600 bg-orange-100' : 'text-orange-500 hover:bg-orange-50'}`} title="Gerenciar Férias / Afastamento">
-                                                    <CalendarDays size={18}/>
-                                                </button>
+                                                {!isOficinaView && (
+                                                    <button onClick={() => setLeaveModalEmp(emp)} className={`p-2 rounded-lg transition-colors ${isOnLeave ? 'text-orange-600 bg-orange-100' : 'text-orange-500 hover:bg-orange-50'}`} title="Gerenciar Férias / Afastamento">
+                                                        <CalendarDays size={18}/>
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
 
@@ -495,13 +500,15 @@ const EmployeesPage = ({
                                                     <Clock size={18}/>
                                                 </button>
                                                 
-                                                <button 
-                                                    onClick={() => { setEmployeeForFines(emp); setIsFinesModalOpen(true); }} 
-                                                    className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors" 
-                                                    title="Visualizar Multas"
-                                                >
-                                                    <ShieldAlert size={18}/>
-                                                </button>
+                                                {!isOficinaView && (
+                                                    <button
+                                                        onClick={() => { setEmployeeForFines(emp); setIsFinesModalOpen(true); }}
+                                                        className="p-2 text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                                                        title="Visualizar Multas"
+                                                    >
+                                                        <ShieldAlert size={18}/>
+                                                    </button>
+                                                )}
 
                                                 <ProtectedComponent requiredPermission="editor" user={user}>
                                                     <button 

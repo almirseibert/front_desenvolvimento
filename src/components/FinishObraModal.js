@@ -1,4 +1,5 @@
 ﻿import React, { useState } from 'react';
+import { formatObraNome } from '../utils/obraFormat';
 
 // --- Modal para perguntar se deseja finalizar a obra ---
 // Extraído de VehiclePage.js (usado por ObraAllocationModal)
@@ -12,7 +13,7 @@ const FinishObraModal = ({ obra, onClose, onConfirm }) => {
                     <h2 className="text-xl font-bold">Finalizar Obra?</h2>
                 </div>
                 <div className="p-6 space-y-4">
-                    <p className="text-gray-700 text-sm">Este é o último veículo ativo na obra "{obra?.nome || ''}". Deseja marcar a obra como finalizada ao desalocar este veículo?</p>
+                    <p className="text-gray-700 text-sm">Este é o último veículo ativo na obra "{formatObraNome(obra)}". Deseja marcar a obra como finalizada ao desalocar este veículo?</p>
                     <div>
                         <label className="block text-xs font-medium text-gray-700">Data de Finalização da Obra</label>
                         <input type="date" value={dataFim} onChange={e => setDataFim(e.target.value)} className="w-full p-2 border rounded mt-1 text-sm" />

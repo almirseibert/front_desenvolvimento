@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { Users, Printer } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
+import { formatObraNome } from '../../utils/obraFormat';
 import SearchableSelect from '../SearchableSelect';
 
 const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] }) => {
@@ -54,7 +55,7 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
             (Array.isArray(obra.historicoVeiculos) ? obra.historicoVeiculos : []).forEach(history => {
                 if (history.employeeId && !history.dataSaida) { 
                     const vehicle = vehicles.find(v => v.id === history.veiculoId);
-                    if (!allocations.has(history.employeeId)) allocations.set(history.employeeId, { obraId: obra.id, obraNome: obra.nome, vehicleRegistros: [] });
+                    if (!allocations.has(history.employeeId)) allocations.set(history.employeeId, { obraId: obra.id, obraNome: formatObraNome(obra), vehicleRegistros: [] });
                     if (vehicle) allocations.get(history.employeeId).vehicleRegistros.push(vehicle.registroInterno || 'N/A');
                 }
             });
@@ -118,7 +119,7 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                             if (hStart <= endFilter && hEnd >= startFilter) {
                                 const startStr = hStart.toLocaleDateString('pt-BR');
                                 const endStr = h.dataSaida ? new Date(h.dataSaida).toLocaleDateString('pt-BR') : 'Atual';
-                                historyLogs.push(`Obra: ${obra.nome}\nPeríodo: ${startStr} a ${endStr}`);
+                                historyLogs.push(`Obra: ${formatObraNome(obra)}\nPeríodo: ${startStr} a ${endStr}`);
                             }
                         }
                     });

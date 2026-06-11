@@ -1,6 +1,6 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
 import { Loader, X, Lock, TrendingUp, AlertTriangle } from 'lucide-react';
-import { getAllowedReadingTypes } from '../../utils/vehicleRules';
+import { getAllowedReadingTypes, getGroupForType } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
 import SearchableSelect from '../SearchableSelect';
 
@@ -148,8 +148,9 @@ const ComboioSaidaModal = ({
             const last = parseFloat(selectedVehicle.odometro || 0);
             
             if (!isNaN(current) && last > 0) {
+                const limiteKm = getGroupForType(selectedVehicle.tipo) === 'Caminhões de Trecho' ? 2000 : 1000;
                 if (current <= last) reason = `Odômetro (${current}) menor/igual ao atual (${last}).`;
-                else if (current - last > 1000) reason = `Salto excessivo de Km (> 1000).`;
+                else if (current - last > limiteKm) reason = `Salto excessivo de Km (> ${limiteKm}).`;
             }
         }
 

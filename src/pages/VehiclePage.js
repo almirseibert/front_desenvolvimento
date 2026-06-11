@@ -12,6 +12,7 @@ import ProtectedComponent from '../components/ProtectedComponent';
 import VehicleModal from '../components/VehicleModal';
 import MaintenanceModal from '../components/MaintenanceModal';
 import VehicleFinesModal from '../components/VehicleFinesModal';
+import { formatObraNome } from '../utils/obraFormat';
 import VehicleDetailModal from '../components/VehicleDetailModal';
 import OperationalAssignmentModal from '../components/OperationalAssignmentModal';
 import ObraAllocationModal from '../components/ObraAllocationModal';
@@ -508,7 +509,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                             const hasChecklists = vehicle.checklistCount > 0;
 
                             const statusDisplay = (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Em Obra' && vehicle.obra)
-                                ? `Obra: ${trunc(vehicle.obra.nome, 18)}`
+                                ? `Obra: ${trunc(formatObraNome(vehicle.obra), 28)}`
                                 : (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Disponível')
                                     ? `${vehicle.computedStatus} · ${vehicle.localizacaoAtual || 'Pátio'}`
                                     : statusKey;
