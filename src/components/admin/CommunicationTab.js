@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect } from 'react';
-import { MessageSquare, Mail, Users, FileText, Trash2, Plus, Eye, EyeOff } from 'lucide-react';
+import { MessageSquare, Mail, Users, FileText, Eye, EyeOff, Pencil, X, Check, RotateCcw } from 'lucide-react';
 import WhatsAppStatusPanel from '../WhatsAppStatusPanel';
 import apiClient from '../../services/apiClient';
 
@@ -52,15 +52,17 @@ const CommunicationTab = ({ socket, users = [] }) => {
   const [routing, setRouting] = useState(defaultRouting());
   const [savingRouting, setSavingRouting] = useState(false);
 
-  // Templates
-  const [templates, setTemplates] = useState([]);
-  const [newTpl, setNewTpl] = useState({ name: '', channel: 'whatsapp', content: '' });
-  const [savingTpl, setSavingTpl] = useState(false);
+  // Templates por evento (catálogo)
+  const [catalog, setCatalog] = useState([]);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
+  const [editingKey, setEditingKey] = useState(null);
+  const [editDraft, setEditDraft] = useState({ channel: 'whatsapp', content: '' });
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     loadEmailConfig();
     loadRouting();
-    loadTemplates();
+    loadCatalog();
   }, []);
 
   const setEmail = (field, value) => setEmailConfig(p => ({ ...p, [field]: value }));
@@ -71,8 +73,16 @@ const CommunicationTab = ({ socket, users = [] }) => {
   const loadRouting = async () => {
     try { const d = await apiClient.adminGetNotificationRouting(); if (d) setRouting(d); } catch (_) {}
   };
-  const loadTemplates = async () => {
-    try { const d = await apiClient.adminGetMessageTemplates(); if (d) setTemplates(d); } catch (_) {}
+  const loadCatalog = async () => {
+    setLoadingCatalog(true);
+    try {
+      const d = await apiClient.adminGetMessageTemplateCatalog();
+      if (Array.isArray(d)) setCatalog(d);
+    } catch (_) {
+      setCatalog([]);
+    } finally {
+      setLoadingCatalog(false);
+    }
   };
 
   const handleSaveEmail = async (e) => {
@@ -138,24 +148,49 @@ const CommunicationTab = ({ socket, users = [] }) => {
       [areaId]: { ...p[areaId], channels: { ...p[areaId].channels, [ch]: !p[areaId].channels[ch] } },
     }));
 
-  const handleAddTemplate = async (e) => {
+  const startEditTemplate = (item) => {
+    setEditingKey(item.key);
+    setEditDraft({
+      channel: item.channel || 'whatsapp',
+      content: item.customBody != null ? item.customBody : item.defaultBody,
+    });
+  };
+
+  const cancelEditTemplate = () => {
+    setEditingKey(null);
+    setEditDraft({ channel: 'whatsapp', content: '' });
+  };
+
+  const handleSaveEditTemplate = async (e) => {
     e.preventDefault();
-    setSavingTpl(true);
+    if (!editingKey) return;
+    setSavingEdit(true);
     try {
-      const saved = await apiClient.adminCreateMessageTemplate(newTpl);
-      setTemplates(p => [...p, saved || { ...newTpl, id: Date.now() }]);
-    } catch (_) {
-      setTemplates(p => [...p, { ...newTpl, id: Date.now() }]);
+      await apiClient.adminUpsertMessageTemplateByEvent(editingKey, editDraft);
+      setCatalog(p => p.map(i => i.key === editingKey
+        ? { ...i, channel: editDraft.channel, customBody: editDraft.content, customized: true }
+        : i));
+      cancelEditTemplate();
+    } catch (err) {
+      alert(`Não foi possível salvar:\n\n${err.message}`);
     } finally {
-      setNewTpl({ name: '', channel: 'whatsapp', content: '' });
-      setSavingTpl(false);
+      setSavingEdit(false);
     }
   };
 
-  const handleDeleteTemplate = async (id) => {
-    if (!window.confirm('Remover este template?')) return;
-    try { await apiClient.adminDeleteMessageTemplate(id); } catch (_) {}
-    setTemplates(p => p.filter(t => t.id !== id));
+  const handleResetTemplate = async (item) => {
+    if (!item.customized) return;
+    if (!window.confirm(
+      `Voltar "${item.label}" ao texto padrão?\n\nO sistema continuará enviando esta notificação — apenas usando a mensagem original.`
+    )) return;
+    try {
+      await apiClient.adminResetMessageTemplateByEvent(item.key);
+      setCatalog(p => p.map(i => i.key === item.key
+        ? { ...i, customBody: null, customized: false, channel: 'whatsapp' }
+        : i));
+    } catch (err) {
+      alert(`Não foi possível resetar:\n\n${err.message}`);
+    }
   };
 
   const CHANNEL_BADGE = { whatsapp: 'bg-green-100 text-green-700', email: 'bg-blue-100 text-blue-700', inapp: 'bg-purple-100 text-purple-700' };
@@ -334,87 +369,104 @@ const CommunicationTab = ({ socket, users = [] }) => {
         </div>
       )}
 
-      {/* Templates de Mensagens */}
+      {/* Templates de Mensagens (catálogo de eventos) */}
       {subTab === 'templates' && (
         <div className="space-y-4">
-          <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-            <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-              <Plus size={16} className="text-yellow-500" /> Novo Template
-            </h3>
-            <form onSubmit={handleAddTemplate} className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Nome do template</label>
-                  <input
-                    value={newTpl.name}
-                    onChange={e => setNewTpl(p => ({ ...p, name: e.target.value }))}
-                    required
-                    placeholder="Ex: Manutenção Vencida"
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-yellow-400 outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Canal</label>
-                  <select
-                    value={newTpl.channel}
-                    onChange={e => setNewTpl(p => ({ ...p, channel: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-yellow-400 outline-none"
-                  >
-                    <option value="whatsapp">WhatsApp</option>
-                    <option value="email">E-mail</option>
-                    <option value="inapp">In-app</option>
-                  </select>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Conteúdo</label>
-                <textarea
-                  value={newTpl.content}
-                  onChange={e => setNewTpl(p => ({ ...p, content: e.target.value }))}
-                  required
-                  rows={3}
-                  placeholder="Ex: Olá {{responsavel}}, o veículo {{veiculo}} está com manutenção vencida desde {{data}}."
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-yellow-400 outline-none resize-none"
-                />
-                <p className="text-xs text-gray-400 mt-1">
-                  Variáveis: <code className="bg-gray-100 px-1 rounded">{'{{veiculo}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{obra}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{data}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{responsavel}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{valor}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{primeiro_nome}}'}</code>{' '}
-                  <code className="bg-gray-100 px-1 rounded">{'{{dias}}'}</code>
-                </p>
-              </div>
-              <button type="submit" disabled={savingTpl} className="px-4 py-2 bg-yellow-400 hover:bg-[#fdf8f0]0 text-gray-900 font-bold rounded-lg text-sm disabled:opacity-50 transition-colors">
-                {savingTpl ? 'Adicionando...' : 'Adicionar Template'}
-              </button>
-            </form>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-800">
+            Cada item abaixo é um evento real disparado pelo sistema. Edite o texto
+            para customizar a mensagem enviada — ou clique em <strong>Resetar</strong> para voltar
+            ao padrão. O sistema sempre tem uma mensagem para enviar; não é possível
+            "ficar sem template".
           </div>
 
-          {templates.length > 0 && (
-            <div className="bg-white rounded-lg shadow border border-gray-200 p-5">
-              <h3 className="font-bold text-gray-800 mb-4">Templates Cadastrados ({templates.length})</h3>
-              <div className="space-y-3">
-                {templates.map(t => (
-                  <div key={t.id} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-medium text-sm text-gray-800">{t.name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${CHANNEL_BADGE[t.channel] || 'bg-gray-100 text-gray-600'}`}>
-                          {t.channel}
-                        </span>
-                      </div>
-                      <p className="text-xs text-gray-500 truncate">{t.content}</p>
-                    </div>
-                    <button onClick={() => handleDeleteTemplate(t.id)} className="ml-3 p-1.5 rounded hover:bg-red-50 text-red-400 flex-shrink-0 transition-colors">
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+          {loadingCatalog && (
+            <div className="bg-white rounded-lg shadow border border-gray-200 p-5 text-sm text-gray-500">
+              Carregando eventos...
             </div>
           )}
+
+          {!loadingCatalog && AREAS.map(area => {
+            const items = catalog.filter(c => c.area === area.id);
+            if (items.length === 0) return null;
+            return (
+              <div key={area.id} className="bg-white rounded-lg shadow border border-gray-200 p-5">
+                <h3 className="font-bold text-gray-800 mb-3 border-b pb-2">{area.label}</h3>
+                <div className="space-y-3">
+                  {items.map(item => editingKey === item.key ? (
+                    <form key={item.key} onSubmit={handleSaveEditTemplate} className="p-3 bg-yellow-50 rounded-lg border border-yellow-200 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-sm text-gray-800">{item.label}</span>
+                        <select
+                          value={editDraft.channel}
+                          onChange={e => setEditDraft(p => ({ ...p, channel: e.target.value }))}
+                          className="px-2 py-1 border border-gray-200 rounded text-xs bg-white focus:ring-2 focus:ring-yellow-400 outline-none"
+                        >
+                          <option value="whatsapp">WhatsApp</option>
+                          <option value="email">E-mail</option>
+                          <option value="inapp">In-app</option>
+                        </select>
+                      </div>
+                      <textarea
+                        value={editDraft.content}
+                        onChange={e => setEditDraft(p => ({ ...p, content: e.target.value }))}
+                        required
+                        rows={5}
+                        className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-yellow-400 outline-none resize-y font-mono"
+                      />
+                      {item.variables.length > 0 && (
+                        <p className="text-xs text-gray-500">
+                          Variáveis:{' '}
+                          {item.variables.map(v => (
+                            <code key={v} className="bg-gray-100 px-1 rounded mr-1">{`{{${v}}}`}</code>
+                          ))}
+                        </p>
+                      )}
+                      <div className="flex justify-end gap-2">
+                        <button type="button" onClick={cancelEditTemplate} className="px-3 py-1.5 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-lg text-xs font-medium flex items-center gap-1 transition-colors">
+                          <X size={12} /> Cancelar
+                        </button>
+                        <button type="submit" disabled={savingEdit} className="px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 rounded-lg text-xs font-bold disabled:opacity-50 flex items-center gap-1 transition-colors">
+                          <Check size={12} /> {savingEdit ? 'Salvando...' : 'Salvar'}
+                        </button>
+                      </div>
+                    </form>
+                  ) : (
+                    <div key={item.key} className="flex items-start justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                          <span className="font-medium text-sm text-gray-800">{item.label}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${CHANNEL_BADGE[item.channel] || 'bg-gray-100 text-gray-600'}`}>
+                            {item.channel}
+                          </span>
+                          {item.customized ? (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-yellow-100 text-yellow-800 font-bold uppercase">Customizado</span>
+                          ) : (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-600 font-medium uppercase">Padrão</span>
+                          )}
+                        </div>
+                        <p className="text-xs text-gray-500 whitespace-pre-line line-clamp-2">
+                          {item.customized ? item.customBody : item.defaultBody}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-1 ml-3 flex-shrink-0">
+                        <button onClick={() => startEditTemplate(item)} title="Editar template" className="p-1.5 rounded hover:bg-yellow-50 text-yellow-600 transition-colors">
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          onClick={() => handleResetTemplate(item)}
+                          disabled={!item.customized}
+                          title={item.customized ? 'Voltar ao texto padrão' : 'Já está no padrão'}
+                          className="p-1.5 rounded hover:bg-gray-100 text-gray-500 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
