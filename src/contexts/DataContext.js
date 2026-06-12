@@ -92,7 +92,7 @@ const RESOURCE_DEFS = {
     refuelings: {
         getter: () => apiClient.getRefuelings(),
         essential: false,
-        allowedFor: (u) => isAdminOrRefueler(u),
+        allowedFor: (u) => !isOperador(u),
     },
     comboioTransactions: {
         getter: () => apiClient.getComboioTransactions(),
