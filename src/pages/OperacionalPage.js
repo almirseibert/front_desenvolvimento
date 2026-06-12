@@ -76,6 +76,7 @@ const OperacionalPage = ({
     const [obraSort, setObraSort] = useState('risco');
     const [obraDetailStatus, setObraDetailStatus] = useState('todos');
     const [obraDetailSort, setObraDetailSort] = useState('padrao');
+    const [showCentroCusto, setShowCentroCusto] = useState(false);
 
     useEffect(() => {
         if (obraId && activeView === 'obra') fetchObraData();
@@ -109,7 +110,7 @@ const OperacionalPage = ({
     };
 
     const obrasComRisco = useMemo(() => {
-        return obras.filter(o => (o.tipo_registro || 'obra') !== 'centro_custo').map(obra => {
+        return obras.filter(o => showCentroCusto || (o.tipo_registro || 'obra') !== 'centro_custo').map(obra => {
             const isFinished = obra.status === 'finalizada' || obra.status === 'Finalizada' ||
                 obra.status === 'Concluída' || obra.status === 'Inativa' ||
                 (obra.dataFim && new Date(obra.dataFim) < today);
@@ -182,7 +183,7 @@ const OperacionalPage = ({
             if (b.ativos !== a.ativos) return b.ativos - a.ativos;
             return a.obra.nome.localeCompare(b.obra.nome);
         });
-    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today]);
+    }, [obras, vehicles, vehicleGroups, dailyWorkLogs, today, showCentroCusto]);
 
     const obrasFiltradas = useMemo(() => {
         let result = [...obrasComRisco];
@@ -764,6 +765,13 @@ const OperacionalPage = ({
                                             <button key={val} onClick={() => setObraHasActive(val)} className={`px-3 py-1 rounded-md font-medium transition-all ${obraHasActive === val ? 'bg-white shadow text-yellow-600' : 'text-[#9a8a78] hover:text-[#6a5e4e]'}`}>{label}</button>
                                         ))}
                                     </div>
+                                    <button
+                                        onClick={() => setShowCentroCusto(v => !v)}
+                                        className={`px-3 py-1 rounded-md font-medium text-xs transition-all border ${showCentroCusto ? 'bg-yellow-50 border-yellow-400 text-yellow-700' : 'bg-white border-gray-200 text-[#9a8a78] hover:text-[#6a5e4e]'}`}
+                                        title="Exibir/Ocultar Centros de Custo"
+                                    >
+                                        {showCentroCusto ? 'Ocultar Centros de Custo' : 'Exibir Centros de Custo'}
+                                    </button>
                                     <div className="ml-auto flex items-center gap-3">
                                         <span className="text-xs text-gray-400">{obrasFiltradas.length} {obrasFiltradas.length === 1 ? 'obra' : 'obras'}</span>
                                         {hasObraFilters && (
