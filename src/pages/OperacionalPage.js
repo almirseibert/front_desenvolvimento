@@ -2,7 +2,7 @@
 import {
     Activity, Search, X, ArrowRight, AlertTriangle,
     BarChart2, ChevronLeft, PackageX, Truck, TrendingUp,
-    Gauge, MapPin, User, Clock, Fuel, FileText
+    Gauge, MapPin, User, Clock, Fuel, FileText, Mail, Phone, Send
 } from 'lucide-react';
 import apiClientModule from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext';
@@ -434,19 +434,36 @@ const OperacionalPage = ({
     };
 
     const [relatorioSubmitting, setRelatorioSubmitting] = useState(false);
+    const [relatorioPreview, setRelatorioPreview] = useState(null); // { operador, mensagem, canais, payload }
+    const [relatorioPreviewLoading, setRelatorioPreviewLoading] = useState(false);
 
-    const solicitarRelatorio = async () => {
+    const abrirPreviewRelatorio = async () => {
         if (!selectedMachine?.operator) return;
+        const payload = {
+            employeeId: selectedMachine.operator.id,
+            veiculo_registro: selectedMachine.vehicle.registroInterno || null,
+            obra_nome: selectedMachine.currentObra ? formatObraNome(selectedMachine.currentObra) : null,
+            dias: selectedMachine.daysSinceLastLog,
+        };
+        setRelatorioPreviewLoading(true);
+        try {
+            const res = await apiClient.previewRelatorioHoras(payload);
+            setRelatorioPreview({ ...res, payload });
+        } catch (e) {
+            setAlertMessage(e.message || 'Erro ao montar a pré-visualização da cobrança.');
+        } finally {
+            setRelatorioPreviewLoading(false);
+        }
+    };
+
+    const confirmarEnvioRelatorio = async () => {
+        if (!relatorioPreview?.payload) return;
         setRelatorioSubmitting(true);
         try {
-            const res = await apiClient.solicitarRelatorioHoras({
-                employeeId: selectedMachine.operator.id,
-                veiculo_registro: selectedMachine.vehicle.registroInterno || null,
-                obra_nome: selectedMachine.currentObra ? formatObraNome(selectedMachine.currentObra) : null,
-                dias: selectedMachine.daysSinceLastLog,
-            });
+            const res = await apiClient.solicitarRelatorioHoras(relatorioPreview.payload);
             const canais = (res?.enviados || []).map(c => c === 'whatsapp' ? 'WhatsApp' : 'e-mail').join(' e ');
             setAlertMessage(canais ? `Cobrança enviada ao operador por ${canais}.` : 'Cobrança enviada ao operador.');
+            setRelatorioPreview(null);
         } catch (e) {
             setAlertMessage(e.message || 'Erro ao enviar a cobrança ao operador.');
         } finally {
@@ -1249,10 +1266,10 @@ const OperacionalPage = ({
                                     {!requestForm ? (
                                         <div className="space-y-2">
                                         {selectedMachine.operator && (
-                                            <button onClick={solicitarRelatorio} disabled={relatorioSubmitting}
+                                            <button onClick={abrirPreviewRelatorio} disabled={relatorioPreviewLoading || relatorioSubmitting}
                                                 title={selectedMachine.daysSinceLastLog === null ? 'Operador nunca lançou horas' : `Cobrar lançamento (${selectedMachine.daysSinceLastLog}d pendente)`}
                                                 className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-bold rounded-lg transition-colors disabled:opacity-50">
-                                                <FileText size={14} /> {relatorioSubmitting ? 'Enviando cobrança...' : 'Solicitar Relatório de Horas'}
+                                                <FileText size={14} /> {relatorioPreviewLoading ? 'Carregando pré-visualização...' : 'Solicitar Relatório de Horas'}
                                             </button>
                                         )}
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -1299,6 +1316,81 @@ const OperacionalPage = ({
                                     )}
                                 </div>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {relatorioPreview && (
+                <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4" onClick={() => !relatorioSubmitting && setRelatorioPreview(null)}>
+                    <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center justify-between px-5 py-4 border-b">
+                            <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                                <FileText size={18} className="text-yellow-600" />
+                                Confirmar envio da cobrança
+                            </h3>
+                            <button onClick={() => !relatorioSubmitting && setRelatorioPreview(null)} className="text-gray-400 hover:text-gray-700 disabled:opacity-40" disabled={relatorioSubmitting}>
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <div className="px-5 py-4 space-y-4">
+                            <p className="text-sm text-gray-600">
+                                Confira os dados antes de enviar. A cobrança será enviada por <strong>{relatorioPreview.canais.map(c => c === 'whatsapp' ? 'WhatsApp' : 'e-mail').join(' e ') || 'nenhum canal'}</strong>.
+                            </p>
+
+                            <div className="bg-gray-50 rounded-lg border border-gray-200 p-3 space-y-2 text-sm">
+                                <div className="flex items-start gap-2">
+                                    <User size={14} className="text-gray-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">Operador</div>
+                                        <div className="font-semibold text-gray-800">{relatorioPreview.operador.nome || '—'}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Phone size={14} className="text-gray-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">WhatsApp cadastrado</div>
+                                        <div className={`font-mono ${relatorioPreview.operador.contato ? 'text-gray-800' : 'text-gray-400 italic'}`}>
+                                            {relatorioPreview.operador.contato || 'não cadastrado'}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <Mail size={14} className="text-gray-500 mt-0.5" />
+                                    <div>
+                                        <div className="text-xs text-gray-500">E-mail cadastrado</div>
+                                        <div className={relatorioPreview.operador.email ? 'text-gray-800' : 'text-gray-400 italic'}>
+                                            {relatorioPreview.operador.email || 'não cadastrado'}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div className="text-xs text-gray-500 mb-1.5 font-semibold uppercase tracking-wide">Mensagem que será enviada</div>
+                                <div className="bg-white border border-gray-300 rounded-lg p-3 text-sm text-gray-800 whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">
+                                    {relatorioPreview.mensagem || <span className="text-gray-400 italic">Mensagem vazia.</span>}
+                                </div>
+                            </div>
+
+                            {!relatorioPreview.operador.contato && !relatorioPreview.operador.email && (
+                                <div className="flex items-start gap-2 bg-red-50 border border-red-200 text-red-800 text-xs rounded-lg p-2.5">
+                                    <AlertTriangle size={14} className="mt-0.5 flex-shrink-0" />
+                                    Operador sem WhatsApp e sem e-mail. O envio falhará.
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="px-5 py-3 border-t bg-gray-50 flex justify-end gap-2 rounded-b-xl">
+                            <button onClick={() => setRelatorioPreview(null)} disabled={relatorioSubmitting}
+                                className="px-4 py-1.5 bg-white border border-gray-300 text-gray-700 text-sm font-semibold rounded-lg hover:bg-gray-100 disabled:opacity-50">
+                                Cancelar
+                            </button>
+                            <button onClick={confirmarEnvioRelatorio} disabled={relatorioSubmitting || relatorioPreview.canais.length === 0}
+                                className="flex items-center gap-1.5 px-4 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-gray-900 text-sm font-bold rounded-lg disabled:opacity-50">
+                                <Send size={14} /> {relatorioSubmitting ? 'Enviando...' : 'Confirmar e enviar'}
+                            </button>
                         </div>
                     </div>
                 </div>

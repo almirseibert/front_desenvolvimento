@@ -268,6 +268,7 @@ const apiClient = {
     getOperationalRequests: async () => apiFetch('/operationalRequests'),
     createOperationalRequest: async (data) => apiFetch('/operationalRequests', { method: 'POST', body: JSON.stringify(data) }),
     resolveOperationalRequest: async (id) => apiFetch(`/operationalRequests/${id}/resolver`, { method: 'PUT' }),
+    previewRelatorioHoras: async (data) => apiFetch('/operationalRequests/solicitar-relatorio/preview', { method: 'POST', body: JSON.stringify(data) }),
     solicitarRelatorioHoras: async (data) => apiFetch('/operationalRequests/solicitar-relatorio', { method: 'POST', body: JSON.stringify(data) }),
     deleteOperationalRequest: async (id) => apiFetch(`/operationalRequests/${id}`, { method: 'DELETE' }),
 
