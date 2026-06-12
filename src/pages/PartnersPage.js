@@ -509,30 +509,9 @@ const RefuelingReportModal = ({ partner, vehicles = [], refuelings = [], comboio
         });
 
         // 2. Entradas de Comboio
-        (comboioTransactions || []).forEach(e => {
-            const itemDate = new Date(e.date);
-            if (e.partnerId !== partner.id || e.type !== 'entrada') return;
-            if (startDate && itemDate < startDate) return;
-            if (endDate && itemDate > endDate) return;
-
-            const total = parseFloat(e.valorTotal) || 0;
-            const litros = parseFloat(e.liters) || 0;
-            
-            data.push({
-                id: e.id,
-                date: itemDate,
-                type: 'Entrada Comboio',
-                icon: <Truck size={14} className="text-green-500" />,
-                description: `Comboio: ${e.comboioVehicleName || 'N/A'}`,
-                vehicleName: e.comboioVehicleName || 'N/A',
-                invoiceNumber: e.invoiceNumber || '',
-                fuelType: e.fuelType,
-                liters: litros,
-                value: total,
-                others: 0,
-                total: total
-            });
-        });
+        // Não listamos aqui: a entrada de comboio já gera uma linha em `refuelings`
+        // (com Auth, veículo do comboio e valores completos) tratada no bloco 1.
+        // Manter este iter duplica a linha no relatório do posto.
 
         const sortedData = data.sort((a, b) => b.date - a.date);
         

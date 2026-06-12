@@ -34,8 +34,7 @@
 // ============================================================================
 
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
-import {
-    Bell, Loader, X, UserPlus, AlertTriangle, WifiOff, Fuel, Truck
+import { Bell, Loader, X, UserPlus, AlertTriangle, WifiOff, Fuel, Truck
 } from 'lucide-react';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
