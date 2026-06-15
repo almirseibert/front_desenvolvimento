@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Loader, Info, Lock, FileText, Wallet, Edit, Clock, Activity, TrendingUp, Send } from 'lucide-react';
+import { X, Loader, Info, Lock, FileText, Edit, Clock, Activity, TrendingUp, Send } from 'lucide-react';
 
 import { getAllowedReadingTypes, getGroupUnit, getReadingSourceForUnit, computeConsumption, getGroupForType } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
@@ -149,10 +149,8 @@ const RefuelingOrderModal = ({
     }, [orderToEdit, solicitacaoData]);
 
     const [isSaving, setIsSaving] = useState(false);
-    const [blockReason, setBlockReason] = useState(null); 
-    const [budgetWarning, setBudgetWarning] = useState(null);
-    const [requiresBudgetOverride, setRequiresBudgetOverride] = useState(false);
-    
+    const [blockReason, setBlockReason] = useState(null);
+
     const [warnings, setWarnings] = useState([]); 
     const [lastRefuelData, setLastRefuelData] = useState(null);
     const [lastAverage, setLastAverage] = useState(null); 
@@ -399,39 +397,10 @@ const RefuelingOrderModal = ({
         if (reason) setBlockReason(reason);
     }, [formData.odometro, formData.horimetro, selectedVehicle]);
 
-    useEffect(() => {
-        if (formData.obraId && obras.length > 0) {
-            const obra = obras.find(o => o.id === formData.obraId);
-            if (!obra || extraObraOptions.includes(formData.obraId)) {
-                setBudgetWarning(null);
-                setRequiresBudgetOverride(false);
-                return;
-            }
-
-            if (!obra.valorContrato || obra.valorContrato <= 0) {
-                setBudgetWarning(null);
-                setRequiresBudgetOverride(false);
-                return;
-            }
-
-            const totalFuelExpenses = expenses
-                .filter(e => e.obraId === formData.obraId && e.category === 'Combustível')
-                .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
-
-            const limit = obra.valorContrato * 0.20; 
-            
-            if (totalFuelExpenses >= limit) {
-                setBudgetWarning(`Combustível atingiu 20% do contrato.`);
-                setRequiresBudgetOverride(true);
-            } else {
-                setBudgetWarning(null);
-                setRequiresBudgetOverride(false);
-            }
-        } else {
-            setBudgetWarning(null);
-            setRequiresBudgetOverride(false);
-        }
-    }, [formData.obraId, obras, expenses, extraObraOptions]);
+    // A trava orçamentária de 20% é aplicada no backend (createRefuelingOrder →
+    // status 'BloqueadoOrcamento'), e as ordens bloqueadas são liberadas em
+    // Administração > Frota > Abastecimento. Mantemos uma única trava (a do
+    // servidor) para evitar divergência de cálculo entre frontend e backend.
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -516,7 +485,7 @@ const RefuelingOrderModal = ({
                 return;
             }
             // Defesa: frontend detectou violação mas backend não bloqueou (ex.: veículo sem leitura prévia)
-            if (blockReason || requiresBudgetOverride) {
+            if (blockReason) {
                 setAlertMessage(`Ordem salva com restrição. Aguarde avaliação do Administrador.`);
                 reloadData();
                 onClose();
@@ -571,12 +540,6 @@ const RefuelingOrderModal = ({
                     {blockReason && (
                         <div className="flex items-center gap-2 p-1.5 bg-red-100 text-red-800 rounded border border-red-200 text-[10px] font-bold animate-pulse">
                             <Lock size={12}/> BLOQUEIO: {blockReason}
-                        </div>
-                    )}
-
-                    {budgetWarning && (
-                        <div className="flex items-center gap-2 p-1.5 bg-orange-100 text-orange-900 rounded border border-orange-200 text-[10px] font-bold">
-                            <Wallet size={12}/> {budgetWarning} {requiresBudgetOverride && "(Requer Senha)"}
                         </div>
                     )}
 
@@ -778,23 +741,17 @@ const RefuelingOrderModal = ({
                 </form>
 
                 <div className="p-2 border-t bg-gray-50 flex justify-between items-center rounded-b-xl shrink-0">
-                    {requiresBudgetOverride && !blockReason && (
-                        <p className="text-[10px] font-bold text-orange-700 flex items-start gap-1 max-w-sm leading-snug">
-                            <Lock size={10} className="mt-0.5 flex-shrink-0"/>
-                            Orçamento de combustível atingido (≥20% do contrato). Esta ordem <u>não será enviada ao posto</u> até ser liberada por um administrador do sistema.
-                        </p>
-                    )}
                     <div className="flex gap-2 ml-auto">
                         <button onClick={onClose} className="px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-200 rounded transition">Cancelar</button>
                         <button
                             onClick={handleSaveClick}
                             disabled={isSaving || duplicateBlocked}
-                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${duplicateBlocked ? 'bg-red-400 text-white' : (blockReason || requiresBudgetOverride) ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-[#fdf8f0]0'}`}
+                            className={`px-3 py-1.5 font-bold text-xs rounded shadow transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1 ${duplicateBlocked ? 'bg-red-400 text-white' : blockReason ? 'bg-orange-400 text-white hover:bg-orange-500' : 'bg-yellow-400 text-gray-900 hover:bg-[#fdf8f0]0'}`}
                         >
                             {isSaving ? <Loader className="animate-spin" size={12}/> : duplicateBlocked ? (
                                 <><Lock size={12}/> Ordem Duplicada</>
                             ) : (
-                                <><Send size={12} /> {(blockReason || requiresBudgetOverride) ? 'Salvar Bloqueado' : 'Salvar & Enviar'}</>
+                                <><Send size={12} /> {blockReason ? 'Salvar Bloqueado' : 'Salvar & Enviar'}</>
                             )}
                         </button>
                     </div>
