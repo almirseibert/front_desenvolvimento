@@ -812,9 +812,11 @@ const AppContent = () => {
             case 'dashboard':
                 return <Dashboard {...commonProps} />;
             case 'supervisor_dashboard':
-                return <SupervisorDashboard {...commonProps} onNavigateToDetail={handleNavigateToObra} />;
+                return canAccessAnaliseGerencial(user)
+                    ? <SupervisorDashboard {...commonProps} onNavigateToDetail={handleNavigateToObra} /> : <Denied />;
             case 'supervisor_detail':
-                return <SupervisorObraDetail obraId={selectedObraId} onBack={() => setCurrentPage('supervisor_dashboard')} />;
+                return canAccessAnaliseGerencial(user)
+                    ? <SupervisorObraDetail obraId={selectedObraId} onBack={() => setCurrentPage('supervisor_dashboard')} /> : <Denied />;
             case 'vehicles':
                 return <VehiclePage {...commonProps} initialFilter={pageFilter} />;
             case 'obras':

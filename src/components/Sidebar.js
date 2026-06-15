@@ -29,11 +29,10 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             id: 'obras',
             label: 'Obras',
             icon: <HardHat size={14} />,
-            hidden: !canAccessAny(['obras', 'expenses', 'supervisor_dashboard']),
+            hidden: !canAccessAny(['obras', 'expenses']),
             items: [
-                { id: 'obras',                label: 'Obras' },
-                { id: 'supervisor_dashboard', label: 'Gestão de Obras (TV)', hidden: !canAccess('supervisor_dashboard') },
-                { id: 'expenses',             label: 'Despesas',             hidden: !canAccess('expenses') },
+                { id: 'obras',    label: 'Obras' },
+                { id: 'expenses', label: 'Despesas', hidden: !canAccess('expenses') },
             ],
         },
         {
@@ -61,7 +60,8 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             icon: <Search size={14} />,
             hidden: !canAccessAnaliseGerencial(user),
             items: [
-                { id: 'analise_gerencial', label: 'Discrepâncias Operacionais' },
+                { id: 'analise_gerencial',    label: 'Discrepâncias Operacionais' },
+                { id: 'supervisor_dashboard', label: 'Gestão de Obras' },
             ],
         },
         {
@@ -128,7 +128,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
         for (const g of navGroups) {
             if (g.items.some(item => item.id === pageId)) return g.id;
         }
-        if (pageId === 'supervisor_detail') return 'obras';
+        if (pageId === 'supervisor_detail') return 'analise';
         return null;
     };
 
@@ -151,7 +151,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
 
     const isGroupActive = (group) =>
         group.items.some(item => item.id === currentPage) ||
-        (group.id === 'obras' && currentPage === 'supervisor_detail');
+        (group.id === 'analise' && currentPage === 'supervisor_detail');
 
     const userInitial = user?.name ? user.name.charAt(0).toUpperCase() : 'U';
     const userRole = (() => {

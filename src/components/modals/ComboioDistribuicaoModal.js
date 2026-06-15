@@ -318,6 +318,8 @@ const ComboioDistribuicaoModal = ({
                                     getLabel={(v) => `${v.registroInterno} - ${v.modelo || ''}`.trim()}
                                     getSubLabel={(v) => v.placa || ''}
                                     placeholder="Selecione o veículo..."
+                                    overlay
+                                    overlayTitle="Buscar veículo a abastecer..."
                                 />
                             </div>
 

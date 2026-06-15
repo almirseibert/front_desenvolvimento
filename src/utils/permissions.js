@@ -6,7 +6,7 @@ export const ROLE_PAGE_ACCESS = {
   abastecimento: ['dashboard','obras','expenses','reports','refueling','comboio','admin_solicitacoes','orders','vehicles','partners','inventory'],
   oficina:       ['dashboard','obras','reports','revisions','tires','orders','vehicles','inventory','employees'],
   editor:        ['dashboard','obras','expenses','operacional','billing','reports','refueling','comboio','admin_solicitacoes','orders','revisions','tires','vehicles','employees','partners','inventory','fines'],
-  supervisor:    ['dashboard','obras','supervisor_dashboard','expenses','operacional','billing','reports','revisions','tires','orders','vehicles'],
+  supervisor:    ['dashboard','obras','expenses','operacional','billing','reports','revisions','tires','orders','vehicles'],
   operador:      ['admin_solicitacoes_app'],
   viewer:        ['dashboard','reports'],
   visualizador:  ['dashboard','reports'],
