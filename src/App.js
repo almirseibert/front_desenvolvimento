@@ -511,28 +511,47 @@ const AppContent = () => {
 
         const handleAdminNotification = (data) => {
             const podeAbastecimento = canAccessPage(user.roleNormalized, 'admin_solicitacoes');
+            // Função "Abastecimento" em Usuários & Acesso.
+            const isAbastecimento = user.roleNormalized === 'abastecimento';
 
             // Contador de solicitações pendentes (quem tem acesso à área de abastecimento).
             if (podeAbastecimento && (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente')) {
                 setPendingSolicitacoesCount(prev => prev + 1);
             }
 
-            // Pop-up + som: somente para administradores.
-            if (user.user_type === 'admin' && ADMIN_NOTIF_META[data.tipo]) {
+            const tocarBeep = () => {
                 try {
                     const audio = new Audio('/beep.mp3');
                     audio.play().catch(e => console.warn('Sem interação', e));
                 } catch (e) {}
+            };
+
+            const mostrarPopup = () => {
+                tocarBeep();
                 setAdminPopups(prev => [
                     ...prev,
                     { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, tipo: data.tipo, message: data.mensagem || data.message || null },
                 ]);
-            } else if (podeAbastecimento && (data.tipo === 'nova_solicitacao' || data.tipo === 'baixa_pendente')) {
+            };
+
+            // Nova solicitação de abastecimento (página Solicitações App): o pop-up vai
+            // para a função Abastecimento — não mais para a função Administrador.
+            if (data.tipo === 'nova_solicitacao') {
+                if (isAbastecimento && ADMIN_NOTIF_META[data.tipo]) {
+                    mostrarPopup();
+                } else if (podeAbastecimento) {
+                    // Demais perfis com acesso a abastecimento: mantém apenas o beep do contador.
+                    tocarBeep();
+                }
+                return;
+            }
+
+            // Demais notificações administrativas: pop-up + som somente para administradores.
+            if (user.user_type === 'admin' && ADMIN_NOTIF_META[data.tipo]) {
+                mostrarPopup();
+            } else if (podeAbastecimento && data.tipo === 'baixa_pendente') {
                 // Não-admin com acesso a abastecimento: mantém apenas o beep do contador.
-                try {
-                    const audio = new Audio('/beep.mp3');
-                    audio.play().catch(e => console.warn('Sem interação', e));
-                } catch (e) {}
+                tocarBeep();
             }
         };
 
