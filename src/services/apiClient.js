@@ -204,6 +204,22 @@ const apiClient = {
     rejeitarComprovanteSolicitacao: async (id) => apiFetch(`/solicitacoes/${id}/rejeitar-comprovante`, { method: 'PUT' }),
     getMySolicitacaoStatus: async () => apiFetch('/solicitacoes/meus-status'),
 
+    // --- Análise Gerencial — Discrepâncias Operacionais ---
+    getAnaliseObrasOverview: async ({ startDate, endDate }) =>
+        apiFetch(`/analise-gerencial/discrepancias/obras?startDate=${startDate}&endDate=${endDate}`),
+    getAnaliseObraDetalhe: async (obraId, { startDate, endDate }) =>
+        apiFetch(`/analise-gerencial/discrepancias/obra/${encodeURIComponent(obraId)}?startDate=${startDate}&endDate=${endDate}`),
+    getAnaliseDiscrepanciaDrill: async (id) =>
+        apiFetch(`/analise-gerencial/discrepancias/${id}`),
+    justificarAnaliseDiscrepancia: async (id, justificativa) =>
+        apiFetch(`/analise-gerencial/discrepancias/${id}/justificar`, {
+            method: 'POST', body: JSON.stringify({ justificativa }),
+        }),
+    reprocessarAnaliseDiscrepancias: async (payload) =>
+        apiFetch('/analise-gerencial/discrepancias/reprocessar', {
+            method: 'POST', body: JSON.stringify(payload),
+        }),
+
     // --- Abastecimentos (Legado/Admin) ---
     getRefuelings: async () => apiFetch('/refuelings'),
     getRefuelingById: async (id) => apiFetch(`/refuelings/${id}`),
@@ -422,6 +438,16 @@ const apiClient = {
         apiFetch(`/sigasul/journeys/simplified?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
     sigasulGetJourneysAggregate: async (from, to) =>
         apiFetch(`/sigasul/journeys/aggregate?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`),
+
+    // --- Confronto Faturamento × Rastreador ---
+    getConfronto: async (params = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiFetch(`/confronto?${qs}`);
+    },
+    getConfrontoDetail: async (placa, data) =>
+        apiFetch(`/confronto/${encodeURIComponent(placa)}/${encodeURIComponent(data)}`),
+    reprocessConfronto: async (body) =>
+        apiFetch('/confronto/reprocessar', { method: 'POST', body: JSON.stringify(body) }),
 
     // --- Defaults & Auxiliares ---
     defaults: { baseURL: API_URL },

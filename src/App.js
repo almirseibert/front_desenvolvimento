@@ -45,7 +45,7 @@ import Sidebar from './components/Sidebar';
 import LoginScreen from './components/LoginScreen';
 
 import apiClient from './services/apiClient';
-import { canAccessPage } from './utils/permissions';
+import { canAccessPage, canAccessAnaliseGerencial } from './utils/permissions';
 import {
     vehicleGroups,
     extraObraOptions,
@@ -83,6 +83,7 @@ const SolicitacaoAbastecimentoPage = lazy(() => import('./pages/SolicitacaoAbast
 const ComboioMobilePage            = lazy(() => import('./pages/ComboioMobilePage'));
 const AdminSolicitacoesPage        = lazy(() => import('./pages/AdminSolicitacoesPage'));
 const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
+const AnaliseGerencialPage         = lazy(() => import('./pages/AnaliseGerencialPage'));
 const AdminUsuariosPage            = lazy(() => import('./pages/AdminUsuariosPage'));
 const AdminFrotaPage               = lazy(() => import('./pages/AdminFrotaPage'));
 const AdminComunicacaoPage         = lazy(() => import('./pages/AdminComunicacaoPage'));
@@ -850,6 +851,9 @@ const AppContent = () => {
             case 'sigasul':
                 return canAccessPage(user.roleNormalized, 'sigasul')
                     ? <SigaSulPage {...commonProps} /> : <Denied />;
+            case 'analise_gerencial':
+                return canAccessAnaliseGerencial(user)
+                    ? <AnaliseGerencialPage {...commonProps} /> : <Denied />;
             default:
                 return <Dashboard {...commonProps} />; 
         }

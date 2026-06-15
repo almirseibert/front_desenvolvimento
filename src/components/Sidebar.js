@@ -3,9 +3,9 @@ import {
     Building, HardHat, ClipboardCheck, FileText,
     Fuel, Wrench, User, Shield, LogOut, Key,
     ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-    Radio
+    Radio, Search
 } from 'lucide-react';
-import { ROLE_PAGE_ACCESS } from '../utils/permissions';
+import { ROLE_PAGE_ACCESS, canAccessAnaliseGerencial } from '../utils/permissions';
 
 const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, pendingSolicitacoesCount }) => {
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -53,6 +53,15 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             hidden: !canAccess('reports'),
             items: [
                 { id: 'reports', label: 'Relatórios' },
+            ],
+        },
+        {
+            id: 'analise',
+            label: 'Análise Gerencial',
+            icon: <Search size={14} />,
+            hidden: !canAccessAnaliseGerencial(user),
+            items: [
+                { id: 'analise_gerencial', label: 'Discrepâncias Operacionais' },
             ],
         },
         {
