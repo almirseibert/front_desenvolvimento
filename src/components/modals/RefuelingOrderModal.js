@@ -213,12 +213,30 @@ const RefuelingOrderModal = ({
                 return;
             }
 
-            const totalFuelExpenses = expenses
-                .filter(e => e.obraId === formData.obraId && (e.category === 'Combustível' || e.fuelType))
+            // Gasto com combustível: a base real são os abastecimentos concluídos
+            // (litros × preço + ARLA + outros). A tabela de `expenses` não possui
+            // categoria 'Combustível', então sozinha o cálculo resultava sempre em
+            // R$ 0,00. Usamos o maior valor entre expenses e refuelings — mesma regra
+            // do backend (updateMonthlyExpense) e da tela de Solicitações.
+            const totalFromExpenses = (expenses || [])
+                .filter(e => String(e.obraId) === String(formData.obraId) && (e.category === 'Combustível' || e.fuelType))
                 .reduce((sum, e) => sum + (parseFloat(e.amount) || 0), 0);
 
+            const totalFromRefuelings = (refuelings || [])
+                .filter(r => String(r.obraId) === String(formData.obraId) && (r.status === 'Concluída' || r.status === 'Confirmada'))
+                .reduce((sum, r) => {
+                    const litros = parseFloat(r.litrosAbastecidos || 0);
+                    const preco = parseFloat(r.pricePerLiter || 0);
+                    const litrosArla = parseFloat(r.litrosAbastecidosArla || 0);
+                    const precoArla = parseFloat(r.pricePerLiterArla || 0);
+                    const outros = parseFloat(r.outrosValor || 0);
+                    return sum + (litros * preco) + (litrosArla * precoArla) + outros;
+                }, 0);
+
+            const totalFuelExpenses = Math.max(totalFromExpenses, totalFromRefuelings);
+
             const valorTotalObra = parseFloat(obra.valorTotalContrato || obra.valorContrato || 0);
-            
+
             if (valorTotalObra > 0) {
                 const percentual = (totalFuelExpenses / valorTotalObra) * 100;
                 setObraStatus({
@@ -232,7 +250,7 @@ const RefuelingOrderModal = ({
         } else {
             setObraStatus(null);
         }
-    }, [formData.obraId, obras, expenses, extraObraOptions]);
+    }, [formData.obraId, obras, expenses, refuelings, extraObraOptions]);
 
 
     const sortedVehicles = useMemo(() =>
