@@ -8,7 +8,7 @@ import DiscrepanciasOperacionais from '../components/analise/DiscrepanciasOperac
 const ANALISES = [
     {
         id: 'discrepancias',
-        label: 'Discrepâncias Operacionais',
+        label: 'Divergências Operacionais',
         icon: <Search size={14} />,
         render: (props) => <DiscrepanciasOperacionais {...props} />,
     },
