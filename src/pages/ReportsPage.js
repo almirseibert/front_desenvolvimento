@@ -1,7 +1,7 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { 
-    Users, Truck, FileText, AlertTriangle, 
-    ClipboardCheck, HardHat, Printer, Droplet, TrendingUp
+    Users, Truck, FileText, AlertTriangle,
+    ClipboardCheck, HardHat, Printer, Droplet, TrendingUp, Clock
 } from 'lucide-react';
 
 import ProtectedComponent from '../components/ProtectedComponent';
@@ -17,6 +17,7 @@ import WorkPlanReport from '../components/reports/WorkPlanReport';
 import SupplyOrdersReport from '../components/reports/SupplyOrdersReport'; 
 import AveragesReport from '../components/reports/AveragesReport'; // Novo
 import FuelConsumptionReport from '../components/reports/FuelConsumptionReport';
+import JornadasOperadorReport from '../components/reports/JornadasOperadorReport';
 
 const ReportsPage = ({ 
     vehicles = [], 
@@ -75,7 +76,8 @@ const ReportsPage = ({
         { id: 'workplan', label: 'Plano de Trabalho', icon: FileText, desc: 'Histórico físico e despesas.', color: 'bg-gray-600' },
         { id: 'supply', label: 'Ordens Abastecimento', icon: Droplet, desc: 'Relatório de ordens em aberto.', color: 'bg-purple-600' },
         { id: 'averages', label: 'Médias & Consumo', icon: TrendingUp, desc: 'Comparativos e médias (Km/L, L/Hr).', color: 'bg-teal-600' },
-        { id: 'fuel_obra', label: 'Consumo por Obra', icon: Droplet, desc: 'Litros e valores de combustível agrupados por obra.', color: 'bg-orange-600' }
+        { id: 'fuel_obra', label: 'Consumo por Obra', icon: Droplet, desc: 'Litros e valores de combustível agrupados por obra.', color: 'bg-orange-600' },
+        { id: 'jornadas_operador', label: 'Jornadas por Operador', icon: Clock, desc: 'Comparativo Faturado × Rastreador × Ponto.', color: 'bg-amber-600' }
     ];
 
     return (
@@ -129,6 +131,7 @@ const ReportsPage = ({
                             {reportType === 'supply' && <SupplyOrdersReport supplyOrders={supplyOrders} vehicles={vehicles} obras={obras} gasStations={gasStations} refuelings={activeRefuelings} />}
                             {reportType === 'averages' && <AveragesReport refuelings={activeRefuelings} vehicles={vehicles} obras={obras} vehicleGroups={vehicleGroups} />}
                             {reportType === 'fuel_obra' && <FuelConsumptionReport refuelings={activeRefuelings} obras={obras} vehicles={vehicles} expenses={expenses} />}
+                            {reportType === 'jornadas_operador' && <JornadasOperadorReport employees={employees} />}
                         </ProtectedComponent>
                     </div>
                 )}

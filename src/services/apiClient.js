@@ -219,6 +219,8 @@ const apiClient = {
         apiFetch('/analise-gerencial/discrepancias/reprocessar', {
             method: 'POST', body: JSON.stringify(payload),
         }),
+    getJornadasOperador: async (employeeId, { startDate, endDate }) =>
+        apiFetch(`/analise-gerencial/jornadas/operador/${encodeURIComponent(employeeId)}?startDate=${startDate}&endDate=${endDate}`),
 
     // --- Abastecimentos (Legado/Admin) ---
     getRefuelings: async () => apiFetch('/refuelings'),
