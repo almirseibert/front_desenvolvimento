@@ -221,6 +221,8 @@ const apiClient = {
         }),
     getJornadasOperador: async (employeeId, { startDate, endDate }) =>
         apiFetch(`/analise-gerencial/jornadas/operador/${encodeURIComponent(employeeId)}?startDate=${startDate}&endDate=${endDate}`),
+    getProjecaoObra: async (obraId) =>
+        apiFetch(`/analise-gerencial/projecao/${encodeURIComponent(obraId)}`),
 
     // --- Abastecimentos (Legado/Admin) ---
     getRefuelings: async () => apiFetch('/refuelings'),

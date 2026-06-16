@@ -85,6 +85,7 @@ const AdminSolicitacoesPage        = lazy(() => import('./pages/AdminSolicitacoe
 const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
 const AnaliseGerencialPage         = lazy(() => import('./pages/AnaliseGerencialPage'));
 const AproveitamentoProdutivoPage  = lazy(() => import('./pages/AproveitamentoProdutivoPage'));
+const ProjecaoObraPage             = lazy(() => import('./pages/ProjecaoObraPage'));
 const AdminUsuariosPage            = lazy(() => import('./pages/AdminUsuariosPage'));
 const AdminFrotaPage               = lazy(() => import('./pages/AdminFrotaPage'));
 const AdminComunicacaoPage         = lazy(() => import('./pages/AdminComunicacaoPage'));
@@ -876,6 +877,9 @@ const AppContent = () => {
             case 'analise_gerencial':
                 return canAccessAnaliseGerencial(user)
                     ? <AnaliseGerencialPage {...commonProps} /> : <Denied />;
+            case 'projecao_obra':
+                return canAccessAnaliseGerencial(user)
+                    ? <ProjecaoObraPage {...commonProps} /> : <Denied />;
             case 'aproveitamento':
                 return canAccessAnaliseGerencial(user)
                     ? <AproveitamentoProdutivoPage {...commonProps} /> : <Denied />;

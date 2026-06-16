@@ -61,6 +61,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             hidden: !canAccessAnaliseGerencial(user),
             items: [
                 { id: 'analise_gerencial',     label: 'Divergências Operacionais' },
+                { id: 'projecao_obra',         label: 'Projeção de Obra' },
                 { id: 'supervisor_dashboard',  label: 'Gestão de Obras' },
                 { id: 'aproveitamento',        label: 'Aproveitamento Produtivo' },
             ],
