@@ -1,5 +1,12 @@
 import React from 'react';
-import { Clock, Calendar, AlertTriangle, User, TrendingUp, Settings } from 'lucide-react';
+import { Clock, Calendar, AlertTriangle, User, Settings, DollarSign } from 'lucide-react';
+
+const fmtBRLCompact = (v) => {
+    const n = Number(v) || 0;
+    if (Math.abs(n) >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
+    if (Math.abs(n) >= 1_000) return `R$ ${(n / 1_000).toFixed(0)}k`;
+    return `R$ ${n.toFixed(0)}`;
+};
 
 const ObraCard = ({ obra, onClick, onConfig }) => {
     const { kpi, nome, responsavel, fiscal_nome, previsao } = obra;
@@ -93,6 +100,44 @@ const ObraCard = ({ obra, onClick, onConfig }) => {
                     </div>
                 </div>
             </div>
+
+            {/* Mini-linha financeira */}
+            {(() => {
+                const valorTotal = Number(kpi?.valor_total_contrato) || 0;
+                const gasto = Number(kpi?.total_gasto) || 0;
+                const valorProduzido = (Math.min(percentual, 100) / 100) * valorTotal;
+                const margem = valorProduzido - gasto;
+                const margemPct = valorProduzido > 0 ? (margem / valorProduzido) * 100 : null;
+                const margemColor = margemPct === null ? 'text-slate-400'
+                    : margemPct >= 25 ? 'text-emerald-700'
+                    : margemPct >= 10 ? 'text-yellow-700'
+                    : 'text-red-700';
+                if (valorTotal === 0 && gasto === 0) return null;
+                return (
+                    <div className="mb-3 p-2 rounded-lg border border-slate-200 bg-slate-50">
+                        <div className="flex items-center gap-1.5 mb-1">
+                            <DollarSign size={13} className="text-slate-500" />
+                            <span className="text-[10px] font-bold uppercase text-slate-500">Financeiro</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1 text-[11px]">
+                            <div>
+                                <div className="text-slate-400 text-[9px] uppercase">Contrato</div>
+                                <div className="font-bold text-slate-700">{fmtBRLCompact(valorTotal)}</div>
+                            </div>
+                            <div>
+                                <div className="text-slate-400 text-[9px] uppercase">Gasto</div>
+                                <div className="font-bold text-slate-700">{fmtBRLCompact(gasto)}</div>
+                            </div>
+                            <div>
+                                <div className="text-slate-400 text-[9px] uppercase">Margem</div>
+                                <div className={`font-bold ${margemColor}`}>
+                                    {margemPct === null ? '—' : `${margemPct.toFixed(0)}%`}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
 
             <div className="mt-auto flex flex-wrap gap-2">
                 {percentual > 90 && (

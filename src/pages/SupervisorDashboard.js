@@ -1,15 +1,26 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     LayoutDashboard, RefreshCw, Loader, AlertCircle, Truck,
     Activity, Search, X, Clock, CheckCircle2,
-    AlertTriangle, ArrowUpDown
+    AlertTriangle, ArrowUpDown, DollarSign, TrendingDown,
+    FileDown, Users, Percent
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import apiClient from '../services/apiClient';
 import ObraCard from '../components/supervisor/ObraCard';
 import ContractConfigModal from '../components/supervisor/ContractConfigModal';
 import AllocationForecastPage from './AllocationForecastPage';
 
 const REFRESH_INTERVAL_MS = 300000;
+
+const fmtBRL = (v) => `R$ ${(Number(v) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+const fmtBRLCompact = (v) => {
+    const n = Number(v) || 0;
+    if (Math.abs(n) >= 1_000_000) return `R$ ${(n / 1_000_000).toFixed(1).replace('.', ',')}M`;
+    if (Math.abs(n) >= 1_000) return `R$ ${(n / 1_000).toFixed(0)}k`;
+    return `R$ ${n.toFixed(0)}`;
+};
 const STATUS_LABELS = {
     red: { label: 'Crítica', color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500' },
     violet: { label: 'Atenção', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200', dot: 'bg-purple-500' },
@@ -21,8 +32,21 @@ const SORT_OPTIONS = [
     { id: 'conclusao_desc', label: 'Maior % conclusão' },
     { id: 'conclusao_asc', label: 'Menor % conclusão' },
     { id: 'prazo_asc', label: 'Menor prazo' },
+    { id: 'margem_asc', label: 'Pior margem' },
+    { id: 'margem_desc', label: 'Melhor margem' },
+    { id: 'receita_desc', label: 'Maior receita' },
     { id: 'nome', label: 'Nome (A-Z)' },
 ];
+
+const computeObraFinance = (o) => {
+    const valorTotal = Number(o.kpi?.valor_total_contrato) || 0;
+    const gasto = Number(o.kpi?.total_gasto) || 0;
+    const perc = Number(o.kpi?.percentual_conclusao) || 0;
+    const valorProduzido = (Math.min(perc, 100) / 100) * valorTotal;
+    const margem = valorProduzido - gasto;
+    const margemPct = valorProduzido > 0 ? (margem / valorProduzido) * 100 : null;
+    return { valorTotal, gasto, valorProduzido, margem, margemPct };
+};
 const STATUS_ORDER = { red: 0, violet: 1, yellow: 2, green: 3 };
 
 // ============================================================================
@@ -52,9 +76,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('todos');
     const [sortBy, setSortBy] = useState('criticidade');
-    const [grouped, setGrouped] = useState(true);
-    const [secondsToRefresh, setSecondsToRefresh] = useState(REFRESH_INTERVAL_MS / 1000);
-    const tickerRef = useRef(null);
+    const [groupMode, setGroupMode] = useState('status'); // 'status' | 'responsavel' | 'none'
 
     const fetchDashboardData = async () => {
         try {
@@ -62,7 +84,6 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
             const data = await apiClient.get('/supervisor/dashboard');
             setObras((data || []).filter(o => (o.tipo_registro || 'obra') !== 'centro_custo'));
             setLastUpdate(new Date());
-            setSecondsToRefresh(REFRESH_INTERVAL_MS / 1000);
         } catch (error) {
             console.error("Erro ao carregar dashboard:", error);
         } finally {
@@ -74,32 +95,70 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
         if (viewMode === 'dashboard') {
             fetchDashboardData();
             const interval = setInterval(fetchDashboardData, REFRESH_INTERVAL_MS);
-            tickerRef.current = setInterval(() => {
-                setSecondsToRefresh(s => (s > 1 ? s - 1 : REFRESH_INTERVAL_MS / 1000));
-            }, 1000);
-            return () => {
-                clearInterval(interval);
-                if (tickerRef.current) clearInterval(tickerRef.current);
-            };
+            return () => clearInterval(interval);
         }
     }, [viewMode]);
 
-    // KPIs agregados
+    // KPIs agregados (com camada financeira e ponderação correta)
     const aggregateKpis = useMemo(() => {
-        if (!obras.length) return { total: 0, capacidadeTotal: 0, alocacaoMedia: 0, criticas: 0 };
+        const empty = {
+            total: 0, capacidadeTotal: 0, conclusaoPonderada: 0, criticas: 0,
+            receitaTotal: 0, custoTotal: 0, valorProduzido: 0, margemMediaPct: 0,
+            aditivoEstourado: 0, aditivoRisco: 0,
+        };
+        if (!obras.length) return empty;
+
         let capacidadeTotal = 0;
-        let somaPercentual = 0;
+        let somaHorasPonderada = 0; // numerador da média ponderada
         let criticas = 0;
+        let receitaTotal = 0;
+        let custoTotal = 0;
+        let valorProduzido = 0;
+        let aditivoEstourado = 0;
+        let aditivoRisco = 0;
+
         obras.forEach(o => {
-            capacidadeTotal += Number(o.kpi?.horas_contratadas || 0);
-            somaPercentual += Number(o.kpi?.percentual_conclusao || 0);
+            const horasContr = Number(o.kpi?.horas_contratadas) || 0;
+            const horasExec = Number(o.kpi?.horas_executadas) || 0;
+            const perc = Number(o.kpi?.percentual_conclusao) || 0;
+            const fin = computeObraFinance(o);
+
+            capacidadeTotal += horasContr;
+            somaHorasPonderada += horasExec; // ponderação real: soma exec / soma contr
             if (o.kpi?.status_cor === 'red' || o.kpi?.status_cor === 'violet') criticas++;
+
+            receitaTotal += fin.valorTotal;
+            custoTotal += fin.gasto;
+            valorProduzido += fin.valorProduzido;
+
+            // Exposição a aditivo:
+            // - estourado: obras com perc > 100% → R$ adicional implícito (perc-100)/100 × valorTotal
+            // - em risco: obras 90-100% → soma de R$ "produzido restante até 100%"
+            if (perc > 100) {
+                aditivoEstourado += ((perc - 100) / 100) * fin.valorTotal;
+            } else if (perc >= 90) {
+                aditivoRisco += ((100 - perc) / 100) * fin.valorTotal;
+            }
         });
+
+        const conclusaoPonderada = capacidadeTotal > 0
+            ? (somaHorasPonderada / capacidadeTotal) * 100
+            : 0;
+        const margemAbsoluta = valorProduzido - custoTotal;
+        const margemMediaPct = valorProduzido > 0 ? (margemAbsoluta / valorProduzido) * 100 : 0;
+
         return {
             total: obras.length,
             capacidadeTotal: Math.round(capacidadeTotal),
-            alocacaoMedia: Math.round(somaPercentual / obras.length),
+            conclusaoPonderada: Math.round(conclusaoPonderada),
             criticas,
+            receitaTotal,
+            custoTotal,
+            valorProduzido,
+            margemAbsoluta,
+            margemMediaPct,
+            aditivoEstourado,
+            aditivoRisco,
         };
     }, [obras]);
 
@@ -123,12 +182,19 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                 || normalize(o.fiscal_nome).includes(q);
         });
 
+        const margemOf = (o) => {
+            const f = computeObraFinance(o);
+            return f.margemPct === null ? -Infinity : f.margemPct;
+        };
         const cmp = {
             criticidade: (a, b) => (STATUS_ORDER[a.kpi?.status_cor] ?? 9) - (STATUS_ORDER[b.kpi?.status_cor] ?? 9)
                 || (b.kpi?.percentual_conclusao || 0) - (a.kpi?.percentual_conclusao || 0),
             conclusao_desc: (a, b) => (b.kpi?.percentual_conclusao || 0) - (a.kpi?.percentual_conclusao || 0),
             conclusao_asc: (a, b) => (a.kpi?.percentual_conclusao || 0) - (b.kpi?.percentual_conclusao || 0),
             prazo_asc: (a, b) => (a.kpi?.dias_restantes_estimados ?? 99999) - (b.kpi?.dias_restantes_estimados ?? 99999),
+            margem_asc: (a, b) => margemOf(a) - margemOf(b),
+            margem_desc: (a, b) => margemOf(b) - margemOf(a),
+            receita_desc: (a, b) => (Number(b.kpi?.valor_total_contrato) || 0) - (Number(a.kpi?.valor_total_contrato) || 0),
             nome: (a, b) => (a.nome || '').localeCompare(b.nome || ''),
         }[sortBy];
 
@@ -136,7 +202,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
     }, [obras, search, statusFilter, sortBy]);
 
     const groups = useMemo(() => {
-        if (!grouped) return null;
+        if (groupMode !== 'status') return null;
         const buckets = { criticas: [], andamento: [], saudaveis: [] };
         filteredAndSorted.forEach(o => {
             const s = o.kpi?.status_cor || 'green';
@@ -145,7 +211,30 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
             else buckets.saudaveis.push(o);
         });
         return buckets;
-    }, [filteredAndSorted, grouped]);
+    }, [filteredAndSorted, groupMode]);
+
+    // Agregação por responsável (substitui agrupamento por status quando ativo)
+    const groupsByResponsavel = useMemo(() => {
+        if (groupMode !== 'responsavel') return null;
+        const map = new Map();
+        filteredAndSorted.forEach(o => {
+            const key = (o.responsavel || 'Sem responsável').trim();
+            if (!map.has(key)) map.set(key, { responsavel: key, obras: [], receita: 0, gasto: 0, valorProduzido: 0, criticas: 0 });
+            const g = map.get(key);
+            const fin = computeObraFinance(o);
+            g.obras.push(o);
+            g.receita += fin.valorTotal;
+            g.gasto += fin.gasto;
+            g.valorProduzido += fin.valorProduzido;
+            if (o.kpi?.status_cor === 'red' || o.kpi?.status_cor === 'violet') g.criticas++;
+        });
+        return Array.from(map.values())
+            .map(g => ({
+                ...g,
+                margemPct: g.valorProduzido > 0 ? ((g.valorProduzido - g.gasto) / g.valorProduzido) * 100 : null,
+            }))
+            .sort((a, b) => b.receita - a.receita);
+    }, [filteredAndSorted, groupMode]);
 
     const handleConfigClick = (e, obra) => {
         if (e && typeof e.stopPropagation === 'function') e.stopPropagation();
@@ -155,6 +244,68 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
 
     const handleCardClick = (obraId) => {
         if (onNavigateToDetail) onNavigateToDetail(obraId);
+    };
+
+    const handleExportPDF = () => {
+        const doc = new jsPDF({ orientation: 'landscape', unit: 'pt' });
+        const now = new Date().toLocaleString('pt-BR');
+
+        doc.setFontSize(14);
+        doc.text('Gestão de Obras — Análise Gerencial', 40, 40);
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text(`Emitido em ${now} • ${aggregateKpis.total} obras ativas`, 40, 56);
+
+        // KPIs em texto
+        const kpiLine = [
+            `Receita contratada: ${fmtBRL(aggregateKpis.receitaTotal)}`,
+            `Custo realizado: ${fmtBRL(aggregateKpis.custoTotal)}`,
+            `Valor produzido: ${fmtBRL(aggregateKpis.valorProduzido)}`,
+            `Margem média: ${aggregateKpis.margemMediaPct.toFixed(1)}%`,
+            `Conclusão ponderada: ${aggregateKpis.conclusaoPonderada}%`,
+            `Aditivo estourado: ${fmtBRL(aggregateKpis.aditivoEstourado)}`,
+            `Em risco de aditivo: ${fmtBRL(aggregateKpis.aditivoRisco)}`,
+            `Obras críticas: ${aggregateKpis.criticas}`,
+        ].join('   |   ');
+        doc.setTextColor(40);
+        doc.setFontSize(8);
+        const wrapped = doc.splitTextToSize(kpiLine, doc.internal.pageSize.getWidth() - 80);
+        doc.text(wrapped, 40, 76);
+
+        const rows = filteredAndSorted.map(o => {
+            const f = computeObraFinance(o);
+            const status = STATUS_LABELS[o.kpi?.status_cor || 'green']?.label || '—';
+            return [
+                o.nome || '—',
+                o.responsavel || '—',
+                status,
+                `${(o.kpi?.percentual_conclusao || 0).toFixed(1)}%`,
+                `${Math.round(o.kpi?.horas_executadas || 0)} / ${Math.round(o.kpi?.horas_contratadas || 0)}`,
+                fmtBRLCompact(f.valorTotal),
+                fmtBRLCompact(f.gasto),
+                f.margemPct === null ? '—' : `${f.margemPct.toFixed(0)}%`,
+                o.kpi?.dias_restantes_estimados ? `${o.kpi.dias_restantes_estimados} d` : '—',
+            ];
+        });
+
+        autoTable(doc, {
+            startY: 100,
+            head: [['Obra', 'Responsável', 'Status', '% Conc.', 'Horas (exec/contr)', 'Contrato', 'Gasto', 'Margem', 'Prazo']],
+            body: rows,
+            styles: { fontSize: 8, cellPadding: 4 },
+            headStyles: { fillColor: [30, 41, 59], textColor: 255 },
+            alternateRowStyles: { fillColor: [248, 250, 252] },
+            columnStyles: {
+                3: { halign: 'right' },
+                4: { halign: 'right' },
+                5: { halign: 'right' },
+                6: { halign: 'right' },
+                7: { halign: 'right' },
+                8: { halign: 'right' },
+            },
+        });
+
+        doc.save(`gestao-obras-${new Date().toISOString().slice(0, 10)}.pdf`);
     };
 
     if (viewMode === 'allocations') return <AllocationForecastPage onBack={() => setViewMode('dashboard')} />;
@@ -191,14 +342,19 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                         <LayoutDashboard className="text-blue-600" />
                         Gestão de Obras
                     </h1>
-                    <p className="text-slate-500 text-xs mt-1 flex items-center gap-2">
+                    <p className="text-slate-500 text-xs mt-1">
                         Atualizado às {lastUpdate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        <span className="text-slate-300">•</span>
-                        <span className="flex items-center gap-1"><RefreshCw size={11} className="text-slate-400"/> próx. em {Math.floor(secondsToRefresh / 60)}m {secondsToRefresh % 60}s</span>
                     </p>
                 </div>
 
                 <div className="flex gap-2 flex-wrap">
+                    <button
+                        onClick={handleExportPDF}
+                        className="bg-white text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-bold shadow-sm border border-slate-200 flex items-center gap-2 transition-colors"
+                        title="Exportar relatório em PDF"
+                    >
+                        <FileDown size={18} /> Exportar PDF
+                    </button>
                     <button
                         onClick={() => setViewMode('allocations')}
                         className="bg-white text-slate-700 hover:bg-slate-50 px-4 py-2 rounded-lg font-bold shadow-sm border border-slate-200 flex items-center gap-2 transition-colors"
@@ -215,28 +371,60 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                 </div>
             </div>
 
-            {/* KPIs agregados */}
+            {/* KPIs agregados — linha 1: visão executiva */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                <KpiCard
+                    icon={DollarSign}
+                    label="Receita contratada"
+                    value={fmtBRLCompact(aggregateKpis.receitaTotal)}
+                    sub="Soma dos contratos ativos"
+                    accent="border-l-blue-500"
+                />
+                <KpiCard
+                    icon={TrendingDown}
+                    label="Custo realizado"
+                    value={fmtBRLCompact(aggregateKpis.custoTotal)}
+                    sub={`Produzido: ${fmtBRLCompact(aggregateKpis.valorProduzido)}`}
+                    accent="border-l-slate-500"
+                />
+                <KpiCard
+                    icon={Percent}
+                    label="Margem média"
+                    value={`${aggregateKpis.margemMediaPct.toFixed(1)}%`}
+                    sub={`Abs.: ${fmtBRLCompact(aggregateKpis.margemAbsoluta || 0)}`}
+                    accent={aggregateKpis.margemMediaPct >= 20 ? 'border-l-emerald-500' : aggregateKpis.margemMediaPct >= 5 ? 'border-l-yellow-500' : 'border-l-red-500'}
+                />
+                <KpiCard
+                    icon={AlertTriangle}
+                    label="Exposição a aditivo"
+                    value={fmtBRLCompact(aggregateKpis.aditivoEstourado)}
+                    sub={`+ ${fmtBRLCompact(aggregateKpis.aditivoRisco)} em risco (90-100%)`}
+                    accent={aggregateKpis.aditivoEstourado > 0 ? 'border-l-red-500' : aggregateKpis.aditivoRisco > 0 ? 'border-l-orange-500' : 'border-l-slate-300'}
+                />
+            </div>
+
+            {/* KPIs agregados — linha 2: operacional */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                 <KpiCard
                     icon={LayoutDashboard}
                     label="Obras ativas"
                     value={aggregateKpis.total}
-                    sub={`${statusCounts.green} saudáveis • ${statusCounts.yellow} em andamento`}
-                    accent="border-l-blue-500"
+                    sub={`${statusCounts.green} saudáveis • ${statusCounts.yellow} em and.`}
+                    accent="border-l-blue-300"
                 />
                 <KpiCard
                     icon={Clock}
                     label="Horas contratadas"
                     value={`${aggregateKpis.capacidadeTotal.toLocaleString('pt-BR')}h`}
-                    sub="Soma do contratado em todas obras"
-                    accent="border-l-emerald-500"
+                    sub="Soma do contratado"
+                    accent="border-l-emerald-300"
                 />
                 <KpiCard
                     icon={Activity}
-                    label="Conclusão média"
-                    value={`${aggregateKpis.alocacaoMedia}%`}
-                    sub="Média ponderada do progresso físico"
-                    accent="border-l-yellow-500"
+                    label="Conclusão ponderada"
+                    value={`${aggregateKpis.conclusaoPonderada}%`}
+                    sub="∑horas exec ÷ ∑horas contratadas"
+                    accent="border-l-yellow-400"
                 />
                 <KpiCard
                     icon={AlertTriangle}
@@ -299,15 +487,24 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                         {SORT_OPTIONS.map(o => <option key={o.id} value={o.id}>{o.label}</option>)}
                     </select>
 
-                    <button
-                        onClick={() => setGrouped(g => !g)}
-                        className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition-colors ${
-                            grouped ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-                        }`}
-                        title="Alternar agrupamento por status"
-                    >
-                        Agrupar
-                    </button>
+                    <div className="flex items-center gap-1 bg-slate-100 rounded-lg p-0.5">
+                        {[
+                            { id: 'status', label: 'Status', icon: AlertTriangle },
+                            { id: 'responsavel', label: 'Responsável', icon: Users },
+                            { id: 'none', label: 'Lista', icon: ArrowUpDown },
+                        ].map(g => (
+                            <button
+                                key={g.id}
+                                onClick={() => setGroupMode(g.id)}
+                                title={`Agrupar por ${g.label}`}
+                                className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-md transition-colors ${
+                                    groupMode === g.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                                }`}
+                            >
+                                <g.icon size={12} /> {g.label}
+                            </button>
+                        ))}
+                    </div>
                 </div>
             </div>
 
@@ -327,7 +524,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                         </button>
                     )}
                 </div>
-            ) : grouped ? (
+            ) : groupMode === 'status' && groups ? (
                 <div className="space-y-6">
                     {groups.criticas.length > 0 && (
                         <section>
@@ -347,6 +544,43 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
                             {renderGrid(groups.saudaveis)}
                         </section>
                     )}
+                </div>
+            ) : groupMode === 'responsavel' && groupsByResponsavel ? (
+                <div className="space-y-8">
+                    {groupsByResponsavel.map(g => {
+                        const margemColor = g.margemPct === null ? 'text-slate-500'
+                            : g.margemPct >= 20 ? 'text-emerald-700'
+                            : g.margemPct >= 5 ? 'text-yellow-700'
+                            : 'text-red-700';
+                        return (
+                            <section key={g.responsavel}>
+                                <div className="flex items-center gap-3 mb-3 mt-2 flex-wrap">
+                                    <div className="w-1.5 h-7 rounded-full bg-blue-500"></div>
+                                    <Users size={18} className="text-slate-700" />
+                                    <h2 className="text-base font-bold text-slate-800 tracking-tight">{g.responsavel}</h2>
+                                    <span className="text-xs font-bold text-slate-500 bg-slate-200 rounded-full px-2 py-0.5">{g.obras.length} obras</span>
+                                    <div className="flex items-center gap-3 text-xs text-slate-600 ml-2">
+                                        <span><b>Receita:</b> {fmtBRLCompact(g.receita)}</span>
+                                        <span className="text-slate-300">•</span>
+                                        <span><b>Gasto:</b> {fmtBRLCompact(g.gasto)}</span>
+                                        <span className="text-slate-300">•</span>
+                                        <span className={`font-bold ${margemColor}`}>
+                                            Margem: {g.margemPct === null ? '—' : `${g.margemPct.toFixed(1)}%`}
+                                        </span>
+                                        {g.criticas > 0 && (
+                                            <>
+                                                <span className="text-slate-300">•</span>
+                                                <span className="text-red-700 font-bold flex items-center gap-1">
+                                                    <AlertTriangle size={11} /> {g.criticas} crítica{g.criticas > 1 ? 's' : ''}
+                                                </span>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                                {renderGrid(g.obras)}
+                            </section>
+                        );
+                    })}
                 </div>
             ) : (
                 renderGrid(filteredAndSorted)
