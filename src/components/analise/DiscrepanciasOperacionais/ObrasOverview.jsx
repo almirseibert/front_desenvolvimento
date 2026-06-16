@@ -122,7 +122,7 @@ const ObrasOverview = ({ apiClient, range, setRange, onSelectObra, setAlertMessa
         <div className="p-6">
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-slate-800 mb-1">Discrepâncias Operacionais</h1>
+                <h1 className="text-2xl font-bold text-slate-800 mb-1">Divergências Operacionais</h1>
                 <p className="text-sm text-slate-500">
                     Obras com lacunas detectadas entre faturamento e atividade do rastreador.
                     Selecione uma obra para investigar.

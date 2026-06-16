@@ -75,7 +75,7 @@ const ObraDetalhe = ({ apiClient, obra, range, onBack, onSelectDiscrepancia, set
                         <ArrowLeft size={18} className="text-slate-600" />
                     </button>
                     <div>
-                        <p className="text-xs text-slate-400 uppercase tracking-wide">Discrepâncias Operacionais</p>
+                        <p className="text-xs text-slate-400 uppercase tracking-wide">Divergências Operacionais</p>
                         <h1 className="text-2xl font-bold text-slate-800">{obra.obraNome}</h1>
                         <p className="text-xs text-slate-500 mt-0.5">{range.startDate} → {range.endDate}</p>
                     </div>
