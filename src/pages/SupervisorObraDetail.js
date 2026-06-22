@@ -288,6 +288,12 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
                     />
                 </div>
 
+                {/* EVOLUÇÃO QUINZENAL — horas faturadas e % acumulada sobre o contrato */}
+                <EvolucaoQuinzenal
+                    quinzenas={producao?.quinzenas || []}
+                    horasContratadas={contract.total_hours_contracted || 0}
+                />
+
                 {/* GRID PRINCIPAL */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
                     {/* FINANCEIRO (2 col) */}
@@ -431,6 +437,164 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
 // SUB-COMPONENTES
 // ============================================================================
 const Activity24 = (props) => <TrendingUp {...props} />;
+
+// Mostra as últimas 6 quinzenas de horas faturadas (daily_work_logs) e % acumulada
+// sobre o contrato. Espelha a régua de quinzenas usada na Projeção de Obras —
+// mesmas janelas de 15 dias ancoradas no início do contrato.
+const EvolucaoQuinzenal = ({ quinzenas, horasContratadas }) => {
+    const fmtData = (iso) => {
+        if (!iso) return '—';
+        const [, m, d] = iso.split('-');
+        return `${d}/${m}`;
+    };
+    const fmtDataLonga = (iso) => {
+        if (!iso) return '—';
+        const [y, m, d] = iso.split('-');
+        return `${d}/${m}/${y}`;
+    };
+
+    const maxHoras = useMemo(
+        () => Math.max(1, ...quinzenas.map(q => q.horasLancadas || 0)),
+        [quinzenas]
+    );
+
+    // Default selecionada: última quinzena (mais recente, normalmente "em curso")
+    const [selectedNumero, setSelectedNumero] = useState(null);
+    const effectiveSelected = useMemo(() => {
+        if (!quinzenas.length) return null;
+        const found = quinzenas.find(q => q.numero === selectedNumero);
+        return found || quinzenas[quinzenas.length - 1];
+    }, [quinzenas, selectedNumero]);
+
+    return (
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+                <h3 className="font-bold text-slate-700 flex items-center gap-2">
+                    <TrendingUp size={18} /> Evolução por quinzena
+                    <span className="text-xs font-normal text-slate-500 ml-1">
+                        últimas {quinzenas.length || 0} • horas faturadas
+                    </span>
+                </h3>
+                {horasContratadas > 0 && (
+                    <span className="text-xs text-slate-500">
+                        Contrato: <strong className="text-slate-700">{Math.round(horasContratadas)}h</strong>
+                    </span>
+                )}
+            </div>
+
+            {quinzenas.length === 0 ? (
+                <div className="p-8 text-center text-slate-400 text-sm">
+                    Sem lançamentos suficientes para montar a série quinzenal.
+                </div>
+            ) : (
+                <div className="p-5">
+                    {/* Painel de detalhes (master-detail) */}
+                    {effectiveSelected && (
+                        <div className="mb-5 rounded-lg border border-blue-100 bg-blue-50/40 p-4">
+                            <div className="flex flex-wrap items-baseline justify-between gap-2 mb-3">
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-sm font-bold text-slate-800">
+                                        {effectiveSelected.numero}ª quinzena
+                                    </span>
+                                    <span className="text-xs text-slate-500">
+                                        {fmtDataLonga(effectiveSelected.dataInicio)} a {fmtDataLonga(effectiveSelected.dataFim)}
+                                    </span>
+                                </div>
+                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                                    effectiveSelected.encerrada
+                                        ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                                        : 'bg-blue-100 text-blue-700 border border-blue-200'
+                                }`}>
+                                    {effectiveSelected.encerrada ? 'Encerrada' : 'Em curso'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <DetailStat
+                                    label="Horas faturadas"
+                                    value={`${effectiveSelected.horasLancadas.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h`}
+                                />
+                                <DetailStat
+                                    label="Máquinas faturando"
+                                    value={`${effectiveSelected.maquinasFaturando ?? 0} / ${effectiveSelected.maquinasAlocadas ?? 0}`}
+                                    sub="das alocadas"
+                                />
+                                <DetailStat
+                                    label="Avanço no período"
+                                    value={effectiveSelected.deltaPercent != null ? `+${effectiveSelected.deltaPercent.toFixed(1)}%` : '—'}
+                                    sub="do contrato"
+                                />
+                                <DetailStat
+                                    label="Acumulado"
+                                    value={effectiveSelected.percentualAcumulado != null ? `${effectiveSelected.percentualAcumulado.toFixed(1)}%` : '—'}
+                                    sub="do contrato"
+                                />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Lista de quinzenas — cada item é clicável */}
+                    <div className="space-y-2">
+                        {quinzenas.map(q => {
+                            const barW = (q.horasLancadas / maxHoras) * 100;
+                            const corBarra = q.horasLancadas === 0
+                                ? 'bg-slate-200'
+                                : q.encerrada ? 'bg-blue-500' : 'bg-blue-300';
+                            const isSelected = effectiveSelected?.numero === q.numero;
+                            return (
+                                <button
+                                    key={q.numero}
+                                    type="button"
+                                    onClick={() => setSelectedNumero(q.numero)}
+                                    className={`w-full text-left rounded-lg px-3 py-2 transition-colors border-l-4 ${
+                                        isSelected
+                                            ? 'border-blue-500 bg-blue-50/60'
+                                            : 'border-transparent hover:bg-slate-50'
+                                    }`}
+                                >
+                                    <div className="flex items-center gap-3 mb-1 text-xs">
+                                        <span className={`inline-flex items-center justify-center rounded-md font-bold px-2 py-0.5 min-w-[36px] ${
+                                            isSelected ? 'bg-blue-500 text-white' : 'bg-slate-100 text-slate-700'
+                                        }`}>
+                                            {q.numero}ª
+                                        </span>
+                                        <span className="text-slate-500 tabular-nums whitespace-nowrap">
+                                            {fmtData(q.dataInicio)} – {fmtData(q.dataFim)}
+                                        </span>
+                                        {!q.encerrada && (
+                                            <span className="w-1.5 h-1.5 rounded-full bg-blue-500" title="Em curso" />
+                                        )}
+                                        <span className="ml-auto text-slate-700 font-bold tabular-nums">
+                                            {q.horasLancadas.toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h
+                                        </span>
+                                        <span className="text-slate-800 font-bold tabular-nums w-16 text-right">
+                                            {q.percentualAcumulado != null ? `${q.percentualAcumulado.toFixed(1)}%` : '—'}
+                                        </span>
+                                    </div>
+                                    <div className="ml-[44px] flex items-center gap-2">
+                                        <div className="flex-1 h-2 bg-slate-100 rounded overflow-hidden">
+                                            <div className={`h-2 rounded ${corBarra} transition-all`} style={{ width: `${Math.min(barW, 100)}%` }} />
+                                        </div>
+                                    </div>
+                                </button>
+                            );
+                        })}
+                    </div>
+                    <div className="pt-3 mt-2 border-t border-slate-100 text-[10px] text-slate-400 text-center">
+                        Clique numa quinzena para ver máquinas faturando, avanço no período e status.
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+};
+
+const DetailStat = ({ label, value, sub }) => (
+    <div>
+        <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500">{label}</p>
+        <p className="text-lg font-bold text-slate-800 mt-0.5 tabular-nums leading-tight">{value}</p>
+        {sub && <p className="text-[10px] text-slate-500 mt-0.5">{sub}</p>}
+    </div>
+);
 
 const KpiBlock = ({ icon: Icon, label, primary, secondary, progress, progressColor, valueColor }) => (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
