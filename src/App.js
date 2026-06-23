@@ -96,8 +96,8 @@ const AdminSistemaPage             = lazy(() => import('./pages/AdminSistemaPage
 // Fallback de Carregamento de Página
 // ==========================================
 const PageFallback = () => (
-    <div className="flex items-center justify-center h-full text-lg font-semibold" style={{ color: '#9a8a78' }}>
-        <Loader size={28} className="animate-spin mr-3" style={{ color: '#9E7A42' }} /> Carregando...
+    <div className="flex items-center justify-center h-full">
+        <ExcavatorLoader size="md" />
     </div>
 );
 
@@ -981,7 +981,7 @@ const AppRouter = () => {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen" style={{ background: '#f5f3ef' }}>
-                <Loader size={36} className="animate-spin" style={{ color: '#9E7A42' }} />
+                <ExcavatorLoader size="md" text={null} />
             </div>
         );
     }

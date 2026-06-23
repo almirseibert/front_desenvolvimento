@@ -577,8 +577,7 @@ const DiarioDeBordoPage = ({
                 {/* Loading de Log Ativo */}
                 {isFetchingLog && (
                     <div className="bg-white p-6 rounded-lg shadow-lg border-l-4 border-gray-300 flex justify-center items-center h-48">
-                         <Loader className="animate-spin text-yellow-500" size={32} />
-                         <p className="ml-4 text-gray-600">Verificando jornada...</p>
+                        <ExcavatorLoader size="sm" text="Verificando jornada..." />
                     </div>
                 )}
 

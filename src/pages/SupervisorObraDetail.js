@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 import {
     ArrowLeft, DollarSign, Truck, Save, Loader,
     AlertTriangle, MessageSquare, FileText, FileDown,
@@ -103,8 +104,8 @@ const SupervisorObraDetail = ({ obraId, onBack }) => {
 
     if (loading) {
         return (
-            <div className="flex h-screen items-center justify-center">
-                <Loader className="animate-spin text-blue-600" size={42} />
+            <div className="flex h-screen items-center justify-center" style={{ background: '#f5f3ef' }}>
+                <ExcavatorLoader size="md" />
             </div>
         );
     }

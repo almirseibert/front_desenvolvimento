@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import apiClient from '../services/apiClient';
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 import {
     Package, Plus, Edit, Trash2, Search, AlertTriangle, TrendingDown,
     DollarSign, AlertCircle, X, Loader, Grid3X3, List, RefreshCw,
@@ -825,8 +826,7 @@ const InventoryPage = ({ user, setAlertMessage, socket }) => {
     if (isLoading) {
         return (
             <div className="container mx-auto p-8 flex flex-col items-center justify-center min-h-[60vh] gap-4">
-                <Loader className="animate-spin text-purple-600" size={40} />
-                <p className="text-gray-500 text-sm">Carregando dados do almoxarifado...</p>
+                <ExcavatorLoader size="md" text="Carregando dados do almoxarifado..." />
             </div>
         );
     }

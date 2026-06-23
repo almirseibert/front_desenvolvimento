@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useRef, useMemo } from 'react';
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 import { 
     Camera, MapPin, Send, AlertTriangle, CheckCircle, Clock, 
     XCircle, ChevronRight, Fuel, Image as ImageIcon, Loader, 
@@ -786,7 +787,7 @@ const SolicitacaoAbastecimentoPage = ({
         }
     };
 
-    if (!user) return <div className="flex justify-center items-center h-screen"><Loader className="animate-spin"/></div>;
+    if (!user) return <div className="flex justify-center items-center h-screen" style={{ background: '#f5f3ef' }}><ExcavatorLoader size="md" text={null} /></div>;
 
     return (
         <div className="w-full bg-gray-100 pb-24 relative">

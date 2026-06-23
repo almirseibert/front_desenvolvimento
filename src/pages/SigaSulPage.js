@@ -1,4 +1,5 @@
 ﻿import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 import {
     Radio, RefreshCw, Loader, Wifi, WifiOff,
     MapPin, Gauge, Zap, ZapOff, AlertTriangle,
@@ -225,9 +226,8 @@ function TabTempoReal({ apiClient }) {
             )}
 
             {loading && data.length === 0 && (
-                <div className="py-16 text-center text-gray-400 text-sm flex flex-col items-center gap-3">
-                    <Loader size={28} className="animate-spin text-yellow-400" />
-                    Carregando posições...
+                <div className="py-16 text-center flex flex-col items-center gap-3">
+                    <ExcavatorLoader size="sm" text="Carregando posições..." />
                 </div>
             )}
 

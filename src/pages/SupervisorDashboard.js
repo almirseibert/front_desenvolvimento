@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 import {
     LayoutDashboard, RefreshCw, Loader, AlertCircle, Truck,
     Activity, Search, X, Clock, CheckCircle2,
@@ -511,8 +512,7 @@ const SupervisorDashboard = ({ user, onNavigateToDetail }) => {
             {/* Conteúdo */}
             {loading ? (
                 <div className="flex flex-col items-center justify-center h-64">
-                    <Loader size={48} className="animate-spin text-blue-600 mb-4" />
-                    <span className="text-xl text-slate-600">Calculando previsões...</span>
+                    <ExcavatorLoader size="sm" text="Calculando previsões..." />
                 </div>
             ) : filteredAndSorted.length === 0 ? (
                 <div className="text-center py-20 text-slate-400 bg-white rounded-xl border border-slate-200">
