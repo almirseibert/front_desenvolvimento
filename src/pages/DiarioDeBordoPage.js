@@ -3,6 +3,7 @@
 import { useAuth } from '../contexts/AuthContext';
 // REMOVIDO: useOfflineContext
 import { Play, Coffee, StopCircle, LogOut, Loader, History, AlertCircle, Truck, ChevronLeft, X } from 'lucide-react'; // Ícones mantidos
+import ExcavatorLoader from '../components/ui/ExcavatorLoader';
 // REMOVIDO: signOut
 import ProtectedComponent from '../components/ProtectedComponent'; // Ajuste o caminho se necessário
 import { formatObraNome } from '../utils/obraFormat';
@@ -477,7 +478,7 @@ const DiarioDeBordoPage = ({
 
     // Telas de Loading e Acesso Negado
     if (isLoading) { // Loading inicial (busca funcionário/veículos)
-        return <div className="flex items-center justify-center min-h-screen"><Loader className="animate-spin text-yellow-500" size={48} /></div>;
+        return <div className="flex items-center justify-center min-h-screen" style={{ background: '#f5f3ef' }}><ExcavatorLoader size="md" /></div>;
     }
 
     if (!myEmployeeData || allocatedVehicles.length === 0) {

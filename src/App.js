@@ -36,6 +36,7 @@
 import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react';
 import { Bell, Loader, X, UserPlus, AlertTriangle, WifiOff, Fuel, Truck
 } from 'lucide-react';
+import ExcavatorLoader from './components/ui/ExcavatorLoader';
 
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -668,7 +669,7 @@ const AppContent = () => {
         if (bootstrapLoading) {
             return (
                 <div className="flex justify-center items-center h-screen" style={{ background: '#f5f3ef' }}>
-                    <Loader className="animate-spin" size={36} style={{ color: '#9E7A42' }} />
+                    <ExcavatorLoader size="md" />
                 </div>
             );
         }
@@ -957,9 +958,8 @@ const AppContent = () => {
                     )}
 
                     {bootstrapLoading ? (
-                        <div className="flex items-center justify-center h-full text-lg font-semibold" style={{ color: '#9a8a78' }}>
-                            <Loader size={28} className="animate-spin mr-3" style={{ color: '#9E7A42' }} />
-                            Carregando dados iniciais...
+                        <div className="flex items-center justify-center h-full">
+                            <ExcavatorLoader size="md" text="Carregando dados iniciais..." />
                         </div>
                     ) : (
                         <Suspense fallback={<PageFallback />}>
