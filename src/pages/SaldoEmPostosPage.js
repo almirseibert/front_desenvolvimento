@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import {
     Fuel, Plus, AlertTriangle, History, X, TrendingDown,
     ArrowDownCircle, ArrowUpCircle, RefreshCcw, ArrowUpDown,
+    Pencil, Trash2,
 } from 'lucide-react';
 import apiClient from '../services/apiClient';
 import { useData, useEnsureResources } from '../contexts/DataContext';
@@ -14,11 +15,28 @@ const fmtDateTime = (d) => {
     if (!d) return '';
     try { return new Date(d).toLocaleString('pt-BR'); } catch { return String(d); }
 };
+// Só consideramos "ativo" o posto que recebeu crédito pré-pago.
+// Postos sem crédito são pagamento à vista — não devem aparecer como saldo negativo.
 const hasActivity = (row) =>
     (Number(row.total_credited) || 0) > 0 ||
     (Number(row.total_reserved) || 0) > 0 ||
-    (Number(row.total_settled) || 0) > 0 ||
     (Number(row.full_tank_open) || 0) > 0;
+
+// Máscara de moeda BRL: o input mantém apenas os dígitos e mostra "1.234,56".
+const digitsToBRL = (digits) => {
+    const clean = String(digits || '').replace(/\D/g, '');
+    if (!clean) return '';
+    const num = Number(clean) / 100;
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+const digitsToNumber = (digits) => {
+    const clean = String(digits || '').replace(/\D/g, '');
+    return clean ? Number(clean) / 100 : 0;
+};
+const numberToDigits = (n) => {
+    const v = Number(n) || 0;
+    return String(Math.round(v * 100));
+};
 
 const ENTRY_LABELS = {
     credit: { label: 'Crédito', color: 'text-green-700 bg-green-50', sign: '+' },
@@ -93,10 +111,11 @@ const PartnerCard = ({ row, onLancar, onVerExtrato }) => {
 // ────────────────────────────────────────────────────────────────────────────
 // Modal: Lançar crédito (com seleção de posto opcional)
 // ────────────────────────────────────────────────────────────────────────────
-const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
-    const [partnerId, setPartnerId] = useState(partner?.partner_id || '');
-    const [amount, setAmount] = useState('');
-    const [description, setDescription] = useState('');
+const LancarCreditoModal = ({ partner, allPartners, editEntry, onClose, onSaved }) => {
+    const isEdit = !!editEntry;
+    const [partnerId, setPartnerId] = useState(editEntry?.partner_id || partner?.partner_id || '');
+    const [amountDigits, setAmountDigits] = useState(editEntry ? numberToDigits(editEntry.amount) : '');
+    const [description, setDescription] = useState(editEntry?.description || '');
     const [detail, setDetail] = useState(null);
     const [loadingDetail, setLoadingDetail] = useState(false);
     const [saving, setSaving] = useState(false);
@@ -116,16 +135,23 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!partnerId) { setError('Escolha um posto.'); return; }
-        const v = parseFloat(String(amount).replace(',', '.'));
+        const v = digitsToNumber(amountDigits);
         if (!Number.isFinite(v) || v <= 0) { setError('Valor deve ser maior que zero.'); return; }
         setSaving(true);
         setError(null);
         try {
-            await apiClient.createPartnerFuelCredit({
-                partner_id: partnerId,
-                amount: v,
-                description: description.trim() || null,
-            });
+            if (isEdit) {
+                await apiClient.updatePartnerFuelCreditEntry(editEntry.id, {
+                    amount: v,
+                    description: description.trim() || null,
+                });
+            } else {
+                await apiClient.createPartnerFuelCredit({
+                    partner_id: partnerId,
+                    amount: v,
+                    description: description.trim() || null,
+                });
+            }
             onSaved();
         } catch (err) {
             setError(err.message);
@@ -137,7 +163,7 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
     const available = Number(detail?.balance?.available || 0);
     const avg30 = Number(detail?.consumption?.avgDaily30 || 0);
     const diasAtuais = avg30 > 0 ? Math.floor(available / avg30) : null;
-    const valorNum = parseFloat(String(amount).replace(',', '.')) || 0;
+    const valorNum = digitsToNumber(amountDigits);
     const diasComCredito = avg30 > 0 ? Math.floor((available + valorNum) / avg30) : null;
     const fullTankOpen = Number(detail?.balance?.full_tank_open || 0);
 
@@ -145,7 +171,7 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl w-full max-w-lg">
                 <div className="flex items-center justify-between p-4 border-b">
-                    <h2 className="font-semibold text-slate-800">Lançar crédito em posto</h2>
+                    <h2 className="font-semibold text-slate-800">{isEdit ? 'Editar crédito lançado' : 'Lançar crédito em posto'}</h2>
                     <button onClick={onClose} className="text-slate-500 hover:text-slate-700"><X size={18} /></button>
                 </div>
                 <form onSubmit={handleSubmit} className="p-4 space-y-4">
@@ -156,7 +182,7 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
                             onChange={(e) => setPartnerId(e.target.value)}
                             className="mt-1 w-full border rounded px-3 py-2"
                             required
-                            disabled={!!partner}
+                            disabled={!!partner || isEdit}
                         >
                             <option value="">Selecione...</option>
                             {(allPartners || []).map(p => (
@@ -189,8 +215,19 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
                     )}
 
                     <div>
-                        <label className="text-sm font-medium text-slate-700">Valor a creditar (R$)</label>
-                        <input type="number" step="0.01" min="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1 w-full border rounded px-3 py-2" required />
+                        <label className="text-sm font-medium text-slate-700">Valor a creditar</label>
+                        <div className="mt-1 relative">
+                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">R$</span>
+                            <input
+                                type="text"
+                                inputMode="numeric"
+                                value={digitsToBRL(amountDigits)}
+                                onChange={(e) => setAmountDigits(e.target.value.replace(/\D/g, ''))}
+                                placeholder="0,00"
+                                className="w-full border rounded pl-9 pr-3 py-2 text-right font-mono"
+                                required
+                            />
+                        </div>
                     </div>
                     <div>
                         <label className="text-sm font-medium text-slate-700">Descrição (opcional)</label>
@@ -207,7 +244,7 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
                     <div className="flex justify-end gap-2 pt-2">
                         <button type="button" onClick={onClose} className="px-4 py-2 rounded border text-slate-700 hover:bg-slate-50">Cancelar</button>
                         <button type="submit" disabled={saving} className="px-4 py-2 rounded bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-semibold disabled:opacity-50">
-                            {saving ? 'Lançando...' : 'Confirmar crédito'}
+                            {saving ? 'Salvando...' : (isEdit ? 'Salvar alteração' : 'Confirmar crédito')}
                         </button>
                     </div>
                 </form>
@@ -219,18 +256,32 @@ const LancarCreditoModal = ({ partner, allPartners, onClose, onSaved }) => {
 // ────────────────────────────────────────────────────────────────────────────
 // Drawer: Extrato em tabela, com filtro técnico e ordem cronológica
 // ────────────────────────────────────────────────────────────────────────────
-const ExtratoDrawer = ({ partner, onClose }) => {
+const ExtratoDrawer = ({ partner, onClose, onEditCredit, refreshKey, onAfterMutation }) => {
     const [entries, setEntries] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showTechnical, setShowTechnical] = useState(false);
     const [sortAsc, setSortAsc] = useState(true);
+    const [deletingId, setDeletingId] = useState(null);
 
     useEffect(() => {
         setLoading(true);
         apiClient.getPartnerFuelCreditEntries(partner.partner_id, { limit: 500 })
             .then(setEntries)
             .finally(() => setLoading(false));
-    }, [partner.partner_id]);
+    }, [partner.partner_id, refreshKey]);
+
+    const handleDelete = async (entry) => {
+        if (!window.confirm(`Remover este crédito de ${fmtBRL(entry.amount)}? Esta ação não pode ser desfeita.`)) return;
+        setDeletingId(entry.id);
+        try {
+            await apiClient.deletePartnerFuelCreditEntry(entry.id);
+            onAfterMutation && onAfterMutation();
+        } catch (e) {
+            alert(e.message);
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     // Por padrão escondemos `reservation_release` em ordens que já foram baixadas:
     // o par (reservation + release) vira ruído quando a baixa cobre a história.
@@ -298,6 +349,7 @@ const ExtratoDrawer = ({ partner, onClose }) => {
                                     <th className="text-left px-3 py-2">Ordem / Obra</th>
                                     <th className="text-left px-3 py-2">Descrição</th>
                                     <th className="text-right px-3 py-2">Valor</th>
+                                    <th className="text-right px-3 py-2 w-20">Ações</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
@@ -325,6 +377,29 @@ const ExtratoDrawer = ({ partner, onClose }) => {
                                             <td className={`px-3 py-2 text-right whitespace-nowrap font-semibold ${isFullTankMarker ? 'text-amber-700 italic' : valueColor}`}>
                                                 {isFullTankMarker ? 'em aberto' : `${sign} ${fmtBRL(Math.abs(amt))}`}
                                             </td>
+                                            <td className="px-3 py-2 text-right whitespace-nowrap">
+                                                {e.entry_type === 'credit' && (
+                                                    <div className="inline-flex gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onEditCredit && onEditCredit(e)}
+                                                            title="Corrigir valor"
+                                                            className="p-1 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded"
+                                                        >
+                                                            <Pencil size={14} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDelete(e)}
+                                                            disabled={deletingId === e.id}
+                                                            title="Remover crédito"
+                                                            className="p-1 text-red-500 hover:text-red-700 hover:bg-red-50 rounded disabled:opacity-50"
+                                                        >
+                                                            <Trash2 size={14} />
+                                                        </button>
+                                                    </div>
+                                                )}
+                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -351,6 +426,8 @@ const SaldoEmPostosPage = () => {
     useEnsureResources(['partnerFuelCredits']);
     const { partnerFuelCredits = [], refresh } = useData();
     const [modal, setModal] = useState(null);
+    const [extratoPartner, setExtratoPartner] = useState(null);
+    const [extratoRefreshKey, setExtratoRefreshKey] = useState(0);
     const [filter, setFilter] = useState('');
     const [sortBy, setSortBy] = useState('alert');
     const [showAll, setShowAll] = useState(false);
@@ -394,6 +471,13 @@ const SaldoEmPostosPage = () => {
     const handleSaved = () => {
         setModal(null);
         refresh && refresh('partnerFuelCredits');
+        // se o extrato estiver aberto, recarrega ele também
+        if (extratoPartner) setExtratoRefreshKey(k => k + 1);
+    };
+
+    const handleExtratoMutation = () => {
+        refresh && refresh('partnerFuelCredits');
+        setExtratoRefreshKey(k => k + 1);
     };
 
     return (
@@ -456,7 +540,7 @@ const SaldoEmPostosPage = () => {
                             key={row.partner_id}
                             row={row}
                             onLancar={(p) => setModal({ type: 'credit', partner: p })}
-                            onVerExtrato={(p) => setModal({ type: 'extrato', partner: p })}
+                            onVerExtrato={(p) => setExtratoPartner(p)}
                         />
                     ))}
                 </div>
@@ -466,12 +550,19 @@ const SaldoEmPostosPage = () => {
                 <LancarCreditoModal
                     partner={modal.partner}
                     allPartners={partnerFuelCredits}
+                    editEntry={modal.editEntry}
                     onClose={() => setModal(null)}
                     onSaved={handleSaved}
                 />
             )}
-            {modal?.type === 'extrato' && (
-                <ExtratoDrawer partner={modal.partner} onClose={() => setModal(null)} />
+            {extratoPartner && (
+                <ExtratoDrawer
+                    partner={extratoPartner}
+                    refreshKey={extratoRefreshKey}
+                    onEditCredit={(entry) => setModal({ type: 'credit', partner: extratoPartner, editEntry: entry })}
+                    onAfterMutation={handleExtratoMutation}
+                    onClose={() => setExtratoPartner(null)}
+                />
             )}
         </div>
     );

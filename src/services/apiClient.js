@@ -201,6 +201,8 @@ const apiClient = {
     },
     createPartnerFuelCredit: async (data) => apiFetch('/partnerFuelCredits', { method: 'POST', body: JSON.stringify(data) }),
     createPartnerFuelCreditAdjustment: async (partnerId, data) => apiFetch(`/partnerFuelCredits/${partnerId}/adjustment`, { method: 'POST', body: JSON.stringify(data) }),
+    updatePartnerFuelCreditEntry: async (entryId, data) => apiFetch(`/partnerFuelCredits/entries/${entryId}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deletePartnerFuelCreditEntry: async (entryId) => apiFetch(`/partnerFuelCredits/entries/${entryId}`, { method: 'DELETE' }),
 
     // --- SOLICITAÇÕES (App) ---
     getSolicitacoes: async (params) => {
