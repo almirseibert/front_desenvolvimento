@@ -63,6 +63,7 @@ const Dashboard                    = lazy(() => import('./pages/Dashboard'));
 const ObrasPage                    = lazy(() => import('./pages/ObrasPage'));
 const PartnersPage                 = lazy(() => import('./pages/PartnersPage'));
 const RefuelingPage                = lazy(() => import('./pages/RefuelingPage'));
+const SaldoEmPostosPage            = lazy(() => import('./pages/SaldoEmPostosPage'));
 const ComboioPage                  = lazy(() => import('./pages/ComboioPage'));
 const ExpensesPage                 = lazy(() => import('./pages/ExpensesPage'));
 const EmployeesPage                = lazy(() => import('./pages/EmployeesPage'));
@@ -575,6 +576,7 @@ const AppContent = () => {
         vehicles:             ['revisions', 'fines'],
         revisions:            ['revisions'],
         refueling:            ['refuelings', 'revisions'],
+        saldo_postos:         ['partnerFuelCredits'],
         admin_solicitacoes:   ['refuelings'],
         comboio:              ['comboioTransactions', 'refuelings'],
         expenses:             ['expenses'],
@@ -837,6 +839,9 @@ const AppContent = () => {
             case 'refueling':
                 return canAccessPage(user.roleNormalized, 'refueling')
                     ? <RefuelingPage {...commonProps} /> : <Denied />;
+            case 'saldo_postos':
+                return canAccessPage(user.roleNormalized, 'saldo_postos')
+                    ? <SaldoEmPostosPage /> : <Denied />;
             case 'admin_solicitacoes':
                 return canAccessPage(user.roleNormalized, 'admin_solicitacoes')
                     ? <AdminSolicitacoesPage {...commonProps} /> : <Denied />;

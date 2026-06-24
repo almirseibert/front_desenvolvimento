@@ -124,6 +124,11 @@ const RESOURCE_DEFS = {
         essential: false,
         allowedFor: (u) => !isOperador(u),
     },
+    partnerFuelCredits: {
+        getter: () => apiClient.getPartnerFuelCredits(),
+        essential: false,
+        allowedFor: (u) => !isOperador(u),
+    },
 };
 
 const RESOURCE_KEYS = Object.keys(RESOURCE_DEFS);
@@ -146,6 +151,8 @@ const TARGET_TO_RESOURCE = {
     diarioDeBordoLogs: 'diarioDeBordoLogs',
     dailyWorkLogs: 'dailyWorkLogs',
     orders: 'orders',
+    partner_fuel_credits: 'partnerFuelCredits',
+    partnerFuelCredits: 'partnerFuelCredits',
 };
 
 // ============================================================================
@@ -168,6 +175,7 @@ export const DataProvider = ({ children }) => {
     const [diarioDeBordoLogs, setDiarioDeBordoLogs] = useState(EMPTY_ARRAY);
     const [dailyWorkLogs, setDailyWorkLogs] = useState(EMPTY_ARRAY);
     const [orders, setOrders] = useState(EMPTY_ARRAY);
+    const [partnerFuelCredits, setPartnerFuelCredits] = useState(EMPTY_ARRAY);
 
     // Status de carregamento essencial (bloqueia tela até terminar)
     const [bootstrapLoading, setBootstrapLoading] = useState(true);
@@ -201,6 +209,7 @@ export const DataProvider = ({ children }) => {
         diarioDeBordoLogs: setDiarioDeBordoLogs,
         dailyWorkLogs: setDailyWorkLogs,
         orders: setOrders,
+        partnerFuelCredits: setPartnerFuelCredits,
     }), []);
 
     // ------------------------------------------------------------------------
@@ -442,6 +451,7 @@ export const DataProvider = ({ children }) => {
         diarioDeBordoLogs,
         dailyWorkLogs,
         orders,
+        partnerFuelCredits,
 
         // Status
         bootstrapLoading,
@@ -459,7 +469,7 @@ export const DataProvider = ({ children }) => {
     }), [
         vehicles, obras, employees, partners,
         revisions, expenses, refuelings, comboioTransactions, fines,
-        diarioDeBordoLogs, dailyWorkLogs, orders,
+        diarioDeBordoLogs, dailyWorkLogs, orders, partnerFuelCredits,
         bootstrapLoading, syncing,
         ensure, ensureAll, refresh, invalidate, reload,
         socket,

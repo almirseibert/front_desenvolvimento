@@ -73,6 +73,7 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             hidden: !canAccessAny(['refueling', 'comboio', 'admin_solicitacoes']),
             items: [
                 { id: 'refueling',          label: 'Abastecimento',     hidden: !canAccess('refueling') },
+                { id: 'saldo_postos',       label: 'Saldo em Postos',   hidden: !canAccess('refueling') },
                 { id: 'comboio',            label: 'Comboio',           hidden: !canAccess('comboio') },
                 { id: 'admin_solicitacoes', label: 'Solicitações (App)', hidden: !canAccess('admin_solicitacoes'), badge: pendingSolicitacoesCount },
             ],

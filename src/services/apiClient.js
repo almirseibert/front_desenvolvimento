@@ -187,11 +187,21 @@ const apiClient = {
     updatePartner: async (id, data) => apiFetch(`/partners/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deletePartner: async (id) => apiFetch(`/partners/${id}`, { method: 'DELETE' }),
     updatePartnerFuelPrices: async (id, prices) => apiFetch(`/partners/${id}/prices`, { method: 'PUT', body: JSON.stringify(prices) }),
-    updatePartnerStatus: async (id, status) => apiFetch(`/partners/${id}/status`, { 
-        method: 'PUT', 
+    updatePartnerStatus: async (id, status) => apiFetch(`/partners/${id}/status`, {
+        method: 'PUT',
         body: JSON.stringify({ status: status })
         }),
-        
+
+    // --- SALDO PRÉ-PAGO EM POSTOS ---
+    getPartnerFuelCredits: async () => apiFetch('/partnerFuelCredits'),
+    getPartnerFuelCreditDetail: async (partnerId) => apiFetch(`/partnerFuelCredits/${partnerId}`),
+    getPartnerFuelCreditEntries: async (partnerId, params = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiFetch(`/partnerFuelCredits/${partnerId}/entries${qs ? `?${qs}` : ''}`);
+    },
+    createPartnerFuelCredit: async (data) => apiFetch('/partnerFuelCredits', { method: 'POST', body: JSON.stringify(data) }),
+    createPartnerFuelCreditAdjustment: async (partnerId, data) => apiFetch(`/partnerFuelCredits/${partnerId}/adjustment`, { method: 'POST', body: JSON.stringify(data) }),
+
     // --- SOLICITAÇÕES (App) ---
     getSolicitacoes: async (params) => {
         const queryParams = new URLSearchParams(params).toString();
