@@ -690,7 +690,7 @@ const BillingPage = ({
                     ...prev,
                     [dateKey]: {
                         ...prev[dateKey],
-                        employeeId: source.employeeId || '',
+                        employeeId: source.employeeId || getDefaultOperator(d) || getDefaultOperator(dateKey) || '',
                         morningStart: source.morningStart || null,
                         morningEnd: source.morningEnd || null,
                         afternoonStart: source.afternoonStart || null,
@@ -759,15 +759,27 @@ const BillingPage = ({
         setAlertMessage(`Horários aplicados a ${count} dia(s) útil(eis) vazio(s).`);
     };
 
-    // Avança o foco para o próximo input de tempo da mesma linha quando o usuário completa HH:MM.
-    const focusNextTimeInput = (e, dayDate, currentField) => {
-        const value = e.target.value;
-        if (!/^\d{2}:\d{2}$/.test(value)) return;
+    // Avança o foco depois de 4 dígitos numéricos digitados (HH + MM).
+    // Não usa o value do input porque o <input type="time"> autocompleta segmentos
+    // ambíguos (ex: "5" vira "05"), o que dispararia o pulo prematuramente.
+    const handleTimeFocus = (e) => { e.target.dataset.digits = '0'; };
+
+    const handleTimeKeyDown = (e, dayDate, currentField) => {
+        if (e.key < '0' || e.key > '9') return;
+        const count = (parseInt(e.target.dataset.digits || '0', 10)) + 1;
+        e.target.dataset.digits = String(count);
+        if (count < 4) return;
         const idx = TIME_FIELD_ORDER.indexOf(currentField);
         if (idx === -1 || idx === TIME_FIELD_ORDER.length - 1) return;
         const nextField = TIME_FIELD_ORDER[idx + 1];
-        const next = document.querySelector(`[data-tk="${dayDate}-${nextField}"]`);
-        if (next && !next.disabled) next.focus();
+        // setTimeout para o dígito atual ser aplicado antes do foco mudar
+        setTimeout(() => {
+            const next = document.querySelector(`[data-tk="${dayDate}-${nextField}"]`);
+            if (next && !next.disabled) {
+                next.focus();
+                next.dataset.digits = '0';
+            }
+        }, 0);
     };
 
     const handleDateRangeChange = (field, value) => {
@@ -1367,9 +1379,9 @@ const BillingPage = ({
                                                                         ))}
                                                                     </select>
                                                                 </td>
-                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-morningStart`} type="time" value={mStart} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'morningStart', e.target.value); focusNextTimeInput(e, dayDate, 'morningStart'); }} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
-                                                                <td className="px-1 py-2 w-20 border-r"><input data-tk={`${dayDate}-morningEnd`} type="time" value={mEnd} min={mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'morningEnd', e.target.value); focusNextTimeInput(e, dayDate, 'morningEnd'); }} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
-                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-afternoonStart`} type="time" value={aStart} min={mEnd || mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'afternoonStart', e.target.value); focusNextTimeInput(e, dayDate, 'afternoonStart'); }} title={afternoonPartial ? 'Período da tarde incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${afternoonPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-morningStart`} type="time" value={mStart} disabled={!!justificativaTipo || isCleared} onFocus={handleTimeFocus} onKeyDown={(e) => handleTimeKeyDown(e, dayDate, 'morningStart')} onChange={(e) => handleInputChange(dayDate, 'morningStart', e.target.value)} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20 border-r"><input data-tk={`${dayDate}-morningEnd`} type="time" value={mEnd} min={mStart || undefined} disabled={!!justificativaTipo || isCleared} onFocus={handleTimeFocus} onKeyDown={(e) => handleTimeKeyDown(e, dayDate, 'morningEnd')} onChange={(e) => handleInputChange(dayDate, 'morningEnd', e.target.value)} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-afternoonStart`} type="time" value={aStart} min={mEnd || mStart || undefined} disabled={!!justificativaTipo || isCleared} onFocus={handleTimeFocus} onKeyDown={(e) => handleTimeKeyDown(e, dayDate, 'afternoonStart')} onChange={(e) => handleInputChange(dayDate, 'afternoonStart', e.target.value)} title={afternoonPartial ? 'Período da tarde incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${afternoonPartial ? partialBorder : ''}`}/></td>
                                                                 <td className="px-1 py-2 w-20 border-r"><input data-tk={`${dayDate}-afternoonEnd`} type="time" value={aEnd} min={aStart || mEnd || mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'afternoonEnd', e.target.value)} title={afternoonPartial ? 'Período da tarde incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${afternoonPartial ? partialBorder : ''}`}/></td>
                                                                 <td className="px-2 py-2 text-center w-28">
                                                                     {justificativaTipo ? (
