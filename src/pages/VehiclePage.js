@@ -415,7 +415,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                 </div>
 
                 {/* ── Filtros sempre visíveis ──────────────────────────────── */}
-                <div className="bg-white rounded-xl shadow-sm overflow-hidden" style={{ border: "1px solid #f0ebe3" }}>
+                <div className="bg-white rounded-xl shadow-sm relative" style={{ border: "1px solid #f0ebe3" }}>
                     <div className="p-3 flex flex-wrap items-center gap-2">
                         {/* Busca */}
                         <div className="relative flex-1 min-w-[180px]">

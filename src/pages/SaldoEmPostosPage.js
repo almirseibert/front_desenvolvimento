@@ -16,11 +16,9 @@ const fmtDateTime = (d) => {
     try { return new Date(d).toLocaleString('pt-BR'); } catch { return String(d); }
 };
 // Só consideramos "ativo" o posto que recebeu crédito pré-pago.
-// Postos sem crédito são pagamento à vista — não devem aparecer como saldo negativo.
-const hasActivity = (row) =>
-    (Number(row.total_credited) || 0) > 0 ||
-    (Number(row.total_reserved) || 0) > 0 ||
-    (Number(row.full_tank_open) || 0) > 0;
+// Postos sem crédito são pagamento à vista — não devem aparecer aqui,
+// mesmo que tenham empenho (tanque cheio aberto) ou consumo via baixa.
+const hasActivity = (row) => (Number(row.total_credited) || 0) > 0;
 
 // Máscara de moeda BRL: o input mantém apenas os dígitos e mostra "1.234,56".
 const digitsToBRL = (digits) => {
