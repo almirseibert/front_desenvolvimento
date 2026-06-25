@@ -2,6 +2,12 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Esconde o ícone do picker nativo em inputs type="time" marcados. */
+.time-input-clean::-webkit-calendar-picker-indicator { display: none; -webkit-appearance: none; }
+.time-input-clean::-webkit-inner-spin-button,
+.time-input-clean::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.time-input-clean { appearance: textfield; -moz-appearance: textfield; }
+
 /* ─── CSS Custom Properties — Tema Terroso Mineral ───────────── */
 :root {
 
@@ -437,6 +443,9 @@ button.bg-yellow-500 {
   50%       { opacity: 0.5; transform: scale(0.85); }
 }
 .dot-pulse { animation: dot-pulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .dot-pulse { animation: none; opacity: 1; }
+}
 
 /* ─── Neon Red Pulse — usado em avisos críticos de bloqueio ─── */
 @keyframes neonRedPulse {

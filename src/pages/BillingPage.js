@@ -52,6 +52,7 @@ const BillingPage = ({
     const [isSaving, setIsSaving] = useState(false);
     const [justificativaOpenDate, setJustificativaOpenDate] = useState(null);
     const [activeRowDate, setActiveRowDate] = useState(null);
+    const [quickFill, setQuickFill] = useState({ morningStart: '', morningEnd: '', afternoonStart: '', afternoonEnd: '' });
 
     // --- ESTADOS RELATÓRIO/FATURAMENTO ---
     const [reportStartDate, setReportStartDate] = useState('');
@@ -294,13 +295,40 @@ const BillingPage = ({
         return true;
     }, [selectedObra]);
 
+    // Índice O(1) de daily logs por dia (substitui .find() dentro de loops)
+    const dailyLogsByDate = useMemo(() => {
+        const map = new Map();
+        dailyLogs.forEach(l => {
+            const key = (l.date || '').split('T')[0];
+            if (key) map.set(key, l);
+        });
+        return map;
+    }, [dailyLogs]);
+
+    // Total decimal do mês — derivado uma vez, consumido pelo tfoot
+    const monthTotalDecimal = useMemo(() => {
+        if (!controlVehicleId) return 0;
+        return getDaysInMonth(controlMonth).reduce((acc, dayDate) => {
+            const existingLog = dailyLogsByDate.get(dayDate) || {};
+            const changes = localChanges[dayDate] || {};
+            if (changes._clear) return acc;
+            const justTipo = changes.justificativaTipo !== undefined ? changes.justificativaTipo : (existingLog.justificativaTipo || null);
+            if (justTipo) return acc;
+            const mS = changes.morningStart !== undefined ? changes.morningStart : (existingLog.morningStart || '');
+            const mE = changes.morningEnd !== undefined ? changes.morningEnd : (existingLog.morningEnd || '');
+            const aS = changes.afternoonStart !== undefined ? changes.afternoonStart : (existingLog.afternoonStart || '');
+            const aE = changes.afternoonEnd !== undefined ? changes.afternoonEnd : (existingLog.afternoonEnd || '');
+            return acc + calculateTimeDiffDecimal(mS, mE) + calculateTimeDiffDecimal(aS, aE);
+        }, 0);
+    }, [controlMonth, controlVehicleId, dailyLogsByDate, localChanges]);
+
     // Progresso de preenchimento do mês
     const monthProgress = useMemo(() => {
         if (!controlVehicleId) return null;
         const days = getDaysInMonth(controlMonth);
         const workdays = days.filter(d => !isWeekend(d));
         const filled = workdays.filter(d => {
-            const log = dailyLogs.find(l => l.date.startsWith(d)) || {};
+            const log = dailyLogsByDate.get(d) || {};
             const changes = localChanges[d] || {};
             if (changes._clear) return false;
             const justTipo = changes.justificativaTipo !== undefined ? changes.justificativaTipo : (log.justificativaTipo || null);
@@ -312,7 +340,7 @@ const BillingPage = ({
             return !!(mS || mE || aS || aE);
         });
         return { filled: filled.length, total: workdays.length };
-    }, [controlMonth, dailyLogs, localChanges, controlVehicleId]);
+    }, [controlMonth, dailyLogsByDate, localChanges, controlVehicleId]);
 
     // Obras recentes resolvidas (filtra IDs que não existem mais)
     const recentObras = useMemo(() => {
@@ -566,11 +594,43 @@ const BillingPage = ({
         }
     };
 
+    const TIME_FIELD_ORDER = ['morningStart', 'morningEnd', 'afternoonStart', 'afternoonEnd'];
+
     const handleInputChange = (dateKey, field, value) => {
-        setLocalChanges(prev => ({
-            ...prev,
-            [dateKey]: { ...prev[dateKey], [field]: value }
-        }));
+        setLocalChanges(prev => {
+            const existingLog = dailyLogs.find(l => l.date.startsWith(dateKey)) || {};
+            const current = { ...existingLog, ...(prev[dateKey] || {}), [field]: value };
+
+            // Garante ordem crescente: mStart ≤ mEnd ≤ aStart ≤ aEnd.
+            // Se o valor digitado for menor que o campo anterior, ele é descartado.
+            // Se ficar maior que algum campo posterior já preenchido, os posteriores são limpos.
+            const idx = TIME_FIELD_ORDER.indexOf(field);
+            if (idx !== -1 && value) {
+                for (let i = 0; i < idx; i++) {
+                    const prevVal = current[TIME_FIELD_ORDER[i]];
+                    if (prevVal && value < prevVal) {
+                        setAlertMessage(`O horário não pode ser menor que o campo anterior (${prevVal}).`);
+                        return prev;
+                    }
+                }
+                const cleared = {};
+                for (let i = idx + 1; i < TIME_FIELD_ORDER.length; i++) {
+                    const nextField = TIME_FIELD_ORDER[i];
+                    if (current[nextField] && current[nextField] < value) {
+                        cleared[nextField] = '';
+                    }
+                }
+                return {
+                    ...prev,
+                    [dateKey]: { ...prev[dateKey], [field]: value, ...cleared }
+                };
+            }
+
+            return {
+                ...prev,
+                [dateKey]: { ...prev[dateKey], [field]: value }
+            };
+        });
     };
 
     const handleSetJustificativa = (dateKey, tipo) => {
@@ -643,6 +703,71 @@ const BillingPage = ({
             }
         }
         setAlertMessage("Nenhum dia anterior com horas lançadas encontrado neste mês.");
+    };
+
+    // Aplica os horários do painel "quick fill" a todos os dias úteis vazios (não sobrescreve).
+    // Conta como "vazio" o dia que não tem horas no banco nem em localChanges, e não está limpo/justificado.
+    const applyQuickFillToWorkdays = () => {
+        const { morningStart, morningEnd, afternoonStart, afternoonEnd } = quickFill;
+        if (!morningStart && !morningEnd && !afternoonStart && !afternoonEnd) {
+            setAlertMessage("Preencha ao menos um horário no painel para aplicar.");
+            return;
+        }
+        if (morningStart && morningEnd && morningEnd < morningStart) {
+            setAlertMessage("Fim da manhã não pode ser menor que o início.");
+            return;
+        }
+        if (afternoonStart && afternoonEnd && afternoonEnd < afternoonStart) {
+            setAlertMessage("Fim da tarde não pode ser menor que o início.");
+            return;
+        }
+        if (morningEnd && afternoonStart && afternoonStart < morningEnd) {
+            setAlertMessage("Início da tarde não pode ser menor que o fim da manhã.");
+            return;
+        }
+
+        const days = getDaysInMonth(controlMonth).filter(d => !isWeekend(d));
+        const updates = {};
+        let count = 0;
+        days.forEach(d => {
+            const log = dailyLogsByDate.get(d) || {};
+            const changes = localChanges[d] || {};
+            if (changes._clear) return;
+            const justTipo = changes.justificativaTipo !== undefined ? changes.justificativaTipo : (log.justificativaTipo || null);
+            if (justTipo) return;
+            const has =
+                (changes.morningStart || log.morningStart) ||
+                (changes.morningEnd || log.morningEnd) ||
+                (changes.afternoonStart || log.afternoonStart) ||
+                (changes.afternoonEnd || log.afternoonEnd);
+            if (has) return;
+            updates[d] = {
+                ...changes,
+                employeeId: changes.employeeId !== undefined ? changes.employeeId : (log.employeeId || getDefaultOperator(d)),
+                morningStart: morningStart || null,
+                morningEnd: morningEnd || null,
+                afternoonStart: afternoonStart || null,
+                afternoonEnd: afternoonEnd || null,
+            };
+            count++;
+        });
+        if (count === 0) {
+            setAlertMessage("Nenhum dia útil vazio encontrado neste mês.");
+            return;
+        }
+        setLocalChanges(prev => ({ ...prev, ...updates }));
+        setAlertMessage(`Horários aplicados a ${count} dia(s) útil(eis) vazio(s).`);
+    };
+
+    // Avança o foco para o próximo input de tempo da mesma linha quando o usuário completa HH:MM.
+    const focusNextTimeInput = (e, dayDate, currentField) => {
+        const value = e.target.value;
+        if (!/^\d{2}:\d{2}$/.test(value)) return;
+        const idx = TIME_FIELD_ORDER.indexOf(currentField);
+        if (idx === -1 || idx === TIME_FIELD_ORDER.length - 1) return;
+        const nextField = TIME_FIELD_ORDER[idx + 1];
+        const next = document.querySelector(`[data-tk="${dayDate}-${nextField}"]`);
+        if (next && !next.disabled) next.focus();
     };
 
     const handleDateRangeChange = (field, value) => {
@@ -1106,6 +1231,42 @@ const BillingPage = ({
                                 </div>
                             )}
 
+                            {/* Painel Quick Fill — aplica horários a dias úteis vazios */}
+                            {controlVehicleId && (
+                                <div className="bg-white shadow rounded-lg p-4">
+                                    <div className="flex flex-col md:flex-row md:items-end gap-3">
+                                        <div className="flex-1">
+                                            <p className="text-xs font-bold text-gray-700 uppercase mb-2">Preenchimento rápido</p>
+                                            <p className="text-[11px] text-gray-500 mb-2">Aplica os horários abaixo a todos os dias úteis vazios deste mês. Não sobrescreve dias já preenchidos ou justificados.</p>
+                                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                                {[
+                                                    { f: 'morningStart', l: 'Manhã início' },
+                                                    { f: 'morningEnd', l: 'Manhã fim' },
+                                                    { f: 'afternoonStart', l: 'Tarde início' },
+                                                    { f: 'afternoonEnd', l: 'Tarde fim' },
+                                                ].map(({ f, l }) => (
+                                                    <div key={f}>
+                                                        <label className="block text-[10px] text-gray-500">{l}</label>
+                                                        <input
+                                                            type="time"
+                                                            value={quickFill[f]}
+                                                            onChange={(e) => setQuickFill(q => ({ ...q, [f]: e.target.value }))}
+                                                            className="time-input-clean w-full text-xs p-1 border rounded text-center"
+                                                        />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={applyQuickFillToWorkdays}
+                                            className="px-4 py-2 bg-[#9E7A42] text-white text-xs font-semibold rounded hover:bg-[#8a6a34] transition whitespace-nowrap"
+                                        >
+                                            Aplicar a dias úteis vazios
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Tabela de Dias do Mês */}
                             <div className="bg-white shadow rounded-lg overflow-hidden">
                                 {loadingLogs ? (
@@ -1141,7 +1302,7 @@ const BillingPage = ({
                                                     };
 
                                                     return getDaysInMonth(controlMonth).map(dayDate => {
-                                                        const existingLog = dailyLogs.find(l => l.date.startsWith(dayDate)) || {};
+                                                        const existingLog = dailyLogsByDate.get(dayDate) || {};
                                                         const changes = localChanges[dayDate] || {};
                                                         const isCleared = !!changes._clear;
 
@@ -1160,6 +1321,10 @@ const BillingPage = ({
 
                                                         const totalDecimal = justificativaTipo ? 0 : (calcDiff(mStart, mEnd) + calcDiff(aStart, aEnd));
                                                         const hasHours = !!(mStart || mEnd || aStart || aEnd);
+                                                        // Pares incompletos (só início ou só fim): borda âmbar para destacar
+                                                        const morningPartial = !justificativaTipo && !isCleared && ((!!mStart) !== (!!mEnd));
+                                                        const afternoonPartial = !justificativaTipo && !isCleared && ((!!aStart) !== (!!aEnd));
+                                                        const partialBorder = 'ring-1 ring-amber-400 border-amber-400';
                                                         const isToday = dayDate === todayStr;
                                                         const isWknd = isWeekend(dayDate);
                                                         const dow = getDayOfWeekShort(dayDate);
@@ -1202,10 +1367,10 @@ const BillingPage = ({
                                                                         ))}
                                                                     </select>
                                                                 </td>
-                                                                <td className="px-1 py-2 w-20"><input type="time" value={mStart} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'morningStart', e.target.value)} className="w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400"/></td>
-                                                                <td className="px-1 py-2 w-20 border-r"><input type="time" value={mEnd} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'morningEnd', e.target.value)} className="w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400"/></td>
-                                                                <td className="px-1 py-2 w-20"><input type="time" value={aStart} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'afternoonStart', e.target.value)} className="w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400"/></td>
-                                                                <td className="px-1 py-2 w-20 border-r"><input type="time" value={aEnd} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'afternoonEnd', e.target.value)} className="w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400"/></td>
+                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-morningStart`} type="time" value={mStart} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'morningStart', e.target.value); focusNextTimeInput(e, dayDate, 'morningStart'); }} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20 border-r"><input data-tk={`${dayDate}-morningEnd`} type="time" value={mEnd} min={mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'morningEnd', e.target.value); focusNextTimeInput(e, dayDate, 'morningEnd'); }} title={morningPartial ? 'Período da manhã incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${morningPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20"><input data-tk={`${dayDate}-afternoonStart`} type="time" value={aStart} min={mEnd || mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => { handleInputChange(dayDate, 'afternoonStart', e.target.value); focusNextTimeInput(e, dayDate, 'afternoonStart'); }} title={afternoonPartial ? 'Período da tarde incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${afternoonPartial ? partialBorder : ''}`}/></td>
+                                                                <td className="px-1 py-2 w-20 border-r"><input data-tk={`${dayDate}-afternoonEnd`} type="time" value={aEnd} min={aStart || mEnd || mStart || undefined} disabled={!!justificativaTipo || isCleared} onChange={(e) => handleInputChange(dayDate, 'afternoonEnd', e.target.value)} title={afternoonPartial ? 'Período da tarde incompleto' : ''} className={`time-input-clean w-full text-xs p-1 border rounded text-center disabled:bg-gray-100 disabled:text-gray-400 ${afternoonPartial ? partialBorder : ''}`}/></td>
                                                                 <td className="px-2 py-2 text-center w-28">
                                                                     {justificativaTipo ? (
                                                                         <span className="text-[10px] bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-semibold whitespace-nowrap">
@@ -1280,27 +1445,7 @@ const BillingPage = ({
                                                     <tr className="bg-gray-800 text-white text-xs font-bold">
                                                         <td colSpan={6} className="px-4 py-2 text-right uppercase tracking-wide">Total do Mês</td>
                                                         <td className="px-2 py-2 text-center text-base">
-                                                            {(() => {
-                                                                const calcDiff = (s, e) => {
-                                                                    if (!s || !e) return 0;
-                                                                    const [h1, m1] = s.split(':').map(Number);
-                                                                    const [h2, m2] = e.split(':').map(Number);
-                                                                    return Math.max(0, ((h2 * 60 + m2) - (h1 * 60 + m1)) / 60);
-                                                                };
-                                                                const total = getDaysInMonth(controlMonth).reduce((acc, dayDate) => {
-                                                                    const existingLog = dailyLogs.find(l => l.date.startsWith(dayDate)) || {};
-                                                                    const changes = localChanges[dayDate] || {};
-                                                                    if (changes._clear) return acc;
-                                                                    const justTipo = changes.justificativaTipo !== undefined ? changes.justificativaTipo : (existingLog.justificativaTipo || null);
-                                                                    if (justTipo) return acc;
-                                                                    const mS = changes.morningStart !== undefined ? changes.morningStart : (existingLog.morningStart || '');
-                                                                    const mE = changes.morningEnd !== undefined ? changes.morningEnd : (existingLog.morningEnd || '');
-                                                                    const aS = changes.afternoonStart !== undefined ? changes.afternoonStart : (existingLog.afternoonStart || '');
-                                                                    const aE = changes.afternoonEnd !== undefined ? changes.afternoonEnd : (existingLog.afternoonEnd || '');
-                                                                    return acc + calcDiff(mS, mE) + calcDiff(aS, aE);
-                                                                }, 0);
-                                                                return formatDecimalToTime(total);
-                                                            })()}
+                                                            {formatDecimalToTime(monthTotalDecimal)}
                                                         </td>
                                                         <td colSpan={2} className="px-4 py-2"></td>
                                                     </tr>
