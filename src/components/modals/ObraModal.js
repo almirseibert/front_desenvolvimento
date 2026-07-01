@@ -9,12 +9,14 @@ const ObraModal = ({
     reloadData,
     setAlertMessage,
     equipmentTypesForHours = [], // Recebe a lista filtrada (derivedEquipmentTypes) do Pai (ObrasPage)
-    initialTipoRegistro = 'obra'
+    initialTipoRegistro = 'obra',
+    employees = [],
 }) => {
     // --- ESTADOS DO FORMULÁRIO ---
     const [tipoRegistro, setTipoRegistro] = useState(initialTipoRegistro); // 'obra' | 'centro_custo'
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
+    const [responsavelEmail, setResponsavelEmail] = useState('');
     const [fiscal, setFiscal] = useState('');
     const [contractType, setContractType] = useState('horas'); // 'horas' | 'metrosQuadrados'
     const [dataInicio, setDataInicio] = useState(new Date().toISOString().split('T')[0]);
@@ -44,6 +46,7 @@ const ObraModal = ({
             setTipoRegistro(obra.tipo_registro || 'obra');
             setNome(obra.nome || '');
             setResponsavel(obra.responsavel || '');
+            setResponsavelEmail(obra.responsavel_email || '');
             setFiscal(obra.fiscal || '');
             setContractType(obra.contractType || 'horas');
             setDataInicio(obra.dataInicio ? new Date(obra.dataInicio).toISOString().split('T')[0] : '');
@@ -136,6 +139,7 @@ const ObraModal = ({
             tipo_registro: tipoRegistro,
             nome,
             responsavel,
+            responsavel_email: responsavelEmail || null,
             fiscal,
             contractType,
             dataInicio,
@@ -247,28 +251,49 @@ const ObraModal = ({
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
                                     <User size={14}/> Responsável da Obra
                                 </label>
-                                <input 
-                                    type="text" 
-                                    value={responsavel} 
-                                    onChange={(e) => setResponsavel(e.target.value)} 
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none" 
-                                    placeholder="Nome do Responsável"
-                                />
+                                {employees.length > 0 ? (
+                                    <select
+                                        value={responsavelEmail}
+                                        onChange={(e) => {
+                                            const email = e.target.value;
+                                            setResponsavelEmail(email);
+                                            const emp = employees.find(x => x.email === email);
+                                            setResponsavel(emp ? emp.nome : '');
+                                        }}
+                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
+                                    >
+                                        <option value="">— Nenhum —</option>
+                                        {employees.filter(emp => emp.email).map(emp => (
+                                            <option key={emp.id} value={emp.email}>
+                                                {emp.nome} ({emp.email})
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <input
+                                        type="text"
+                                        value={responsavel}
+                                        onChange={(e) => setResponsavel(e.target.value)}
+                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none"
+                                        placeholder="Nome do Responsável"
+                                    />
+                                )}
+                                <p className="text-xs text-gray-400 mt-0.5">Recebe alertas de progresso da obra (30/50/70%) e de orçamento de combustível.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
                                     <ClipboardList size={14}/> Fiscal da Obra
                                 </label>
-                                <input 
-                                    type="text" 
-                                    value={fiscal} 
-                                    onChange={(e) => setFiscal(e.target.value)} 
-                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none" 
+                                <input
+                                    type="text"
+                                    value={fiscal}
+                                    onChange={(e) => setFiscal(e.target.value)}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none"
                                     placeholder="Nome do Fiscal"
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Data Início *</label>

@@ -102,6 +102,19 @@ const apiClient = {
         });
     },
 
+    // --- Documentos do Veículo ---
+    getVehicleDocuments: async (vehicleId) => apiFetch(`/vehicles/${vehicleId}/documents`),
+    uploadVehicleDocument: async (vehicleId, formData) =>
+        apiFetch(`/vehicles/${vehicleId}/documents`, { method: 'POST', body: formData }),
+    deleteVehicleDocument: async (vehicleId, docId) =>
+        apiFetch(`/vehicles/${vehicleId}/documents/${docId}`, { method: 'DELETE' }),
+
+    // --- Log de notificações enviadas ---
+    getNotificationLog: async (params = {}) => {
+        const qs = new URLSearchParams(params).toString();
+        return apiFetch(`/notification-log${qs ? '?' + qs : ''}`);
+    },
+
     // --- Configurações de Tipos/Sub-tipos de Veículos ---
     getVehicleTypeConfigs: async () => apiFetch('/vehicle-type-configs'),
     createVehicleTypeConfig: async (data) => apiFetch('/vehicle-type-configs', { method: 'POST', body: JSON.stringify(data) }),

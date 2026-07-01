@@ -369,6 +369,7 @@ const ObrasPage = ({
                     setAlertMessage={setAlertMessage}
                     equipmentTypesForHours={derivedEquipmentTypes}
                     initialTipoRegistro={selectedObra ? (selectedObra.tipo_registro || 'obra') : (tipoFilter !== 'todos' ? tipoFilter : 'obra')}
+                    employees={employees}
                 />
             )}
 

@@ -559,12 +559,18 @@ const AppContent = () => {
             }
         };
 
+        const handleWaReconectado = () => {
+            setAdminPopups(prev => prev.filter(p => p.tipo !== 'whatsapp_desconectado' && p.tipo !== 'whatsapp_nao_configurado'));
+        };
+
         socket.on('agenda:alerta', handleAgendaAlert);
         socket.on('admin:notificacao', handleAdminNotification);
+        socket.on('whatsapp:reconectado', handleWaReconectado);
 
         return () => {
             socket.off('agenda:alerta', handleAgendaAlert);
             socket.off('admin:notificacao', handleAdminNotification);
+            socket.off('whatsapp:reconectado', handleWaReconectado);
         };
     }, [socket, user]);
 
