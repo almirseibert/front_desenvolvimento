@@ -2,7 +2,7 @@
 import { 
     Disc, Truck, Plus, ArrowRight, ArrowLeft, Printer, Search, 
     Activity, AlertCircle, X, History, Briefcase, AlertTriangle,
-    Settings, FileText, Trash2, RotateCcw, Edit, FileCheck
+    Settings, FileText, Trash2, RotateCcw, Edit, FileCheck, CornerDownRight
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -135,7 +135,7 @@ const TiresPage = ({
     }), [tires]);
 
     const filteredVehicles = useMemo(() => {
-        return vehicles
+        const matched = vehicles
             .filter(v => {
                 if (!vehicleSearchTerm) return true;
                 const term = vehicleSearchTerm.toLowerCase();
@@ -147,6 +147,26 @@ const TiresPage = ({
                 );
             })
             .sort((a, b) => (a.registroInterno || '').localeCompare(b.registroInterno || ''));
+
+        // Reboques/acessórios atrelados aparecem aninhados sob o principal, para
+        // permitir a manutenção de pneus do reboque.
+        const matchedIds = new Set(matched.map(v => v.id));
+        const childrenByParent = new Map();
+        for (const v of vehicles) {
+            if (v.linkedParentId) {
+                if (!childrenByParent.has(v.linkedParentId)) childrenByParent.set(v.linkedParentId, []);
+                childrenByParent.get(v.linkedParentId).push(v);
+            }
+        }
+        const result = [];
+        for (const v of matched) {
+            if (v.linkedParentId && matchedIds.has(v.linkedParentId)) continue; // renderizado aninhado
+            result.push({ ...v, _isChild: !!v.linkedParentId });
+            for (const child of (childrenByParent.get(v.id) || [])) {
+                result.push({ ...child, _isChild: true });
+            }
+        }
+        return result;
     }, [vehicles, vehicleSearchTerm]);
 
     const selectedVehicle = useMemo(() => 
@@ -415,8 +435,13 @@ const TiresPage = ({
                         </div>
                         <div className="max-h-60 overflow-y-auto border rounded-lg mb-4 bg-gray-50">
                             {filteredVehicles.map(v => (
-                                <div key={v.id} onClick={() => setSelectedVehicleId(v.id)} className={`p-2 cursor-pointer text-sm border-b last:border-b-0 hover:bg-blue-50 ${selectedVehicleId === v.id ? 'bg-blue-100 border-l-4 border-blue-500 font-medium' : ''}`}>
-                                    {v.registroInterno} - {v.tipo} - {v.marca} {v.modelo}
+                                <div key={v.id} onClick={() => setSelectedVehicleId(v.id)} className={`p-2 cursor-pointer text-sm border-b last:border-b-0 hover:bg-blue-50 ${v._isChild ? 'pl-6 bg-violet-50/40' : ''} ${selectedVehicleId === v.id ? 'bg-blue-100 border-l-4 border-blue-500 font-medium' : ''}`}>
+                                    <span className="inline-flex items-center gap-1">
+                                        {v._isChild && <CornerDownRight size={13} className="text-violet-400 shrink-0"/>}
+                                        {v.registroInterno} - {v.tipo} - {v.marca} {v.modelo}
+                                        {v.isOutsourced && <span title="Veículo terceirizado" className="text-[9px] font-bold uppercase bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-1.5 py-px">3º</span>}
+                                        {v._isChild && <span className="text-[9px] font-bold uppercase text-violet-500">Atrelado</span>}
+                                    </span>
                                 </div>
                             ))}
                         </div>

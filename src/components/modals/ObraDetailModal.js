@@ -1,5 +1,5 @@
 ﻿import React, { useState, useMemo, useEffect } from 'react';
-import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clock, RefreshCw, User, ClipboardList, Trash2 } from 'lucide-react';
+import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clock, RefreshCw, User, ClipboardList, Trash2, CornerDownRight } from 'lucide-react';
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableSelect from '../SearchableSelect';
 import { formatObraNome } from '../../utils/obraFormat';
@@ -694,14 +694,25 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
                                         const initialReading = parseFloat(h.horimetroEntrada ?? h.odometroEntrada ?? 0);
                                         const partialReading = Math.max(0, currentReading - initialReading);
 
+                                        // Reboques/acessórios atrelados a este veículo (aparecem aninhados)
+                                        const attachedChildren = (vehicle.linkedChildren || [])
+                                            .map(c => vehicles.find(v => v.id === c.id))
+                                            .filter(Boolean);
+
                                         return (
-                                            <div key={h.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                          <div key={h.id}>
+                                            <div className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-xs">
                                                         {vehicle.registroInterno}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-gray-800">{vehicle.modelo}</p>
+                                                        <p className="font-bold text-gray-800 flex items-center gap-1.5">
+                                                            {vehicle.modelo}
+                                                            {vehicle.isOutsourced && (
+                                                                <span title="Veículo terceirizado" className="text-[9px] font-bold uppercase bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-1.5 py-px">3º</span>
+                                                            )}
+                                                        </p>
                                                         <p className="text-xs text-gray-500">{vehicle.tipo}</p>
                                                     </div>
                                                 </div>
@@ -754,6 +765,22 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
                                                     </div>
                                                 </ProtectedComponent>
                                             </div>
+                                            {attachedChildren.length > 0 && (
+                                                <div className="ml-6 mt-1 space-y-1">
+                                                    {attachedChildren.map(child => (
+                                                        <div key={child.id} className="flex items-center gap-2 bg-violet-50/60 border border-violet-100 rounded-md px-3 py-1.5 text-xs">
+                                                            <CornerDownRight size={13} className="text-violet-400 shrink-0"/>
+                                                            <span className="font-bold text-violet-800">{child.registroInterno}</span>
+                                                            <span className="text-gray-500">{child.modelo || child.tipo}</span>
+                                                            {child.isOutsourced && (
+                                                                <span title="Veículo terceirizado" className="text-[9px] font-bold uppercase bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-1.5 py-px">3º</span>
+                                                            )}
+                                                            <span className="ml-auto text-[10px] font-bold uppercase text-violet-500">Atrelado</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                          </div>
                                         );
                                     }) : (
                                         <div className="text-center py-8 bg-white border border-dashed rounded-lg text-gray-400">

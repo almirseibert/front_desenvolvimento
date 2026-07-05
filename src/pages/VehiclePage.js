@@ -3,7 +3,7 @@ import {
     HardHat, Users, Wrench, ShieldAlert, Edit, Clock, Trash2, PlusCircle,
     Download, ChevronsUpDown, AlertTriangle, Truck,
     FileText, Ban, ClipboardCheck, Power, Package, Search,
-    CheckCircle2, Briefcase, Fuel
+    CheckCircle2, Briefcase, Fuel, MoreVertical, Unlink, CornerDownRight
 } from 'lucide-react';
 import Button from '../components/ui/Button';
 import StatusBadge from '../components/ui/StatusBadge';
@@ -25,6 +25,46 @@ import { getVehicleMainReading, checkVehicleRestrictions } from '../utils/vehicl
 // STATUS_CONFIG removido — usar StatusBadge de src/components/ui/StatusBadge.js
 
 const ALL_STATUS_OPTIONS = ['Disponível', 'Em Obra', 'Em Operação', 'Em Manutenção', 'Aguardando Manutenção', 'Sucata'];
+
+// Menu de "três pontinhos" (kebab) — agrupa as ações secundárias do veículo.
+const ActionMenu = ({ items }) => {
+    const [open, setOpen] = useState(false);
+    const ref = React.useRef(null);
+    useEffect(() => {
+        if (!open) return;
+        const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, [open]);
+    const list = (items || []).filter(Boolean);
+    if (!list.length) return null;
+    return (
+        <div ref={ref} style={{ position: 'relative' }}>
+            <button
+                type="button" onClick={() => setOpen(o => !o)} title="Mais ações"
+                style={{ padding: '5px', borderRadius: 6, border: 'none', cursor: 'pointer', lineHeight: 0, color: open ? '#6a5e4e' : '#b0a090', background: open ? '#faf9f7' : 'transparent' }}
+            >
+                <MoreVertical size={15} />
+            </button>
+            {open && (
+                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 30, background: '#fff', border: '1px solid #f0ebe3', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.14)', minWidth: 178, padding: 4 }}>
+                    {list.map((it, i) => (
+                        <button
+                            key={i} type="button"
+                            onClick={() => { setOpen(false); it.onClick(); }}
+                            style={{ display: 'flex', alignItems: 'center', gap: 9, width: '100%', textAlign: 'left', padding: '7px 10px', border: 'none', background: 'transparent', cursor: 'pointer', fontSize: 12.5, fontWeight: 600, color: it.danger ? '#b03828' : '#4b4237', borderRadius: 6 }}
+                            onMouseEnter={e => { e.currentTarget.style.background = it.danger ? '#fdf0ec' : '#faf9f7'; }}
+                            onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; }}
+                        >
+                            <span style={{ display: 'inline-flex', color: it.danger ? '#b03828' : '#9a8a78' }}>{it.icon}</span>
+                            {it.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
@@ -55,7 +95,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
     const [selectedVehicle, setSelectedVehicle] = useState(null);
     const [filters, setFilters] = useState({
         type: 'todos', status: 'todos', search: '',
-        group: 'todos', showInactive: false, showSucata: false
+        group: 'todos', origem: 'todos', showInactive: false, showSucata: false
     });
     const [sortConfig, setSortConfig] = useState({ key: 'registroInterno', direction: 'ascending' });
 
@@ -74,11 +114,21 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
 
     // --- Processamento de Dados ---
     const processedVehicles = useMemo(() => {
+        const byId = new Map((vehicles || []).map(v => [v.id, v]));
+
         return (vehicles || []).map(v => {
+            // Reboque/acessório atrelado a um veículo principal (vehicle_links)
+            const parentRaw = v.linkedParentId ? byId.get(v.linkedParentId) : null;
+            const isAttachedChild = !!parentRaw;
+
             // "Sucata" é status permanente — não sofre override por alocações
             let currentStatus = v.status;
             if (currentStatus !== 'Sucata') {
-                if (!currentStatus || currentStatus === 'Disponível') {
+                if (isAttachedChild) {
+                    // Filho atrelado herda o contexto do principal e fica indisponível.
+                    // Se o principal está em obra, o filho aparece "Em Obra"; senão "Atrelado".
+                    currentStatus = parentRaw.obraAtualId ? 'Em Obra' : 'Atrelado';
+                } else if (!currentStatus || currentStatus === 'Disponível') {
                     if (v.obraAtualId) currentStatus = 'Em Obra';
                     else if (v.operationalAssignment) currentStatus = 'Em Operação';
                     else if (v.maintenanceLocation) currentStatus = 'Em Manutenção';
@@ -88,13 +138,19 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
             const isSucata = currentStatus === 'Sucata';
             const readingData = getVehicleMainReading(v);
             const restrictions = isSucata ? [] : checkVehicleRestrictions(v, revisions);
-            const obra = v.obraAtualId ? obras.find(o => o.id === v.obraAtualId) : null;
+            // Obra: própria ou herdada do principal quando atrelado
+            const effectiveObraId = isAttachedChild ? parentRaw.obraAtualId : v.obraAtualId;
+            const obra = effectiveObraId ? obras.find(o => o.id === effectiveObraId) : null;
 
             return {
                 ...v,
                 computedStatus: currentStatus,
                 isSucata,
                 obra,
+                isAttachedChild,
+                attachedParent: parentRaw
+                    ? { id: parentRaw.id, registroInterno: parentRaw.registroInterno, placa: parentRaw.placa }
+                    : null,
                 vehicleReading: `${readingData.value ?? 'N/A'} ${readingData.unit}`,
                 vehicleReadingRaw: readingData.raw,
                 restrictions,
@@ -102,6 +158,18 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
             };
         });
     }, [vehicles, revisions, obras]);
+
+    // Resolve os filhos atrelados (objetos processados) de cada principal, p/ render aninhado.
+    const childrenByParentId = useMemo(() => {
+        const map = new Map();
+        for (const v of processedVehicles) {
+            if (v.isAttachedChild && v.linkedParentId) {
+                if (!map.has(v.linkedParentId)) map.set(v.linkedParentId, []);
+                map.get(v.linkedParentId).push(v);
+            }
+        }
+        return map;
+    }, [processedVehicles]);
 
     // --- Cards de sumário ---
     const summary = useMemo(() => {
@@ -139,6 +207,8 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
 
             const typeMatch  = filters.type  === 'todos' || v.tipo === filters.type;
             const groupMatch = filters.group === 'todos' || (groups[filters.group] && groups[filters.group].includes(v.tipo));
+            const origemMatch = filters.origem === 'todos'
+                || (filters.origem === 'terceirizados' ? !!v.isOutsourced : !v.isOutsourced);
 
             // '_manutencao' é valor especial que agrupa Em Manutenção + Aguardando Manutenção
             const statusMatch = filters.status === 'todos' || (
@@ -150,7 +220,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
             if (v.isSucata   && !filters.showSucata)   return false;
             if (!v.ativo && !v.isSucata && !filters.showInactive) return false;
 
-            return searchMatch && typeMatch && statusMatch && groupMatch;
+            return searchMatch && typeMatch && statusMatch && groupMatch && origemMatch;
         });
 
         items.sort((a, b) => {
@@ -262,6 +332,17 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
         }
     };
 
+    const handleDesvincular = async (vehicle) => {
+        if (!vehicle?.linkId) return;
+        try {
+            await apiClient.deleteVehicleLink(vehicle.linkId);
+            setAlertMessage(`${vehicle.registroInterno} desvinculado com sucesso.`);
+            reloadData();
+        } catch (error) {
+            setAlertMessage('Erro ao desvincular: ' + error.message);
+        }
+    };
+
     const exportToCSV = () => {
         const headers = ['Registro', 'Placa', 'Marca', 'Modelo', 'Grupo', 'Leitura', 'Status', 'Terceiro?', 'Ativo'];
         const rows = filteredVehicles.map(v => [
@@ -313,7 +394,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
         </button>
     );
 
-    const activeFiltersCount = [filters.group, filters.type, filters.status].filter(f => f !== 'todos').length
+    const activeFiltersCount = [filters.group, filters.type, filters.status, filters.origem].filter(f => f !== 'todos').length
         + (filters.showInactive ? 1 : 0) + (filters.showSucata ? 1 : 0);
 
     // Controle de botões por role
@@ -330,6 +411,153 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
         const role = user?.user_type?.toLowerCase() || '';
         const allowed = VEHICLE_ACTION_BUTTONS[role] || ['history'];
         return allowed.includes(action);
+    };
+
+    // ─── Linha da tabela (reutilizável — principal ou filho atrelado) ──────────
+    const renderVehicleRow = (vehicle, isChild = false) => {
+        const statusKey = vehicle.isSucata ? 'Sucata' : (!vehicle.ativo ? 'Inativo' : vehicle.computedStatus);
+        const hasCritical = vehicle.restrictions.some(r => r.type === 'bloqueio' || r.type === 'error');
+        const hasChecklists = vehicle.checklistCount > 0;
+
+        // Texto completo (para tooltip) e truncado (para exibição)
+        const statusDisplayFull = vehicle.isAttachedChild
+            ? (vehicle.computedStatus === 'Em Obra' && vehicle.obra
+                ? `Em Obra: ${formatObraNome(vehicle.obra)} · atrelado a ${vehicle.attachedParent?.registroInterno || ''}`
+                : `Atrelado a ${vehicle.attachedParent?.registroInterno || ''}`)
+            : (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Em Obra' && vehicle.obra)
+                ? `Obra: ${formatObraNome(vehicle.obra)}`
+                : (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Disponível')
+                    ? `${vehicle.computedStatus} · ${vehicle.localizacaoAtual || 'Pátio'}`
+                    : statusKey;
+
+        // Ações contextuais (só para veículos não-atrelados)
+        const canAllocate = canDo('allocate') && vehicle.ativo && !vehicle.isSucata && !vehicle.isAttachedChild;
+        let activeBtn = null;
+        const kebabContextItems = [];
+        if (canAllocate) {
+            if (vehicle.computedStatus === 'Disponível') {
+                activeBtn = <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsObraAllocationModalOpen(true); }} title="Alocar em Obra" color="#059669" bg="#ecfdf5" hoverBg="#d1fae5"><HardHat size={13}/></IBtn>;
+                kebabContextItems.push(
+                    { icon: <Users size={13}/>, label: 'Alocar em Operação', onClick: () => { setSelectedVehicle(vehicle); setIsOperationalModalOpen(true); } },
+                    { icon: <Wrench size={13}/>, label: 'Enviar p/ Manutenção', onClick: () => { setSelectedVehicle(vehicle); setIsMaintenanceModalOpen(true); } },
+                );
+            } else if (vehicle.computedStatus === 'Em Obra') {
+                activeBtn = <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsObraAllocationModalOpen(true); }} title="Desalocar de Obra" color="#b03828" bg="#fdf0ec" hoverBg="#fce8e4"><HardHat size={13}/></IBtn>;
+            } else if (vehicle.computedStatus === 'Em Operação') {
+                activeBtn = <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsOperationalModalOpen(true); }} title="Desalocar de Operação" color="#b03828" bg="#fdf0ec" hoverBg="#fce8e4"><Users size={13}/></IBtn>;
+            } else if (vehicle.computedStatus === 'Em Manutenção' || vehicle.computedStatus === 'Aguardando Manutenção') {
+                activeBtn = <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsMaintenanceModalOpen(true); }} title="Finalizar Manutenção" color="#059669" bg="#ecfdf5" hoverBg="#d1fae5"><Wrench size={13}/></IBtn>;
+            }
+        }
+
+        // Filho atrelado: botão visível = Desvincular; demais ações só no kebab
+        if (vehicle.isAttachedChild && canDo('edit') && vehicle.ativo && !vehicle.isSucata) {
+            activeBtn = <IBtn onClick={() => handleDesvincular(vehicle)} title={`Desvincular de ${vehicle.attachedParent?.registroInterno || 'principal'}`} color="#b03828" bg="#fdf0ec" hoverBg="#fce8e4"><Unlink size={13}/></IBtn>;
+        }
+
+        // Itens do kebab (secundários)
+        const kebabItems = [
+            ...(vehicle.isAttachedChild ? [] : kebabContextItems),
+            canDo('edit')      && !vehicle.isAttachedChild && { icon: <Edit size={13}/>, label: 'Editar', onClick: () => handleEdit(vehicle) },
+            canDo('checklist') && { icon: <ClipboardCheck size={13}/>, label: hasChecklists ? 'Checklists •' : 'Checklists', onClick: () => { setSelectedVehicle(vehicle); setIsChecklistModalOpen(true); } },
+            canDo('fines')     && !vehicle.isAttachedChild && { icon: <ShieldAlert size={13}/>, label: 'Multas', onClick: () => { setSelectedVehicle(vehicle); setIsFinesModalOpen(true); } },
+            canDo('history')   && { icon: <Clock size={13}/>, label: 'Histórico', onClick: () => { setSelectedVehicle(vehicle); setIsHistoryModalOpen(true); } },
+            canDo('block')     && !vehicle.isSucata && !vehicle.isAttachedChild && { icon: <Power size={13}/>, label: vehicle.ativo ? 'Inativar' : 'Reativar', onClick: () => setVehicleToToggleStatus(vehicle) },
+            canDo('delete')    && !vehicle.isAttachedChild && { icon: <Trash2 size={13}/>, label: 'Excluir', danger: true, onClick: () => { setSelectedVehicle(vehicle); setIsDeleteModalOpen(true); } },
+        ].filter(Boolean);
+
+        return (
+            <div
+                key={vehicle.id}
+                className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-3 items-center px-3 md:px-4 py-2 transition-all ${getRowStyle(vehicle)} ${isChild ? 'bg-[#fbfaf8]' : ''}`}
+                style={{ background: isChild ? '#fbfaf8' : 'white' }}
+                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(250,249,247,0.85)'; }}
+                onMouseLeave={e => { e.currentTarget.style.background = isChild ? '#fbfaf8' : 'white'; }}
+            >
+                {/* Veículo */}
+                <div className="md:col-span-4 flex items-center gap-2.5 min-w-0" style={isChild ? { paddingLeft: 22 } : undefined}>
+                    {isChild && <CornerDownRight size={15} style={{ color: '#c8b8a8', flexShrink: 0 }} />}
+                    <div
+                        className="relative shrink-0 cursor-pointer group"
+                        onClick={() => { setSelectedVehicle(vehicle); setIsDetailModalOpen(true); }}
+                    >
+                        <div
+                            className={`${isChild ? 'w-[36px] h-[26px]' : 'w-[44px] h-[30px]'} rounded-lg overflow-hidden flex items-center justify-center ${vehicle.isSucata ? 'grayscale opacity-70' : ''}`}
+                            style={{ border: '1px solid #e8e0d4', background: '#f5f3ef', flexShrink: 0 }}
+                        >
+                            {vehicle.fotoURL ? (
+                                <img
+                                    src={vehicle.fotoURL.startsWith('http') ? vehicle.fotoURL : `${(process.env.REACT_APP_API_URL || '').replace('/api', '')}${vehicle.fotoURL}`}
+                                    alt=""
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                />
+                            ) : (
+                                <Truck size={14} style={{ color: '#c8b8a8' }} />
+                            )}
+                        </div>
+                        {hasCritical && vehicle.ativo && !vehicle.isSucata && (
+                            <div className="absolute -top-1.5 -left-1.5 bg-red-500 text-white rounded-full p-0.5 shadow" title="Requer atenção">
+                                <AlertTriangle size={10} fill="white"/>
+                            </div>
+                        )}
+                        {vehicle.isSucata && (
+                            <div className="absolute -top-1.5 -left-1.5 bg-zinc-500 text-white rounded-full p-0.5 shadow" title="Sucata">
+                                <Package size={10}/>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <span style={{ fontWeight: 700, fontSize: 13, color: '#3d3528' }}>{vehicle.registroInterno}</span>
+                            {vehicle.isOutsourced && (
+                                <span title="Veículo terceirizado" style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', background: '#f3e8ff', color: '#6b21a8', border: '1px solid #e9d5ff', borderRadius: 9999, padding: '1px 6px' }}>3º</span>
+                            )}
+                            {vehicle.isAttachedChild && (
+                                <span title={`Atrelado a ${vehicle.attachedParent?.registroInterno || ''}`} style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', background: '#ede9fe', color: '#5b21b6', border: '1px solid #ddd6fe', borderRadius: 9999, padding: '1px 6px' }}>Atrelado</span>
+                            )}
+                        </div>
+                        <p style={{ fontSize: 11, color: '#9a8a78' }} className="truncate">{vehicle.marca} {vehicle.modelo}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                            <span style={{ fontSize: 10, color: '#b0a090' }}>{vehicle.tipo}</span>
+                            {renderAlertBadges(vehicle.restrictions, vehicle)}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Reg. Interno */}
+                <div className="md:col-span-1 hidden md:block min-w-0 truncate">
+                    <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Roboto Mono', monospace", color: '#6a5e4e' }}>{vehicle.registroInterno}</span>
+                </div>
+
+                {/* Placa */}
+                <div className="md:col-span-1 hidden md:block min-w-0">
+                    <span className="truncate inline-block max-w-full" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: '#3d3528', background: '#f5f2ed', border: '1px solid #e8e0d4', borderRadius: 6, padding: '3px 8px' }}>{vehicle.placa}</span>
+                </div>
+
+                {/* Leitura */}
+                <div className="md:col-span-2 hidden md:flex justify-center min-w-0">
+                    <span className="truncate" style={{ fontFamily: "'Roboto Mono', monospace", fontSize: 13, fontWeight: 600, color: vehicle.isSucata ? '#9ca3af' : '#3d3528' }}>
+                        {vehicle.vehicleReading}
+                    </span>
+                </div>
+
+                {/* Status */}
+                <div className="md:col-span-2 flex justify-start md:justify-center min-w-0" title={statusDisplayFull}>
+                    <StatusBadge
+                        status={statusKey}
+                        label={trunc(statusDisplayFull, 22)}
+                        style={{ maxWidth: 170 }}
+                    />
+                </div>
+
+                {/* Ações — botão contextual + kebab */}
+                <div className="md:col-span-2 flex gap-1 justify-start md:justify-center items-center">
+                    {activeBtn}
+                    <ActionMenu items={kebabItems} />
+                </div>
+            </div>
+        );
     };
 
     // ─── Render ───────────────────────────────────────────────────────────────
@@ -400,17 +628,24 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                         <span className="text-gray-200 mx-0.5 text-base select-none">|</span>
                         <span className="text-[10px] font-bold text-purple-400 uppercase tracking-wider mr-0.5 shrink-0">Terceiros:</span>
                         {[
-                            { label: 'Total',       value: summary.terceiros,             dot: 'bg-purple-500' },
-                            { label: 'Disponíveis', value: summary.terceirosDisponiveis,  dot: 'bg-emerald-500' },
-                            { label: 'Em Obra',     value: summary.terceirosEmObra,       dot: 'bg-sky-500' },
-                            ...(summary.terceirosManutencao > 0 ? [{ label: 'Manutenção', value: summary.terceirosManutencao, dot: 'bg-orange-400' }] : []),
-                        ].map(({ label, value, dot }) => (
-                            <span key={label} className="flex items-center gap-1.5 px-2 py-1 rounded-md border border-purple-100 bg-purple-50 text-purple-700 text-xs font-medium">
-                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}/>
-                                <span className="font-bold">{value}</span>
-                                <span className="opacity-75">{label}</span>
-                            </span>
-                        ))}
+                            { label: 'Total',       value: summary.terceiros,             dot: 'bg-purple-500', statusKey: null },
+                            { label: 'Disponíveis', value: summary.terceirosDisponiveis,  dot: 'bg-emerald-500', statusKey: 'Disponível' },
+                            { label: 'Em Obra',     value: summary.terceirosEmObra,       dot: 'bg-sky-500', statusKey: 'Em Obra' },
+                            ...(summary.terceirosManutencao > 0 ? [{ label: 'Manutenção', value: summary.terceirosManutencao, dot: 'bg-orange-400', statusKey: '_manutencao' }] : []),
+                        ].map(({ label, value, dot, statusKey }) => {
+                            const isActive = filters.origem === 'terceirizados' && (statusKey ? filters.status === statusKey : filters.status === 'todos');
+                            return (
+                                <button
+                                    key={label}
+                                    onClick={() => setFilters(p => ({ ...p, origem: 'terceirizados', status: statusKey || 'todos', showSucata: false }))}
+                                    className={`flex items-center gap-1.5 px-2 py-1 rounded-md border text-xs font-medium transition-all cursor-pointer hover:shadow-sm hover:brightness-95 ${isActive ? 'border-purple-500 bg-purple-100 text-purple-800 ring-1' : 'border-purple-100 bg-purple-50 text-purple-700'}`}
+                                >
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dot}`}/>
+                                    <span className="font-bold">{value}</span>
+                                    <span className="opacity-75">{label}</span>
+                                </button>
+                            );
+                        })}
                     </>)}
                 </div>
 
@@ -451,6 +686,11 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                             <option value="_manutencao">Manutenção (qualquer)</option>
                             {ALL_STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
+                        <select name="origem" value={filters.origem} onChange={handleFilterChange} className="px-2.5 py-1.5 text-sm rounded-lg bg-white focus:ring-2 focus:ring-yellow-400 outline-none" style={{ border: "1px solid #f0ebe3" }}>
+                            <option value="todos">Própria + Terceiros</option>
+                            <option value="proprios">Somente Própria</option>
+                            <option value="terceirizados">Somente Terceirizados</option>
+                        </select>
                         {/* Toggles */}
                         {[
                             { name: 'showInactive', label: 'Inativos', activeColor: 'peer-checked:bg-yellow-400' },
@@ -470,7 +710,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                             <span className="text-xs text-gray-400">{filteredVehicles.length} veículo{filteredVehicles.length !== 1 ? 's' : ''}</span>
                             {activeFiltersCount > 0 && (
                                 <button
-                                    onClick={() => setFilters({ type: 'todos', status: 'todos', search: '', group: 'todos', showInactive: false, showSucata: false })}
+                                    onClick={() => setFilters({ type: 'todos', status: 'todos', search: '', group: 'todos', origem: 'todos', showInactive: false, showSucata: false })}
                                     className="text-xs text-yellow-600 hover:text-yellow-700 font-medium"
                                 >
                                     Limpar
@@ -481,10 +721,10 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                 </div>
 
                 {/* ── Tabela ──────────────────────────────────────────────── */}
-                <div className="bg-white rounded-xl overflow-hidden" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.08)' }}>
+                <div className="bg-white rounded-xl" style={{ border: '1px solid #f0ebe3', boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.08)' }}>
 
                     {/* Cabeçalho */}
-                    <div className="hidden md:grid grid-cols-12 gap-4 px-5 py-3" style={{ background: '#faf9f7', borderBottom: '1px solid #f0ebe3' }}>
+                    <div className="hidden md:grid grid-cols-12 gap-3 px-4 py-2 rounded-t-xl" style={{ background: '#faf9f7', borderBottom: '1px solid #f0ebe3' }}>
                         <div className="col-span-4"><SortHeader label="Veículo" sortKey="registroInterno"/></div>
                         <div className="col-span-1"><SortHeader label="Reg." sortKey="registroInterno"/></div>
                         <div className="col-span-1"><SortHeader label="Placa" sortKey="placa"/></div>
@@ -503,160 +743,21 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
                                 <p style={{ color: '#b0a090', fontWeight: 600, fontSize: 13 }}>Nenhum veículo encontrado</p>
                                 <p style={{ color: '#d4c8b8', fontSize: 11, marginTop: 4 }}>Ajuste os filtros ou cadastre um novo veículo</p>
                             </div>
-                        ) : filteredVehicles.map(vehicle => {
-                            const statusKey = vehicle.isSucata ? 'Sucata' : (!vehicle.ativo ? 'Inativo' : vehicle.computedStatus);
-                            const hasCritical = vehicle.restrictions.some(r => r.type === 'bloqueio' || r.type === 'error');
-                            const hasChecklists = vehicle.checklistCount > 0;
-
-                            const statusDisplay = (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Em Obra' && vehicle.obra)
-                                ? `Obra: ${trunc(formatObraNome(vehicle.obra), 28)}`
-                                : (!vehicle.isSucata && vehicle.ativo && vehicle.computedStatus === 'Disponível')
-                                    ? `${vehicle.computedStatus} · ${vehicle.localizacaoAtual || 'Pátio'}`
-                                    : statusKey;
-
-                            return (
-                                <div
-                                    key={vehicle.id}
-                                    className={`grid grid-cols-1 md:grid-cols-12 gap-2 md:gap-4 items-center px-3 md:px-5 py-3.5 transition-all ${getRowStyle(vehicle)}`}
-                                    style={{ background: 'white' }}
-                                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(250,249,247,0.85)'; }}
-                                    onMouseLeave={e => { e.currentTarget.style.background = 'white'; }}
-                                >
-
-                                    {/* Veículo */}
-                                    <div className="md:col-span-4 flex items-center gap-3">
-                                        <div
-                                            className="relative shrink-0 cursor-pointer group"
-                                            onClick={() => { setSelectedVehicle(vehicle); setIsDetailModalOpen(true); }}
-                                        >
-                                            <div
-                                                className={`w-[44px] h-[30px] rounded-lg overflow-hidden flex items-center justify-center ${vehicle.isSucata ? 'grayscale opacity-70' : ''}`}
-                                                style={{ border: '1px solid #e8e0d4', background: '#f5f3ef', flexShrink: 0 }}
-                                            >
-                                                {vehicle.fotoURL ? (
-                                                    <img
-                                                        src={vehicle.fotoURL.startsWith('http') ? vehicle.fotoURL : `${(process.env.REACT_APP_API_URL || '').replace('/api', '')}${vehicle.fotoURL}`}
-                                                        alt=""
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                                                    />
-                                                ) : (
-                                                    <Truck size={14} style={{ color: '#c8b8a8' }} />
-                                                )}
-                                            </div>
-                                            {hasCritical && vehicle.ativo && !vehicle.isSucata && (
-                                                <div className="absolute -top-1.5 -left-1.5 bg-red-500 text-white rounded-full p-0.5 shadow" title="Requer atenção">
-                                                    <AlertTriangle size={10} fill="white"/>
-                                                </div>
-                                            )}
-                                            {vehicle.isSucata && (
-                                                <div className="absolute -top-1.5 -left-1.5 bg-zinc-500 text-white rounded-full p-0.5 shadow" title="Sucata">
-                                                    <Package size={10}/>
-                                                </div>
-                                            )}
-                                        </div>
-
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-1.5 flex-wrap">
-                                                <span style={{ fontWeight: 700, fontSize: 13, color: '#3d3528' }}>{vehicle.registroInterno}</span>
-                                                {vehicle.isOutsourced && (
-                                                    <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', background: '#f3e8ff', color: '#6b21a8', border: '1px solid #e9d5ff', borderRadius: 9999, padding: '1px 6px' }}>3º</span>
-                                                )}
-                                            </div>
-                                            <p style={{ fontSize: 11, color: '#9a8a78' }} className="truncate">{vehicle.marca} {vehicle.modelo}</p>
-                                            <div className="flex items-center gap-2 mt-0.5">
-                                                <span style={{ fontSize: 10, color: '#b0a090' }}>{vehicle.tipo}</span>
-                                                {renderAlertBadges(vehicle.restrictions, vehicle)}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Reg. Interno */}
-                                    <div className="md:col-span-1 hidden md:block">
-                                        <span style={{ fontSize: 11, fontWeight: 700, fontFamily: "'Roboto Mono', monospace", color: '#6a5e4e' }}>{vehicle.registroInterno}</span>
-                                    </div>
-
-                                    {/* Placa */}
-                                    <div className="md:col-span-1 hidden md:block">
-                                        <span style={{ fontFamily: "'Roboto Mono', monospace", fontSize: 11, fontWeight: 600, letterSpacing: '0.04em', color: '#3d3528', background: '#f5f2ed', border: '1px solid #e8e0d4', borderRadius: 6, padding: '3px 8px' }}>{vehicle.placa}</span>
-                                    </div>
-
-                                    {/* Leitura */}
-                                    <div className="md:col-span-2 hidden md:flex justify-center">
-                                        <span style={{ fontFamily: "'Roboto Mono', monospace", fontSize: 13, fontWeight: 600, color: vehicle.isSucata ? '#9ca3af' : '#3d3528' }}>
-                                            {vehicle.vehicleReading}
-                                        </span>
-                                    </div>
-
-                                    {/* Status */}
-                                    <div className="md:col-span-2 flex justify-start md:justify-center">
-                                        <StatusBadge
-                                            status={statusKey}
-                                            label={trunc(statusDisplay, 22)}
-                                            style={{ maxWidth: 170 }}
-                                        />
-                                    </div>
-
-                                    {/* Botões */}
-                                    <div className="md:col-span-2 flex flex-wrap gap-1 justify-start md:justify-center items-center">
-
-                                        {canDo('checklist') && (
-                                            <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsChecklistModalOpen(true); }} title="Checklists"
-                                                color={hasChecklists ? '#6b21a8' : undefined} bg={hasChecklists ? '#f3e8ff' : undefined}>
-                                                <ClipboardCheck size={13}/>
-                                            </IBtn>
-                                        )}
-                                        {canDo('fines') && (
-                                            <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsFinesModalOpen(true); }} title="Multas" hoverColor="#c2410c" hoverBg="#fff7ed">
-                                                <ShieldAlert size={13}/>
-                                            </IBtn>
-                                        )}
-                                        {canDo('history') && (
-                                            <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsHistoryModalOpen(true); }} title="Histórico" hoverColor="#1d4ed8" hoverBg="#eff6ff">
-                                                <Clock size={13}/>
-                                            </IBtn>
-                                        )}
-
-                                        {canDo('edit') && (
-                                            <IBtn onClick={() => handleEdit(vehicle)} title="Editar" hoverColor="#9E7A42" hoverBg="#fdf8f0">
-                                                <Edit size={13}/>
-                                            </IBtn>
-                                        )}
-
-                                        {canDo('allocate') && (<>
-                                            {vehicle.ativo && !vehicle.isSucata && vehicle.computedStatus === 'Disponível' && (<>
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsObraAllocationModalOpen(true); }} title="Alocar Obra" hoverColor="#059669" hoverBg="#ecfdf5"><HardHat size={13}/></IBtn>
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsOperationalModalOpen(true); }} title="Alocar Operação" hoverColor="#0891b2" hoverBg="#ecfeff"><Users size={13}/></IBtn>
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsMaintenanceModalOpen(true); }} title="Enviar p/ Manutenção" hoverColor="#ea580c" hoverBg="#fff7ed"><Wrench size={13}/></IBtn>
-                                            </>)}
-                                            {vehicle.ativo && !vehicle.isSucata && vehicle.computedStatus === 'Em Obra' && (
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsObraAllocationModalOpen(true); }} title="Desalocar de Obra" color="#b03828" bg="#fdf0ec" hoverBg="#fce8e4"><HardHat size={13}/></IBtn>
-                                            )}
-                                            {vehicle.ativo && !vehicle.isSucata && vehicle.computedStatus === 'Em Operação' && (
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsOperationalModalOpen(true); }} title="Desalocar de Operação" color="#b03828" bg="#fdf0ec" hoverBg="#fce8e4"><Users size={13}/></IBtn>
-                                            )}
-                                            {vehicle.ativo && !vehicle.isSucata && (vehicle.computedStatus === 'Em Manutenção' || vehicle.computedStatus === 'Aguardando Manutenção') && (
-                                                <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsMaintenanceModalOpen(true); }} title="Finalizar Manutenção" color="#059669" bg="#ecfdf5" hoverBg="#d1fae5"><Wrench size={13}/></IBtn>
-                                            )}
-                                        </>)}
-
-                                        {canDo('block') && !vehicle.isSucata && (
-                                            <IBtn onClick={() => setVehicleToToggleStatus(vehicle)}
-                                                title={vehicle.ativo ? 'Inativar Veículo' : 'Reativar Veículo'}
-                                                hoverColor={vehicle.ativo ? '#b03828' : '#059669'}
-                                                hoverBg={vehicle.ativo ? '#fdf0ec' : '#ecfdf5'}>
-                                                <Power size={13}/>
-                                            </IBtn>
-                                        )}
-
-                                        {canDo('delete') && (
-                                            <IBtn onClick={() => { setSelectedVehicle(vehicle); setIsDeleteModalOpen(true); }} title="Excluir permanentemente" hoverColor="#b03828" hoverBg="#fdf0ec">
-                                                <Trash2 size={13}/>
-                                            </IBtn>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
+                        ) : (() => {
+                            // Filhos atrelados renderizam aninhados sob o principal (quando o principal
+                            // está na lista filtrada); caso contrário, caem como linha normal (fallback).
+                            const presentIds = new Set(filteredVehicles.map(v => v.id));
+                            const rows = [];
+                            for (const vehicle of filteredVehicles) {
+                                if (vehicle.isAttachedChild && presentIds.has(vehicle.linkedParentId)) continue;
+                                rows.push(renderVehicleRow(vehicle, false));
+                                const children = childrenByParentId.get(vehicle.id);
+                                if (children && children.length) {
+                                    for (const child of children) rows.push(renderVehicleRow(child, true));
+                                }
+                            }
+                            return rows;
+                        })()}
                     </div>
 
                     {filteredVehicles.length > 0 && (

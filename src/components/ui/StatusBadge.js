@@ -20,6 +20,9 @@ export const VEHICLE_STATUS_CONFIG = {
     'Aguardando Manutenção': {
         bg: '#fef3c7', border: '#fde68a', text: '#78350f', dot: '#fbbf24', pulse: true,
     },
+    'Atrelado': {
+        bg: '#ede9fe', border: '#ddd6fe', text: '#5b21b6', dot: '#7c3aed', pulse: false,
+    },
     'Sucata': {
         bg: '#f4f4f5', border: '#d4d4d8', text: '#3f3f46', dot: '#71717a', pulse: false,
     },
