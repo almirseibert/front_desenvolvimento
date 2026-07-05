@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Shield, MessageSquare, Bell, Users, ClipboardList } from 'lucide-react';
+import { Shield, MessageSquare, Bell, Users, ClipboardList, Mail, Lightbulb } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import apiClient from '../services/apiClient';
 
@@ -7,12 +7,16 @@ import CommunicationTab     from '../components/admin/CommunicationTab';
 import NotificacoesAdminTab from '../components/admin/NotificacoesAdminTab';
 import ContatosInternosTab  from '../components/admin/ContatosInternosTab';
 import NotifLogTab          from '../components/admin/NotifLogTab';
+import EmailLogTab          from '../components/admin/EmailLogTab';
+import SuggestionsTab       from '../components/admin/SuggestionsTab';
 
 const TABS = [
   { id: 'comunicacao',  label: 'Comunicação',       icon: <MessageSquare  size={15} /> },
   { id: 'notificacoes', label: 'Notificações',       icon: <Bell           size={15} /> },
   { id: 'contatos',     label: 'Contatos Internos',  icon: <Users          size={15} /> },
   { id: 'log',          label: 'Log de Envios',      icon: <ClipboardList  size={15} /> },
+  { id: 'emails',       label: 'E-mails',            icon: <Mail           size={15} /> },
+  { id: 'sugestoes',    label: 'Sugestões',          icon: <Lightbulb      size={15} /> },
 ];
 
 const AdminComunicacaoPage = ({ socket }) => {
@@ -68,6 +72,8 @@ const AdminComunicacaoPage = ({ socket }) => {
         {activeTab === 'notificacoes' && <NotificacoesAdminTab />}
         {activeTab === 'contatos'     && <ContatosInternosTab />}
         {activeTab === 'log'          && <NotifLogTab />}
+        {activeTab === 'emails'       && <EmailLogTab />}
+        {activeTab === 'sugestoes'    && <SuggestionsTab />}
       </div>
     </div>
   );

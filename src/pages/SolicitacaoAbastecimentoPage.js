@@ -148,6 +148,7 @@ const SolicitacaoAbastecimentoPage = ({
     onLogout,
     socket,
     onVoltar,
+    onAbrirDocumentos,
 }) => {
     
     // --- ESTADOS DE CONTROLE ---
@@ -1207,6 +1208,11 @@ const SolicitacaoAbastecimentoPage = ({
                                 <p className="text-gray-400 text-sm">Painel do Operador</p>
                             </div>
                             <div className="flex gap-2 items-center shrink-0">
+                                {onAbrirDocumentos && (
+                                    <button onClick={onAbrirDocumentos} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition" title="Documentos (PDFs)">
+                                        <FileText size={20} />
+                                    </button>
+                                )}
                                 <button onClick={() => setIsPasswordModalOpen(true)} className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition" title="Alterar Senha">
                                     <Lock size={20} />
                                 </button>

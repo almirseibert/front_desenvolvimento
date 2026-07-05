@@ -10,7 +10,7 @@ import autoTable from 'jspdf-autotable';
 import { getAllowedReadingTypes } from '../utils/vehicleRules';
 import { formatObraNome } from '../utils/obraFormat';
 import RefuelingOrderModal from '../components/modals/RefuelingOrderModal';
-import ConfirmRefuelingModal from '../components/modals/ConfirmRefuelingModal';
+import BaixaForm from '../components/refueling/BaixaForm';
 
 const AdminSolicitacoesPage = ({ 
     apiClient, 
@@ -39,7 +39,6 @@ const AdminSolicitacoesPage = ({
     const [imageTab, setImageTab] = useState('painel'); // NOVO: Controle de aba de imagem
     
     const [relatedOrder, setRelatedOrder] = useState(null);
-    const [showConfirmModal, setShowConfirmModal] = useState(false);
 
     const [imgTransform, setImgTransform] = useState({ rotate: 0, scale: 1 });
 
@@ -668,21 +667,33 @@ const AdminSolicitacoesPage = ({
                                 </div>
                             )}
 
-                            {/* --- SEÇÃO AGUARDANDO_BAIXA --- */}
+                            {/* --- SEÇÃO AGUARDANDO_BAIXA: FORMULÁRIO DE BAIXA INLINE --- */}
                             {isBaixa && (
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-inner">
-                                    <h5 className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
-                                        <Check size={14}/> Aguardando Baixa
-                                    </h5>
-                                    <p className="text-[10px] text-blue-700 mb-1">
-                                        Clique em "Confirmar Baixa" para preencher os dados do cupom fiscal no modal.
-                                    </p>
-                                    {relatedOrder && !relatedOrder.id && (
+                                relatedOrder && relatedOrder.id ? (
+                                    <BaixaForm
+                                        user={user}
+                                        order={relatedOrder}
+                                        onClose={() => {}}
+                                        setAlertMessage={setAlertMessage}
+                                        apiClient={apiClient}
+                                        reloadData={reloadData}
+                                        onAfterConfirm={handleAfterBaixaConfirm}
+                                        refuelings={refuelings}
+                                        vehicles={vehicles}
+                                        partners={partners}
+                                        employees={employees}
+                                        PasswordConfirmationModal={PasswordConfirmationModal}
+                                    />
+                                ) : (
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-inner">
+                                        <h5 className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
+                                            <Check size={14}/> Aguardando Baixa
+                                        </h5>
                                         <p className="text-[10px] text-red-600 font-bold flex items-center gap-1 mt-1">
                                             <AlertCircle size={12}/> Ordem não localizada — atualize a página.
                                         </p>
-                                    )}
-                                </div>
+                                    </div>
+                                )
                             )}
 
                             {/* INFO GERAL DE RODAPÉ (COMUM PARA AMBOS) */}
@@ -726,14 +737,10 @@ const AdminSolicitacoesPage = ({
                                     )}
                                 </>
                             ) : isBaixa ? (
-                                <div className="flex gap-2 flex-col md:flex-row">
-                                    <button
-                                        onClick={() => setShowConfirmModal(true)}
-                                        disabled={relatedOrder && !relatedOrder.id}
-                                        className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded shadow text-sm flex items-center justify-center gap-2 transition disabled:opacity-50"
-                                    >
-                                        <Check size={18}/> CONFIRMAR BAIXA
-                                    </button>
+                                <div className="flex gap-2 flex-col md:flex-row items-center">
+                                    <p className="flex-1 text-[10px] text-gray-500 leading-tight">
+                                        Preencha os dados do cupom acima e clique em <span className="font-bold text-green-700">Confirmar Baixa</span>. A foto do cupom permanece visível ao lado.
+                                    </p>
 
                                     <button onClick={() => handleRejeitarComprovante(s.id)} className="px-4 py-3 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded border border-orange-200 text-xs flex items-center justify-center gap-1 transition">
                                         <X size={16}/> Rejeitar Foto
@@ -759,25 +766,6 @@ const AdminSolicitacoesPage = ({
                         </div>
                     </div>
                 </div>
-                
-                {showConfirmModal && relatedOrder && (
-                    <ConfirmRefuelingModal
-                        user={user}
-                        order={relatedOrder}
-                        onClose={() => setShowConfirmModal(false)}
-                        setAlertMessage={setAlertMessage}
-                        apiClient={apiClient}
-                        reloadData={reloadData}
-                        onAfterConfirm={handleAfterBaixaConfirm}
-                        refuelings={refuelings}
-                        obras={obras}
-                        expenses={expenses}
-                        vehicles={vehicles}
-                        partners={partners}
-                        employees={employees}
-                        PasswordConfirmationModal={PasswordConfirmationModal}
-                    />
-                )}
             </div>
         );
     };

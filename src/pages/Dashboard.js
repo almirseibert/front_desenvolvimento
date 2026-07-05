@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Activity, Calendar, Loader } from 'lucide-react';
+import { Activity, Calendar, Loader, Lightbulb } from 'lucide-react';
 
 import KPIRow from '../components/dashboard/KPIRow';
 import ObrasFocus from '../components/dashboard/ObrasFocus';
@@ -7,6 +7,7 @@ import RankingObras from '../components/dashboard/RankingObras';
 import PulseChart from '../components/dashboard/PulseChart';
 import AlertsCompact from '../components/dashboard/AlertsCompact';
 import AgendaModal from '../components/modals/AgendaModal';
+import SuggestionModal from '../components/modals/SuggestionModal';
 
 const fmtPeriod = (start, end) => {
     if (!start || !end) return '';
@@ -16,11 +17,12 @@ const fmtPeriod = (start, end) => {
     return `${sd}/${meses[parseInt(start.split('-')[1], 10) - 1]} – ${ed}/${meses[parseInt(em, 10) - 1]}`;
 };
 
-const Dashboard = ({ navigate, apiClient }) => {
+const Dashboard = ({ navigate, apiClient, setAlertMessage }) => {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showAgenda, setShowAgenda] = useState(false);
+    const [showSuggestion, setShowSuggestion] = useState(false);
     const [notificacoesAgenda, setNotificacoesAgenda] = useState(0);
 
     const load = useCallback(async () => {
@@ -76,17 +78,25 @@ const Dashboard = ({ navigate, apiClient }) => {
                         )}
                     </p>
                 </div>
-                <button
-                    onClick={() => setShowAgenda(true)}
-                    className="relative bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
-                >
-                    <Calendar size={16} /> Agenda / Avisos
-                    {notificacoesAgenda > 0 && (
-                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
-                            {notificacoesAgenda}
-                        </span>
-                    )}
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={() => setShowSuggestion(true)}
+                        className="bg-white border border-stone-200 hover:bg-stone-50 text-stone-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                    >
+                        <Lightbulb size={16} className="text-yellow-500" /> Sugestão
+                    </button>
+                    <button
+                        onClick={() => setShowAgenda(true)}
+                        className="relative bg-stone-900 hover:bg-stone-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors inline-flex items-center gap-2"
+                    >
+                        <Calendar size={16} /> Agenda / Avisos
+                        {notificacoesAgenda > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full border-2 border-white">
+                                {notificacoesAgenda}
+                            </span>
+                        )}
+                    </button>
+                </div>
             </header>
 
             {loading && !data && (
@@ -116,6 +126,13 @@ const Dashboard = ({ navigate, apiClient }) => {
 
                     <AlertsCompact alerts={data.alerts} navigate={navigate} />
                 </>
+            )}
+
+            {showSuggestion && (
+                <SuggestionModal
+                    onClose={() => setShowSuggestion(false)}
+                    setAlertMessage={setAlertMessage || ((m) => window.alert(m))}
+                />
             )}
 
             <AgendaModal

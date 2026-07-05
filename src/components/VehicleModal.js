@@ -169,6 +169,52 @@ const VehicleModal = ({
         }
     };
 
+    // --- Vínculos entre veículos (atrelar) ---
+    const [links, setLinks] = useState([]);
+    const [linkChildId, setLinkChildId] = useState('');
+    const [linkTipo, setLinkTipo] = useState('');
+    const [linkSaving, setLinkSaving] = useState(false);
+
+    const loadLinks = useCallback(async () => {
+        if (!vehicle?.id) return;
+        try {
+            const data = await apiClient.getVehicleLinks(vehicle.id);
+            setLinks(data || []);
+        } catch (e) {
+            console.warn('Erro ao carregar vínculos:', e.message);
+        }
+    }, [vehicle?.id, apiClient]);
+
+    useEffect(() => { loadLinks(); }, [loadLinks]);
+
+    const handleAddLink = async () => {
+        if (!vehicle?.id || !linkChildId) return;
+        setLinkSaving(true);
+        try {
+            await apiClient.createVehicleLink({
+                parent_vehicle_id: vehicle.id,
+                child_vehicle_id: linkChildId,
+                tipo_vinculo: linkTipo || null,
+            });
+            setLinkChildId('');
+            setLinkTipo('');
+            await loadLinks();
+        } catch (err) {
+            setError('Falha ao atrelar: ' + err.message);
+        } finally {
+            setLinkSaving(false);
+        }
+    };
+
+    const handleRemoveLink = async (id) => {
+        try {
+            await apiClient.deleteVehicleLink(id);
+            setLinks(prev => prev.filter(l => l.id !== id));
+        } catch (err) {
+            setError('Falha ao remover vínculo: ' + err.message);
+        }
+    };
+
     // --- Helpers de Grupo ---
     const vehicleGroupsLocal = (vehicleGroups && Object.keys(vehicleGroups).length > 0)
         ? vehicleGroups
@@ -748,6 +794,73 @@ const VehicleModal = ({
                                                 {docUploading ? 'Enviando…' : 'Selecionar PDF'}
                                                 <input type="file" accept="application/pdf" onChange={handleDocUpload} disabled={docUploading} className="hidden"/>
                                             </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Veículos Atrelados */}
+                                {vehicle?.id && (
+                                    <div className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                                        <p className="text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                                            <Package size={13}/> Veículos Atrelados
+                                        </p>
+                                        <p className="text-[11px] text-gray-400 -mt-1">Ex.: cavalo/prancha ↔ semirreboque, máquina ↔ acessório (rompedor/varredeira).</p>
+
+                                        {links.length > 0 ? (
+                                            <ul className="space-y-1">
+                                                {links.map(l => {
+                                                    const isParent = l.parent_vehicle_id === vehicle.id;
+                                                    const outroReg = isParent ? (l.child_registro || l.child_placa) : (l.parent_registro || l.parent_placa);
+                                                    const outroMod = isParent ? l.child_modelo : l.parent_modelo;
+                                                    return (
+                                                        <li key={l.id} className="flex items-center justify-between gap-2 text-xs bg-white border rounded px-2 py-1.5">
+                                                            <span className="truncate">
+                                                                <span className="text-gray-400">{isParent ? 'Atrelado:' : 'Principal:'}</span>{' '}
+                                                                <span className="font-medium">{outroReg}</span>
+                                                                {outroMod ? <span className="text-gray-400"> — {outroMod}</span> : null}
+                                                                {l.tipo_vinculo ? <span className="text-gray-400"> ({l.tipo_vinculo})</span> : null}
+                                                            </span>
+                                                            <button onClick={() => handleRemoveLink(l.id)} className="text-red-400 hover:text-red-600 shrink-0" title="Desvincular">
+                                                                <Trash2 size={13}/>
+                                                            </button>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">Nenhum veículo atrelado.</p>
+                                        )}
+
+                                        <div className="pt-1 flex gap-1.5">
+                                            <select
+                                                value={linkChildId}
+                                                onChange={e => setLinkChildId(e.target.value)}
+                                                className="flex-1 min-w-0 p-1.5 border rounded text-xs bg-white"
+                                            >
+                                                <option value="">Selecionar veículo a atrelar…</option>
+                                                {vehicles
+                                                    .filter(v => v.id !== vehicle.id)
+                                                    .map(v => (
+                                                        <option key={v.id} value={v.id}>
+                                                            {v.registroInterno || v.placa} {v.modelo ? `— ${v.modelo}` : ''}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Tipo (opcional)"
+                                                value={linkTipo}
+                                                onChange={e => setLinkTipo(e.target.value)}
+                                                className="w-28 p-1.5 border rounded text-xs"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddLink}
+                                                disabled={!linkChildId || linkSaving}
+                                                className="px-2.5 py-1.5 bg-[#9E7A42] text-white rounded text-xs font-bold disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                                {linkSaving ? <Loader size={12} className="animate-spin"/> : 'Atrelar'}
+                                            </button>
                                         </div>
                                     </div>
                                 )}

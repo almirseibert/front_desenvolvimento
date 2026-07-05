@@ -83,6 +83,7 @@ const SupervisorDashboard          = lazy(() => import('./pages/SupervisorDashbo
 const SupervisorObraDetail         = lazy(() => import('./pages/SupervisorObraDetail'));
 const SolicitacaoAbastecimentoPage = lazy(() => import('./pages/SolicitacaoAbastecimentoPage'));
 const ComboioMobilePage            = lazy(() => import('./pages/ComboioMobilePage'));
+const OperadorDocumentosPage       = lazy(() => import('./pages/OperadorDocumentosPage'));
 const AdminSolicitacoesPage        = lazy(() => import('./pages/AdminSolicitacoesPage'));
 const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
 const AnaliseGerencialPage         = lazy(() => import('./pages/AnaliseGerencialPage'));
@@ -682,6 +683,20 @@ const AppContent = () => {
             );
         }
 
+        // Tela de Documentos (PDFs) — acessível a partir de qualquer fluxo do operador
+        if (operadorTelaAtual === 'documentos') {
+            return (
+                <Suspense fallback={<PageFallback />}>
+                    <OperadorDocumentosPage
+                        apiClient={apiClient}
+                        user={user}
+                        setAlertMessage={setAlertMessage}
+                        onVoltar={() => setOperadorTelaAtual(null)}
+                    />
+                </Suspense>
+            );
+        }
+
         // Detecta veículos vinculados ao operador via alocacaoAtual.description
         const employeeRecord = employees.find(e =>
             e.id === user.employeeId || e.nome === user.name
@@ -717,6 +732,7 @@ const AppContent = () => {
                         setAlertMessage={setAlertMessage}
                         socket={socket}
                         PasswordConfirmationModal={PasswordConfirmationModalWrapped}
+                        onAbrirDocumentos={() => setOperadorTelaAtual('documentos')}
                     />
                 </Suspense>
             );
@@ -740,6 +756,7 @@ const AppContent = () => {
                             socket={socket}
                             PasswordConfirmationModal={PasswordConfirmationModalWrapped}
                             onVoltar={() => setOperadorTelaAtual(null)}
+                            onAbrirDocumentos={() => setOperadorTelaAtual('documentos')}
                         />
                     </Suspense>
                 );
@@ -756,6 +773,7 @@ const AppContent = () => {
                             setAlertMessage={setAlertMessage}
                             socket={socket}
                             onVoltar={() => setOperadorTelaAtual(null)}
+                            onAbrirDocumentos={() => setOperadorTelaAtual('documentos')}
                         />
                     </Suspense>
                 );
@@ -791,6 +809,13 @@ const AppContent = () => {
                         <div className="font-semibold text-slate-800 text-lg">Comboio</div>
                         <div className="text-xs text-slate-400 text-center">Gerenciar abastecimento do comboio</div>
                     </button>
+                    <button
+                        onClick={() => setOperadorTelaAtual('documentos')}
+                        className="w-full max-w-xs text-slate-500 hover:text-slate-800 text-sm font-medium flex items-center justify-center gap-2 mt-2 transition"
+                    >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        Documentos (PDFs)
+                    </button>
                 </div>
             );
         }
@@ -806,6 +831,7 @@ const AppContent = () => {
                     partners={partners}
                     setAlertMessage={setAlertMessage}
                     socket={socket}
+                    onAbrirDocumentos={() => setOperadorTelaAtual('documentos')}
                 />
             </Suspense>
         );
