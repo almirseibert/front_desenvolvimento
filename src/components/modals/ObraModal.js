@@ -1,5 +1,16 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
 import { X, Loader, MapPin, Clock, Truck, Plus, Trash2, DollarSign, User, ClipboardList } from 'lucide-react';
+import { vehicleSubTypes } from '../../utils/vehicleRules';
+
+// Ciclo de vida de planejamento — transições automáticas:
+// radar (criada) → planejada (contrato de horas) → mobilização (1ª alocação) → ativa (1º lançamento de horas)
+const OBRA_FASES = [
+    { value: 'radar',       label: 'Radar (apenas criada)' },
+    { value: 'planejada',   label: 'Planejada (contrato de horas registrado)' },
+    { value: 'mobilizacao', label: 'Mobilização (máquinas alocadas)' },
+    { value: 'ativa',       label: 'Ativa (horas em apontamento)' },
+];
+const PRE_ACTIVE_STATUSES = ['radar', 'planejada', 'mobilizacao'];
 
 const ObraModal = ({
     user,
@@ -38,6 +49,13 @@ const ObraModal = ({
     const [orgaoContratante, setOrgaoContratante] = useState('');
     const [regiao, setRegiao] = useState('');
 
+    // --- ESTADOS DE PLANEJAMENTO (pré-obra) ---
+    const [statusObra, setStatusObra] = useState('ativa');
+    const [dataInicioPrevisto, setDataInicioPrevisto] = useState('');
+    const [origemInfo, setOrigemInfo] = useState('');
+    const [confiancaInfo, setConfiancaInfo] = useState('');
+    const [obsPlanejamento, setObsPlanejamento] = useState('');
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     // --- INICIALIZAÇÃO (Modo Edição) ---
@@ -50,20 +68,27 @@ const ObraModal = ({
             setFiscal(obra.fiscal || '');
             setContractType(obra.contractType || 'horas');
             setDataInicio(obra.dataInicio ? new Date(obra.dataInicio).toISOString().split('T')[0] : '');
-            setDataFim(obra.dataFim ? new Date(obra.dataFim).toISOString().split('T')[0] : '');
+            // Previsão de fim agora vive em dataFimPrevisto; dataFim antigo serve de fallback
+            const fimPrev = obra.dataFimPrevisto || (obra.status !== 'finalizada' ? obra.dataFim : null);
+            setDataFim(fimPrev ? new Date(fimPrev).toISOString().split('T')[0] : '');
             setLatitude(obra.latitude || '');
             setLongitude(obra.longitude || '');
             setOrgaoContratante(obra.orgao_contratante || '');
             setRegiao(obra.regiao || '');
-            
-            // Restaura Contrato por Horas
-            const horasParsed = typeof obra.horasContratadasPorTipo === 'string' 
-                ? JSON.parse(obra.horasContratadasPorTipo) 
-                : (obra.horasContratadasPorTipo || {});
-            
-            const valoresParsed = typeof obra.valoresPorTipo === 'string'
-                ? JSON.parse(obra.valoresPorTipo)
-                : (obra.valoresPorTipo || {});
+
+            setStatusObra(obra.status && obra.status !== 'finalizada' ? obra.status : 'ativa');
+            setDataInicioPrevisto(obra.dataInicioPrevisto ? new Date(obra.dataInicioPrevisto).toISOString().split('T')[0] : '');
+            setOrigemInfo(obra.origemInfo || '');
+            setConfiancaInfo(obra.confiancaInfo || '');
+            setObsPlanejamento(obra.obsPlanejamento || '');
+
+            // Restaura Contrato por Horas — prefere o plano por SUBGRUPO; legado por grupo como fallback
+            const parseMaybe = (v) => (typeof v === 'string' ? JSON.parse(v) : (v || {}));
+            const horasSubParsed = parseMaybe(obra.horasContratadasPorSubTipo);
+            const usaSubTipo = Object.keys(horasSubParsed).length > 0;
+
+            const horasParsed = usaSubTipo ? horasSubParsed : parseMaybe(obra.horasContratadasPorTipo);
+            const valoresParsed = usaSubTipo ? parseMaybe(obra.valoresPorSubTipo) : parseMaybe(obra.valoresPorTipo);
 
             const items = Object.keys(horasParsed).map(type => ({
                 type,
@@ -83,6 +108,18 @@ const ObraModal = ({
             setContractedItems([]);
         }
     }, [obra]);
+
+    // Opções de equipamento: expande cada grupo cobrável nos seus subgrupos;
+    // grupo sem subgrupos entra como opção direta (mesma regra do backend).
+    const equipmentOptions = useMemo(() => {
+        const opts = [];
+        equipmentTypesForHours.forEach(tipo => {
+            const subs = vehicleSubTypes[tipo];
+            if (Array.isArray(subs) && subs.length > 0) opts.push(...subs);
+            else opts.push(tipo);
+        });
+        return [...new Set(opts)].sort();
+    }, [equipmentTypesForHours]);
 
     // --- CÁLCULO DO VALOR TOTAL ---
     const totalValue = useMemo(() => {
@@ -135,6 +172,8 @@ const ObraModal = ({
         e.preventDefault();
         setIsSubmitting(true);
 
+        const isPreActive = PRE_ACTIVE_STATUSES.includes(statusObra);
+
         const payload = {
             tipo_registro: tipoRegistro,
             nome,
@@ -142,8 +181,14 @@ const ObraModal = ({
             responsavel_email: responsavelEmail || null,
             fiscal,
             contractType,
-            dataInicio,
-            dataFim: dataFim || null,
+            // Pré-obra não tem início real — é preenchido na 1ª alocação de equipamento
+            dataInicio: isPreActive ? null : dataInicio,
+            dataFimPrevisto: dataFim || null,
+            dataInicioPrevisto: dataInicioPrevisto || null,
+            status: tipoRegistro === 'centro_custo' ? 'ativa' : statusObra,
+            origemInfo: origemInfo || null,
+            confiancaInfo: confiancaInfo || null,
+            obsPlanejamento: obsPlanejamento || null,
             latitude,
             longitude,
             kmContratadoPrancha: parseFloat(kmContratadoPrancha) || 0,
@@ -154,27 +199,52 @@ const ObraModal = ({
         };
 
         if (contractType === 'horas') {
+            // Plano detalhado por SUBGRUPO (fonte de verdade do planejamento)
+            const horasSubObj = {};
+            const valoresSubObj = {};
+            // Agregado por GRUPO (compatibilidade com faturamento/relatórios legados)
+            const subToTipo = {};
+            Object.entries(vehicleSubTypes).forEach(([tipo, subs]) => {
+                (subs || []).forEach(s => { subToTipo[s] = tipo; });
+            });
             const horasObj = {};
-            const valoresObj = {};
-            
+            const valorPonderado = {};
+
             contractedItems.forEach(item => {
                 if (item.type) {
-                    horasObj[item.type] = parseFloat(item.hours) || 0;
-                    valoresObj[item.type] = parseFloat(item.price) || 0;
+                    const h = parseFloat(item.hours) || 0;
+                    const v = parseFloat(item.price) || 0;
+                    horasSubObj[item.type] = h;
+                    valoresSubObj[item.type] = v;
+
+                    const tipoPai = subToTipo[item.type] || item.type;
+                    horasObj[tipoPai] = (horasObj[tipoPai] || 0) + h;
+                    valorPonderado[tipoPai] = (valorPonderado[tipoPai] || 0) + h * v;
                 }
             });
 
+            const valoresObj = {};
+            Object.keys(horasObj).forEach(tipoPai => {
+                valoresObj[tipoPai] = horasObj[tipoPai] > 0
+                    ? Math.round((valorPonderado[tipoPai] / horasObj[tipoPai]) * 100) / 100
+                    : 0;
+            });
+
+            payload.horasContratadasPorSubTipo = horasSubObj;
+            payload.valoresPorSubTipo = valoresSubObj;
             payload.horasContratadasPorTipo = horasObj;
-            payload.valoresPorTipo = valoresObj; // Novo campo para salvar preços
-            payload.sectors = []; 
+            payload.valoresPorTipo = valoresObj;
+            payload.sectors = [];
         } else {
             payload.sectors = sectors.map(s => ({
                 ...s,
                 kmContratado: parseFloat(s.kmContratado) || 0,
                 price: parseFloat(s.price) || 0
             }));
-            payload.horasContratadasPorTipo = {}; 
+            payload.horasContratadasPorTipo = {};
             payload.valoresPorTipo = {};
+            payload.horasContratadasPorSubTipo = {};
+            payload.valoresPorSubTipo = {};
         }
 
         try {
@@ -294,24 +364,98 @@ const ObraModal = ({
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-1">Data Início *</label>
-                                <input 
-                                    type="date" 
-                                    value={dataInicio} 
-                                    onChange={(e) => setDataInicio(e.target.value)} 
-                                    className="w-full p-2 border rounded" 
-                                    required 
-                                />
+                        {/* Fase (ciclo de vida de planejamento) — não se aplica a centro de custo */}
+                        {tipoRegistro !== 'centro_custo' && (
+                            <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-3">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Fase da Obra</label>
+                                    <select
+                                        value={statusObra}
+                                        onChange={(e) => setStatusObra(e.target.value)}
+                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
+                                    >
+                                        {OBRA_FASES.map(f => (
+                                            <option key={f.value} value={f.value}>{f.label}</option>
+                                        ))}
+                                    </select>
+                                    {PRE_ACTIVE_STATUSES.includes(statusObra) && (
+                                        <p className="text-xs text-amber-700 mt-1">
+                                            Obra em fase de planejamento: fica fora dos fluxos operacionais e é ativada
+                                            automaticamente ao receber o primeiro equipamento.
+                                        </p>
+                                    )}
+                                </div>
+
+                                {PRE_ACTIVE_STATUSES.includes(statusObra) && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Origem da informação</label>
+                                            <input
+                                                type="text"
+                                                value={origemInfo}
+                                                onChange={(e) => setOrigemInfo(e.target.value)}
+                                                className="w-full p-2 border rounded"
+                                                placeholder="Ex: contato na prefeitura, edital nº..."
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Confiança</label>
+                                            <select
+                                                value={confiancaInfo}
+                                                onChange={(e) => setConfiancaInfo(e.target.value)}
+                                                className="w-full p-2 border rounded bg-white"
+                                            >
+                                                <option value="">Selecione...</option>
+                                                <option value="rumor">Rumor</option>
+                                                <option value="plano_oficial">Plano oficial</option>
+                                                <option value="contrato_assinado">Contrato assinado</option>
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-bold text-gray-700 mb-1">Observações de planejamento</label>
+                                            <textarea
+                                                value={obsPlanejamento}
+                                                onChange={(e) => setObsPlanejamento(e.target.value)}
+                                                className="w-full p-2 border rounded text-sm"
+                                                rows={2}
+                                                placeholder="Contexto, pendências, condições..."
+                                            />
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4">
+                            {PRE_ACTIVE_STATUSES.includes(statusObra) && tipoRegistro !== 'centro_custo' ? (
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Previsão Início</label>
+                                    <input
+                                        type="date"
+                                        value={dataInicioPrevisto}
+                                        onChange={(e) => setDataInicioPrevisto(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                    />
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Data Início *</label>
+                                    <input
+                                        type="date"
+                                        value={dataInicio}
+                                        onChange={(e) => setDataInicio(e.target.value)}
+                                        className="w-full p-2 border rounded"
+                                        required
+                                    />
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Previsão Fim</label>
-                                <input 
-                                    type="date" 
-                                    value={dataFim} 
-                                    onChange={(e) => setDataFim(e.target.value)} 
-                                    className="w-full p-2 border rounded" 
+                                <input
+                                    type="date"
+                                    value={dataFim}
+                                    onChange={(e) => setDataFim(e.target.value)}
+                                    className="w-full p-2 border rounded"
                                 />
                             </div>
                         </div>
@@ -399,15 +543,15 @@ const ObraModal = ({
                                     {contractedItems.map((item, index) => (
                                         <div key={index} className="flex flex-col sm:flex-row gap-3 items-end bg-white p-3 rounded border shadow-sm">
                                             <div className="w-full sm:flex-1">
-                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Grupo de Veículo</label>
-                                                <select 
-                                                    value={item.type} 
-                                                    onChange={(e) => updateContractedItem(index, 'type', e.target.value)} 
+                                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Equipamento (Subgrupo)</label>
+                                                <select
+                                                    value={item.type}
+                                                    onChange={(e) => updateContractedItem(index, 'type', e.target.value)}
                                                     className="w-full p-2 border rounded text-sm focus:ring-1 focus:ring-blue-400 outline-none"
                                                 >
                                                     <option value="">Selecione...</option>
-                                                    {equipmentTypesForHours.map(t => (
-                                                        <option key={t} value={t}>{t}</option>
+                                                    {equipmentOptions.map(opt => (
+                                                        <option key={opt} value={opt}>{opt}</option>
                                                     ))}
                                                 </select>
                                             </div>

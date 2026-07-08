@@ -121,7 +121,7 @@ const ComboioDistribuicaoModal = ({
             .sort((a, b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')),
         [vehicles, comboioVehicle]
     );
-    const sortedObras = useMemo(() => obras.filter(o => o.status === 'ativa').sort((a, b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
+    const sortedObras = useMemo(() => obras.filter(o => ['ativa', 'mobilizacao'].includes(o.status)).sort((a, b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
     const sortedEmployees = useMemo(() => [...employees].sort((a, b) => (a.nome || '').localeCompare(b.nome || '')), [employees]);
     const selectedVehicle = useMemo(() => vehicles.find(v => v.id === formData.receivingVehicleId), [formData.receivingVehicleId, vehicles]);
 

@@ -266,7 +266,7 @@ const RefuelingOrderModal = ({
                 && p.status_operacional !== 'BLOQUEADO')
             .sort((a,b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''))
     , [partners]);
-    const sortedObras = useMemo(() => [...obras].filter(o => o.status === 'ativa').sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
+    const sortedObras = useMemo(() => [...obras].filter(o => ['ativa', 'mobilizacao'].includes(o.status)).sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
 
     const selectedVehicle = useMemo(() => vehicles.find(v => v.id === formData.vehicleId), [formData.vehicleId, vehicles]);
     
@@ -301,7 +301,7 @@ const RefuelingOrderModal = ({
 
                 if (selectedVehicle.obraAtualId) {
                     const obra = obras.find(o => o.id === selectedVehicle.obraAtualId);
-                    if (obra && obra.status === 'ativa') {
+                    if (obra && ['ativa', 'mobilizacao'].includes(obra.status)) {
                         autoObraId = selectedVehicle.obraAtualId;
                         const alocacao = obra?.historicoVeiculos?.find(h => h.veiculoId === selectedVehicle.id && !h.dataSaida);
                         if (alocacao?.employeeId) autoEmployeeId = alocacao.employeeId;

@@ -167,6 +167,7 @@ const apiClient = {
 
     // --- Obras ---
     getObras: async () => apiFetch('/obras'),
+    getPlanejamentoObras: async (janelaDias) => apiFetch(`/obras/planejamento${janelaDias ? `?janelaDias=${janelaDias}` : ''}`),
     getObraById: async (id) => apiFetch(`/obras/${id}`),
     createObra: async (data) => apiFetch('/obras', { method: 'POST', body: JSON.stringify(data) }),
     updateObra: async (id, data) => apiFetch(`/obras/${id}`, { method: 'PUT', body: JSON.stringify(data) }),

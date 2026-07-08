@@ -61,6 +61,7 @@ import { processVehiclesWithAlerts } from './utils/vehicleAlerts';
 // ==========================================
 const Dashboard                    = lazy(() => import('./pages/Dashboard'));
 const ObrasPage                    = lazy(() => import('./pages/ObrasPage'));
+const PlanejamentoPage             = lazy(() => import('./pages/PlanejamentoPage'));
 const PartnersPage                 = lazy(() => import('./pages/PartnersPage'));
 const RefuelingPage                = lazy(() => import('./pages/RefuelingPage'));
 const SaldoEmPostosPage            = lazy(() => import('./pages/SaldoEmPostosPage'));
@@ -858,6 +859,8 @@ const AppContent = () => {
                 return <VehiclePage {...commonProps} initialFilter={pageFilter} />;
             case 'obras':
                 return <ObrasPage {...commonProps} initialFilter={pageFilter} />;
+            case 'planejamento':
+                return <PlanejamentoPage {...commonProps} />;
             case 'billing':
                 return <BillingPage {...commonProps} initialFilter={pageFilter} />;
             case 'operacional':
