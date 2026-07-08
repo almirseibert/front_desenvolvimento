@@ -11,7 +11,8 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
     const [filters, setFilters] = useState({ type: '', obraId: '', status: '', group: '' });
     const [selectedVehicleIds, setSelectedVehicleIds] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
-    
+    const [pdfOrientation, setPdfOrientation] = useState('landscape');
+
     // Configuração de Colunas
     const allColumns = useMemo(() => [
         { key: 'registroInterno', label: 'Registro Interno' },
@@ -25,9 +26,10 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
         { key: 'ano_fabricacao', label: 'Ano Fab.' },
         { key: 'ano_modelo', label: 'Ano Mod.' },
         { key: 'chassi', label: 'Chassi' },
+        { key: 'rastreador', label: 'Rastreador' },
     ], []);
 
-    const [selectedColumns, setSelectedColumns] = useState(['registroInterno', 'placa', 'tipo', 'modelo', 'status', 'obraAtual', 'leituraPrincipal']);
+    const [selectedColumns, setSelectedColumns] = useState(['registroInterno', 'placa', 'tipo', 'modelo', 'status', 'obraAtual', 'leituraPrincipal', 'rastreador']);
 
     // Filtragem de Veículos
     const filteredVehicles = useMemo(() => {
@@ -73,25 +75,38 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
 
     const handleGeneratePDF = () => {
         if (selectedVehicleIds.length === 0 || selectedColumns.length === 0) return alert("Selecione ao menos um veículo e uma coluna.");
-        
-        const doc = new jsPDF({ orientation: 'landscape' });
-        doc.setFontSize(18);
-        doc.text('Relatório de Veículos - Frota MAK', 14, 22);
-        doc.setFontSize(10);
-        doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}`, 14, 28);
-        
+
+        const doc = new jsPDF({ orientation: pdfOrientation });
+        doc.setFontSize(16);
+        doc.text('Relatório de Veículos - Frota MAK', 14, 20);
+        doc.setFontSize(9);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')}  |  ${selectedVehicleIds.length} veículos  |  Orientação: ${pdfOrientation === 'landscape' ? 'Paisagem' : 'Retrato'}`, 14, 26);
+
         const headers = selectedColumns.map(colKey => allColumns.find(c => c.key === colKey)?.label || colKey);
         const body = filteredVehicles
             .filter(v => selectedVehicleIds.includes(v.id))
             .map(vehicle => selectedColumns.map(colKey => vehicle[colKey] != null ? String(vehicle[colKey]) : ''));
 
+        // Larguras específicas por tipo de coluna para melhor aproveitamento do espaço
+        const colWidths = {
+            registroInterno: 20, placa: 22, tipo: 28, marca: 24, modelo: 30,
+            status: 28, obraAtual: 55, leituraPrincipal: 22,
+            ano_fabricacao: 14, ano_modelo: 14, chassi: 38, rastreador: 25,
+        };
+        const columnStyles = {};
+        selectedColumns.forEach((colKey, i) => {
+            if (colWidths[colKey]) columnStyles[i] = { cellWidth: colWidths[colKey] };
+        });
+
         autoTable(doc, {
-            startY: 35,
+            startY: 32,
             head: [headers],
             body,
             theme: 'striped',
-            headStyles: { fillColor: [3, 105, 161] },
-            styles: { fontSize: 8, cellPadding: 2 },
+            headStyles: { fillColor: [3, 105, 161], fontSize: 8, fontStyle: 'bold', cellPadding: { top: 3, bottom: 3, left: 3, right: 3 } },
+            styles: { fontSize: 7.5, cellPadding: { top: 2.5, bottom: 2.5, left: 3, right: 3 }, overflow: 'linebreak' },
+            alternateRowStyles: { fillColor: [245, 248, 252] },
+            columnStyles,
         });
         doc.save('Relatorio_Veiculos_MAK.pdf');
     };
@@ -173,9 +188,22 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
                 </table>
             </div>
 
-            <button onClick={handleGeneratePDF} disabled={selectedVehicleIds.length === 0} className="btn-primary w-full md:w-auto flex items-center justify-center gap-2">
-                <Printer size={18}/> Gerar PDF ({selectedVehicleIds.length})
-            </button>
+            <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                    <label className="font-medium text-gray-600">Orientação PDF:</label>
+                    <select
+                        value={pdfOrientation}
+                        onChange={e => setPdfOrientation(e.target.value)}
+                        className="px-2.5 py-1.5 rounded-lg text-sm border border-gray-200 bg-white focus:ring-2 focus:ring-blue-400 outline-none"
+                    >
+                        <option value="landscape">Paisagem (Horizontal)</option>
+                        <option value="portrait">Retrato (Vertical)</option>
+                    </select>
+                </div>
+                <button onClick={handleGeneratePDF} disabled={selectedVehicleIds.length === 0} className="btn-primary flex items-center justify-center gap-2">
+                    <Printer size={16}/> Gerar PDF ({selectedVehicleIds.length} veículos)
+                </button>
+            </div>
         </div>
     );
 };

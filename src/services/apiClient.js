@@ -98,9 +98,14 @@ const apiClient = {
     uploadVehicleImage: async (id, formData) => {
         return apiFetch(`/vehicles/${id}/upload-image`, {
             method: 'POST',
-            body: formData, 
+            body: formData,
         });
     },
+
+    // --- Documentos do Veículo ---
+    getVehicleDocuments: async (id) => apiFetch(`/vehicles/${id}/documents`),
+    uploadVehicleDocument: async (id, formData) => apiFetch(`/vehicles/${id}/documents`, { method: 'POST', body: formData }),
+    deleteVehicleDocument: async (id, docId) => apiFetch(`/vehicles/${id}/documents/${docId}`, { method: 'DELETE' }),
 
     // --- Configurações de Tipos/Sub-tipos de Veículos ---
     getVehicleTypeConfigs: async () => apiFetch('/vehicle-type-configs'),

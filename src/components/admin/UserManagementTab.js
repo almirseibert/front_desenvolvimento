@@ -105,7 +105,9 @@ const UserManagementTab = ({ groups = [], onUsersChange }) => {
       await apiClient.adminDeleteRegistrationRequest(id);
       loadRequests();
     } catch (e) {
-      showToast('Erro ao rejeitar solicitação.');
+      const detail = e?.data?.detail || e?.data?.error || e?.message || '';
+      showToast('Erro ao rejeitar solicitação.' + (detail ? ` (${detail})` : ''));
+      console.error('[handleReject] id=%s error:', id, e?.data || e?.message);
     }
   };
 
