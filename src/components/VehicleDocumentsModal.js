@@ -24,7 +24,7 @@ const VehicleDocumentsModal = ({ vehicle, onClose, apiClient }) => {
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);
     const [deleting, setDeleting] = useState(null);
-    const [form, setForm] = useState({ tipo: 'CRLV', descricao: '' });
+    const [form, setForm] = useState({ tipo: 'CRLV', nome: '' });
     const [file, setFile] = useState(null);
     const [error, setError] = useState('');
     const fileRef = useRef(null);
@@ -50,11 +50,11 @@ const VehicleDocumentsModal = ({ vehicle, onClose, apiClient }) => {
         setUploading(true);
         try {
             const formData = new FormData();
-            formData.append('docFile', file);
+            formData.append('documentFile', file);
             formData.append('tipo', form.tipo);
-            formData.append('descricao', form.descricao);
+            formData.append('nome', form.nome);
             await apiClient.uploadVehicleDocument(vehicle.id, formData);
-            setForm({ tipo: 'CRLV', descricao: '' });
+            setForm({ tipo: 'CRLV', nome: '' });
             setFile(null);
             if (fileRef.current) fileRef.current.value = '';
             await loadDocs();
@@ -66,7 +66,7 @@ const VehicleDocumentsModal = ({ vehicle, onClose, apiClient }) => {
     };
 
     const handleDelete = async (doc) => {
-        if (!window.confirm(`Excluir o documento "${doc.nome_original}"?`)) return;
+        if (!window.confirm(`Excluir o documento "${doc.nome}"?`)) return;
         setDeleting(doc.id);
         try {
             await apiClient.deleteVehicleDocument(vehicle.id, doc.id);
@@ -123,12 +123,12 @@ const VehicleDocumentsModal = ({ vehicle, onClose, apiClient }) => {
                                 </select>
                             </div>
                             <div>
-                                <label className="block text-xs font-medium text-gray-600 mb-1">Descrição (opcional)</label>
+                                <label className="block text-xs font-medium text-gray-600 mb-1">Nome (opcional)</label>
                                 <input
                                     type="text"
-                                    value={form.descricao}
-                                    onChange={e => setForm(p => ({ ...p, descricao: e.target.value }))}
-                                    placeholder="Ex: Vencimento 2026"
+                                    value={form.nome}
+                                    onChange={e => setForm(p => ({ ...p, nome: e.target.value }))}
+                                    placeholder="Ex: CRLV 2026"
                                     className="w-full px-3 py-2 rounded-lg text-sm bg-white outline-none focus:ring-2 focus:ring-yellow-400"
                                     style={{ border: '1px solid #e8e0d4' }}
                                 />
@@ -183,9 +183,8 @@ const VehicleDocumentsModal = ({ vehicle, onClose, apiClient }) => {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 <span style={tipoBadgeStyle(doc.tipo)}>{doc.tipo}</span>
-                                                <span className="text-sm font-medium text-gray-700 truncate">{doc.nome_original}</span>
+                                                <span className="text-sm font-medium text-gray-700 truncate">{doc.nome}</span>
                                             </div>
-                                            {doc.descricao && <p className="text-xs text-gray-400 mt-0.5">{doc.descricao}</p>}
                                             <p className="text-xs text-gray-300 mt-0.5">{fmtDate(doc.created_at)}</p>
                                         </div>
                                         <div className="flex items-center gap-1 shrink-0">

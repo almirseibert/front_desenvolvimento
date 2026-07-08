@@ -25,11 +25,12 @@ const CHANNELS = [
 ];
 
 const TARGET_TYPES = [
-    { id: 'role',          label: 'Função (role)',    placeholder: 'admin, gerencia, rh, faturamento, abastecimento, oficina, editor' },
-    { id: 'user',          label: 'Usuário (ID)',     placeholder: 'ID do usuário no sistema' },
-    { id: 'employee',      label: 'Funcionário (ID)', placeholder: 'ID do funcionário' },
-    { id: 'phone',         label: 'Telefone (avulso)', placeholder: '55519XXXXXXXX' },
-    { id: 'email_address', label: 'E-mail (avulso)',  placeholder: 'pessoa@empresa.com' },
+    { id: 'role',             label: 'Função (role)',       placeholder: 'admin, gerencia, rh, faturamento, abastecimento, oficina, editor' },
+    { id: 'user',             label: 'Usuário (ID)',        placeholder: 'ID do usuário no sistema' },
+    { id: 'employee',         label: 'Funcionário (ID)',    placeholder: 'ID do funcionário' },
+    { id: 'internal_contact', label: 'Contato Interno',     placeholder: 'Selecione um contato interno' },
+    { id: 'phone',            label: 'Telefone (avulso)',   placeholder: '55519XXXXXXXX' },
+    { id: 'email_address',    label: 'E-mail (avulso)',     placeholder: 'pessoa@empresa.com' },
 ];
 
 const eventLabel = (id) => EVENT_TYPES.find(e => e.id === id)?.label || id;
@@ -37,6 +38,7 @@ const targetTypeLabel = (id) => TARGET_TYPES.find(t => t.id === id)?.label || id
 
 const NotificacoesAdminTab = () => {
     const [targets, setTargets] = useState([]);
+    const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filterEvent, setFilterEvent] = useState('');
     const [filterChannel, setFilterChannel] = useState('');
@@ -46,8 +48,12 @@ const NotificacoesAdminTab = () => {
     const load = async () => {
         setLoading(true);
         try {
-            const data = await apiClient.adminListNotificationTargets();
+            const [data, contactsData] = await Promise.all([
+                apiClient.adminListNotificationTargets(),
+                apiClient.adminListInternalContacts().catch(() => []),
+            ]);
             setTargets(Array.isArray(data) ? data : []);
+            setContacts(Array.isArray(contactsData) ? contactsData : []);
         } catch (e) {
             console.error('Erro ao carregar notification_targets:', e);
             setFeedback({ type: 'error', text: e.message || 'Erro ao carregar destinos.' });
@@ -56,6 +62,8 @@ const NotificacoesAdminTab = () => {
         }
     };
     useEffect(() => { load(); }, []);
+
+    const contactName = (id) => contacts.find(c => String(c.id) === String(id))?.nome || null;
 
     const filtered = useMemo(() => targets.filter(t => {
         if (filterEvent && t.event_type !== filterEvent) return false;
@@ -184,10 +192,13 @@ const NotificacoesAdminTab = () => {
                                                 </span>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-medium text-gray-800 truncate">
-                                                        {t.label || t.target_value}
+                                                        {t.label || (t.target_type === 'internal_contact' && contactName(t.target_value)) || t.target_value}
                                                     </div>
                                                     <div className="text-[11px] text-gray-500">
-                                                        {targetTypeLabel(t.target_type)} · <span className="font-mono">{t.target_value}</span>
+                                                        {targetTypeLabel(t.target_type)}
+                                                        {t.target_type === 'internal_contact'
+                                                            ? <> · {contactName(t.target_value) || <span className="font-mono">{t.target_value}</span>}</>
+                                                            : <> · <span className="font-mono">{t.target_value}</span></>}
                                                     </div>
                                                 </div>
                                                 <button
@@ -224,6 +235,7 @@ const NotificacoesAdminTab = () => {
             {modal.open && (
                 <NotificacaoModal
                     initial={modal.data}
+                    contacts={contacts}
                     onClose={() => setModal({ open: false, data: null })}
                     onSaved={() => { setModal({ open: false, data: null }); load(); setFeedback({ type: 'ok', text: 'Destino salvo.' }); }}
                 />
@@ -233,7 +245,7 @@ const NotificacoesAdminTab = () => {
 };
 
 // ─── Modal ─────────────────────────────────────────────────────────────────────
-const NotificacaoModal = ({ initial, onClose, onSaved }) => {
+const NotificacaoModal = ({ initial, contacts = [], onClose, onSaved }) => {
     const isEdit = !!initial;
     const [form, setForm] = useState(initial || {
         event_type: EVENT_TYPES[0].id,
@@ -332,13 +344,42 @@ const NotificacaoModal = ({ initial, onClose, onSaved }) => {
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-gray-600 mb-1 block">Valor do destino</label>
-                        <input
-                            type="text"
-                            value={form.target_value}
-                            onChange={(e) => handleChange('target_value', e.target.value)}
-                            placeholder={targetMeta?.placeholder || ''}
-                            className="w-full text-sm px-3 py-2 rounded-md border border-gray-300 bg-white"
-                        />
+                        {form.target_type === 'internal_contact' ? (
+                            <>
+                                <select
+                                    value={form.target_value}
+                                    onChange={(e) => {
+                                        const id = e.target.value;
+                                        handleChange('target_value', id);
+                                        const c = contacts.find(x => String(x.id) === id);
+                                        if (c && !form.label) handleChange('label', c.nome);
+                                    }}
+                                    className="w-full text-sm px-3 py-2 rounded-md border border-gray-300 bg-white"
+                                >
+                                    <option value="">— Selecione —</option>
+                                    {contacts
+                                        .filter(c => form.channel === 'whatsapp' ? c.whatsapp : c.email)
+                                        .map(c => (
+                                            <option key={c.id} value={c.id}>
+                                                {c.nome} ({form.channel === 'whatsapp' ? c.whatsapp : c.email})
+                                            </option>
+                                        ))}
+                                </select>
+                                {contacts.filter(c => form.channel === 'whatsapp' ? c.whatsapp : c.email).length === 0 && (
+                                    <p className="text-[11px] text-amber-600 mt-1">
+                                        Nenhum contato interno com {form.channel === 'whatsapp' ? 'WhatsApp' : 'e-mail'} cadastrado. Cadastre em "Contatos Internos".
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <input
+                                type="text"
+                                value={form.target_value}
+                                onChange={(e) => handleChange('target_value', e.target.value)}
+                                placeholder={targetMeta?.placeholder || ''}
+                                className="w-full text-sm px-3 py-2 rounded-md border border-gray-300 bg-white"
+                            />
+                        )}
                     </div>
                     <div>
                         <label className="text-xs font-semibold text-gray-600 mb-1 block">Rótulo (opcional)</label>

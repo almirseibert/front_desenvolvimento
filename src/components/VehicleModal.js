@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel } from 'lucide-react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel, FileText, Trash2, Upload, ExternalLink } from 'lucide-react';
 import { checkReadingConsistency, vehicleSubTypes, getGroupUnit } from '../utils/vehicleRules';
 import SearchableSelect from './SearchableSelect';
 
@@ -120,6 +120,100 @@ const VehicleModal = ({
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [pendingSaveData, setPendingSaveData] = useState(null);
     const [violationMessage, setViolationMessage] = useState('');
+
+    // --- Documentos ---
+    const [documents, setDocuments] = useState([]);
+    const [docUploading, setDocUploading] = useState(false);
+    const [docNome, setDocNome] = useState('');
+    const [docTipo, setDocTipo] = useState('CRLV');
+
+    const loadDocuments = useCallback(async () => {
+        if (!vehicle?.id) return;
+        try {
+            const docs = await apiClient.getVehicleDocuments(vehicle.id);
+            setDocuments(docs);
+        } catch (e) {
+            console.warn('Erro ao carregar documentos:', e.message);
+        }
+    }, [vehicle?.id, apiClient]);
+
+    useEffect(() => { loadDocuments(); }, [loadDocuments]);
+
+    const handleDocUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file || !vehicle?.id) return;
+        setDocUploading(true);
+        try {
+            const fd = new FormData();
+            fd.append('documentFile', file);
+            fd.append('nome', docNome || file.name.replace(/\.pdf$/i, ''));
+            fd.append('tipo', docTipo);
+            await apiClient.uploadVehicleDocument(vehicle.id, fd);
+            setDocNome('');
+            await loadDocuments();
+        } catch (err) {
+            setError('Falha ao enviar documento: ' + err.message);
+        } finally {
+            setDocUploading(false);
+            e.target.value = '';
+        }
+    };
+
+    const handleDocDelete = async (docId) => {
+        if (!vehicle?.id) return;
+        try {
+            await apiClient.deleteVehicleDocument(vehicle.id, docId);
+            setDocuments(prev => prev.filter(d => d.id !== docId));
+        } catch (err) {
+            setError('Falha ao remover documento: ' + err.message);
+        }
+    };
+
+    // --- Vínculos entre veículos (atrelar) ---
+    const [links, setLinks] = useState([]);
+    const [linkChildId, setLinkChildId] = useState('');
+    const [linkTipo, setLinkTipo] = useState('');
+    const [linkSaving, setLinkSaving] = useState(false);
+
+    const loadLinks = useCallback(async () => {
+        if (!vehicle?.id) return;
+        try {
+            const data = await apiClient.getVehicleLinks(vehicle.id);
+            setLinks(data || []);
+        } catch (e) {
+            console.warn('Erro ao carregar vínculos:', e.message);
+        }
+    }, [vehicle?.id, apiClient]);
+
+    useEffect(() => { loadLinks(); }, [loadLinks]);
+
+    const handleAddLink = async () => {
+        if (!vehicle?.id || !linkChildId) return;
+        setLinkSaving(true);
+        try {
+            await apiClient.createVehicleLink({
+                parent_vehicle_id: vehicle.id,
+                child_vehicle_id: linkChildId,
+                tipo_vinculo: linkTipo || null,
+            });
+            setLinkChildId('');
+            setLinkTipo('');
+            await loadLinks();
+        } catch (err) {
+            setError('Falha ao atrelar: ' + err.message);
+        } finally {
+            setLinkSaving(false);
+        }
+    };
+
+    const handleRemoveLink = async (id) => {
+        try {
+            await apiClient.deleteVehicleLink(id);
+            setLinks(prev => prev.filter(l => l.id !== id));
+        } catch (err) {
+            setError('Falha ao remover vínculo: ' + err.message);
+        }
+    };
 
     // --- Helpers de Grupo ---
     const vehicleGroupsLocal = (vehicleGroups && Object.keys(vehicleGroups).length > 0)
@@ -639,6 +733,135 @@ const VehicleModal = ({
                                             <input type="checkbox" name="naoPodeCircular" checked={!formData.canCirculate} onChange={handleChange} className="h-5 w-5 text-red-600 rounded"/>
                                             <span className={`font-bold text-sm ${!formData.canCirculate ? 'text-red-800' : 'text-gray-600'}`}>NÃO Pode Circular?</span>
                                         </label>
+                                    </div>
+                                )}
+
+                                {/* Documentos do Veículo */}
+                                {vehicle?.id && (
+                                    <div className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                                        <p className="text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                                            <FileText size={13}/> Documentos
+                                        </p>
+
+                                        {/* Lista */}
+                                        {documents.length > 0 ? (
+                                            <ul className="space-y-1">
+                                                {documents.map(doc => {
+                                                    const apiBase = (process.env.REACT_APP_API_URL || 'http://localhost:3001/api').replace('/api', '');
+                                                    const href = doc.url.startsWith('http') ? doc.url : `${apiBase}${doc.url}`;
+                                                    return (
+                                                        <li key={doc.id} className="flex items-center justify-between gap-2 text-xs bg-white border rounded px-2 py-1.5">
+                                                            <a href={href} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline truncate">
+                                                                <ExternalLink size={11} className="shrink-0"/>
+                                                                <span className="truncate">{doc.nome}</span>
+                                                                <span className="text-gray-400 shrink-0">({doc.tipo})</span>
+                                                            </a>
+                                                            <button onClick={() => handleDocDelete(doc.id)} className="text-red-400 hover:text-red-600 shrink-0">
+                                                                <Trash2 size={13}/>
+                                                            </button>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">Nenhum documento cadastrado.</p>
+                                        )}
+
+                                        {/* Upload */}
+                                        <div className="pt-1 space-y-1.5">
+                                            <div className="flex gap-1.5">
+                                                <input
+                                                    type="text"
+                                                    placeholder="Nome do documento"
+                                                    value={docNome}
+                                                    onChange={e => setDocNome(e.target.value)}
+                                                    className="flex-1 min-w-0 p-1.5 border rounded text-xs"
+                                                />
+                                                <select
+                                                    value={docTipo}
+                                                    onChange={e => setDocTipo(e.target.value)}
+                                                    className="p-1.5 border rounded text-xs bg-white"
+                                                >
+                                                    <option>CRLV</option>
+                                                    <option>Seguro</option>
+                                                    <option>Contrato</option>
+                                                    <option>AET</option>
+                                                    <option>Outro</option>
+                                                </select>
+                                            </div>
+                                            <label className={`flex items-center justify-center gap-1.5 w-full p-1.5 border-2 border-dashed rounded text-xs cursor-pointer transition ${docUploading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-white border-gray-300'}`}>
+                                                {docUploading ? <Loader size={12} className="animate-spin"/> : <Upload size={12}/>}
+                                                {docUploading ? 'Enviando…' : 'Selecionar PDF'}
+                                                <input type="file" accept="application/pdf" onChange={handleDocUpload} disabled={docUploading} className="hidden"/>
+                                            </label>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Veículos Atrelados */}
+                                {vehicle?.id && (
+                                    <div className="p-3 border rounded-lg bg-gray-50 space-y-2">
+                                        <p className="text-xs font-bold text-gray-700 uppercase flex items-center gap-1.5">
+                                            <Package size={13}/> Veículos Atrelados
+                                        </p>
+                                        <p className="text-[11px] text-gray-400 -mt-1">Ex.: cavalo/prancha ↔ semirreboque, máquina ↔ acessório (rompedor/varredeira).</p>
+
+                                        {links.length > 0 ? (
+                                            <ul className="space-y-1">
+                                                {links.map(l => {
+                                                    const isParent = l.parent_vehicle_id === vehicle.id;
+                                                    const outroReg = isParent ? (l.child_registro || l.child_placa) : (l.parent_registro || l.parent_placa);
+                                                    const outroMod = isParent ? l.child_modelo : l.parent_modelo;
+                                                    return (
+                                                        <li key={l.id} className="flex items-center justify-between gap-2 text-xs bg-white border rounded px-2 py-1.5">
+                                                            <span className="truncate">
+                                                                <span className="text-gray-400">{isParent ? 'Atrelado:' : 'Principal:'}</span>{' '}
+                                                                <span className="font-medium">{outroReg}</span>
+                                                                {outroMod ? <span className="text-gray-400"> — {outroMod}</span> : null}
+                                                                {l.tipo_vinculo ? <span className="text-gray-400"> ({l.tipo_vinculo})</span> : null}
+                                                            </span>
+                                                            <button onClick={() => handleRemoveLink(l.id)} className="text-red-400 hover:text-red-600 shrink-0" title="Desvincular">
+                                                                <Trash2 size={13}/>
+                                                            </button>
+                                                        </li>
+                                                    );
+                                                })}
+                                            </ul>
+                                        ) : (
+                                            <p className="text-xs text-gray-400">Nenhum veículo atrelado.</p>
+                                        )}
+
+                                        <div className="pt-1 flex gap-1.5">
+                                            <select
+                                                value={linkChildId}
+                                                onChange={e => setLinkChildId(e.target.value)}
+                                                className="flex-1 min-w-0 p-1.5 border rounded text-xs bg-white"
+                                            >
+                                                <option value="">Selecionar veículo a atrelar…</option>
+                                                {vehicles
+                                                    .filter(v => v.id !== vehicle.id)
+                                                    .map(v => (
+                                                        <option key={v.id} value={v.id}>
+                                                            {v.registroInterno || v.placa} {v.modelo ? `— ${v.modelo}` : ''}
+                                                        </option>
+                                                    ))}
+                                            </select>
+                                            <input
+                                                type="text"
+                                                placeholder="Tipo (opcional)"
+                                                value={linkTipo}
+                                                onChange={e => setLinkTipo(e.target.value)}
+                                                className="w-28 p-1.5 border rounded text-xs"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={handleAddLink}
+                                                disabled={!linkChildId || linkSaving}
+                                                className="px-2.5 py-1.5 bg-[#9E7A42] text-white rounded text-xs font-bold disabled:opacity-50 flex items-center gap-1"
+                                            >
+                                                {linkSaving ? <Loader size={12} className="animate-spin"/> : 'Atrelar'}
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
 

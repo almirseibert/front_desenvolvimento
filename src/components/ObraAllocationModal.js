@@ -155,8 +155,12 @@ const ObraAllocationModal = ({
     const currentVehicleReading = getVehicleMainReading(vehicle).value || '';
     const [readingValue, setReadingValue] = useState(currentVehicleReading.toString());
 
+    // Inclui obras em fase de planejamento (planejada/mobilizacao): alocar o 1º
+    // equipamento nelas as ativa automaticamente no backend. Única tela
+    // operacional que enxerga status pré-obra.
     const activeObras = useMemo(() =>
-        obras.filter(o => o.status === 'ativa').sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
+        obras.filter(o => ['ativa', 'planejada', 'mobilizacao'].includes(o.status))
+            .sort((a, b) => (a.nome || '').localeCompare(b.nome || '')),
     [obras]);
 
     // Somente funcionários com status 'ativo'
@@ -435,7 +439,7 @@ const ObraAllocationModal = ({
                                         <Building2 size={12} /> Obra Destino <span className="text-red-500">*</span>
                                     </label>
                                     <SearchableSelect
-                                        items={activeObras.map(o => ({ ...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}` }))}
+                                        items={activeObras.map(o => ({ ...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}${o.status !== 'ativa' ? ' [PLANEJADA]' : ''}` }))}
                                         value={obraId}
                                         onChange={(item) => setObraId(item?.id || '')}
                                         getLabel={(o) => o._displayNome || o.nome}

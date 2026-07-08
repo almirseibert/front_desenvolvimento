@@ -31,8 +31,9 @@ const Sidebar = ({ currentPage, setCurrentPage, user, logout, onChangePassword, 
             icon: <HardHat size={14} />,
             hidden: !canAccessAny(['obras', 'expenses']),
             items: [
-                { id: 'obras',    label: 'Obras' },
-                { id: 'expenses', label: 'Despesas', hidden: !canAccess('expenses') },
+                { id: 'obras',        label: 'Obras' },
+                { id: 'planejamento', label: 'Planejamento', hidden: !canAccess('planejamento') },
+                { id: 'expenses',     label: 'Despesas', hidden: !canAccess('expenses') },
             ],
         },
         {

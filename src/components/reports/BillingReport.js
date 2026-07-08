@@ -110,7 +110,7 @@ const BillingReport = ({ obras, vehicles }) => {
                 <label className="block text-sm font-bold text-gray-700 mb-2">Selecione a Obra</label>
                 <div className="flex gap-3">
                     <SearchableObraSelect
-                        obras={sortedObras.filter(o => o.status === 'ativa')}
+                        obras={sortedObras.filter(o => ['ativa', 'mobilizacao'].includes(o.status))}
                         value={selectedObraId}
                         onChange={(obra) => setSelectedObraId(obra?.id || '')}
                         placeholder="Buscar obra pelo nome..."

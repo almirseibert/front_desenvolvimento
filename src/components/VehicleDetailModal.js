@@ -1,9 +1,19 @@
-﻿import React from 'react';
-import { ImageOff, X, MapPin } from 'lucide-react';
+﻿import React, { useState, useEffect } from 'react';
+import { ImageOff, X, MapPin, FileText, ExternalLink } from 'lucide-react';
 import { getGroupUnit, getReadingSourceForUnit } from '../utils/vehicleRules';
+import apiClient from '../services/apiClient';
 
 // --- Modal de Detalhes do Veículo (V2.7 - Rastreador Label) ---
 const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) => {
+    const [documents, setDocuments] = useState([]);
+
+    useEffect(() => {
+        if (!vehicle?.id) return;
+        apiClient.getVehicleDocuments(vehicle.id)
+            .then(setDocuments)
+            .catch(() => {});
+    }, [vehicle?.id]);
+
     if (!vehicle) return null;
 
     // --- Helper Robusto (Igual ao VehicleModal) ---
@@ -157,6 +167,35 @@ const VehicleDetailModal = ({ vehicle, revision, onClose, vehicleGroups = {} }) 
                          <div className="text-gray-800 font-medium col-span-2">{revision?.descricao || 'Nenhuma descrição'}</div>
                     </div>
                 </div>
+                {/* Documentos */}
+                {documents.length > 0 && (
+                    <div className="px-4 pb-4">
+                        <p className="text-xs font-bold text-gray-500 uppercase mb-2 flex items-center gap-1.5">
+                            <FileText size={13}/> Documentos
+                        </p>
+                        <ul className="space-y-1">
+                            {documents.map(doc => {
+                                const apiBase = (process.env.REACT_APP_API_URL || 'http://localhost:3001/api').replace('/api', '');
+                                const href = doc.url.startsWith('http') ? doc.url : `${apiBase}${doc.url}`;
+                                return (
+                                    <li key={doc.id}>
+                                        <a
+                                            href={href}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-1.5 text-sm text-blue-600 hover:underline"
+                                        >
+                                            <ExternalLink size={13} className="shrink-0"/>
+                                            <span>{doc.nome}</span>
+                                            <span className="text-gray-400 text-xs">({doc.tipo})</span>
+                                        </a>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    </div>
+                )}
+
                  {/* Rodapé Fixo */}
                 <div className="p-4 bg-gray-50 border-t flex justify-end sticky bottom-0 z-10">
                     <button onClick={onClose} className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 text-sm font-medium">Fechar</button>

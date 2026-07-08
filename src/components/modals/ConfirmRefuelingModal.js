@@ -9,6 +9,7 @@ const ConfirmRefuelingModal = ({
     setAlertMessage,
     apiClient,
     reloadData,
+    onAfterConfirm,
     refuelings = [],
     obras = [],
     expenses = [],
@@ -308,6 +309,7 @@ const ConfirmRefuelingModal = ({
             };
 
             await apiClient.confirmRefuelingOrder(order.id, payload);
+            if (onAfterConfirm) await onAfterConfirm();
             setAlertMessage("Abastecimento confirmado!");
             reloadData();
             onClose();

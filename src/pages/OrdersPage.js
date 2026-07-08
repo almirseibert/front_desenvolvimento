@@ -1074,7 +1074,7 @@ const OrderModal = ({ user, onClose, setAlertMessage, vehicles = [], employees =
 
     const sortedVehicles  = useMemo(() => [...vehicles].sort((a,b) => (a.registroInterno || '').localeCompare(b.registroInterno || '')), [vehicles]);
     const sortedEmployees = useMemo(() => [...employees].sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [employees]);
-    const sortedObras     = useMemo(() => [...obras].filter(o => o.status === 'ativa').sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
+    const sortedObras     = useMemo(() => [...obras].filter(o => ['ativa', 'mobilizacao'].includes(o.status)).sort((a,b) => (a.nome || '').localeCompare(b.nome || '')), [obras]);
 
     // -------------------------------------------------------
     // AUTO-PREENCHIMENTO ao selecionar Veículo

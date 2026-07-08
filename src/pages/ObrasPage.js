@@ -56,6 +56,7 @@ const ObrasPage = ({
     // --- HELPER: Cores do Card Baseado em Progresso ---
     const getCardBorderColor = (obra) => {
         if (obra.status === 'finalizada') return '#9ca3af';
+        if (['radar', 'planejada', 'mobilizacao'].includes(obra.status)) return '#f59e0b'; // âmbar: fase de planejamento
         if (obra.tipo_registro !== 'centro_custo' && (!obra.orgao_contratante || !obra.regiao)) return '#f97316'; // laranja: informações pendentes
         if (obra.contractType === 'horas') {
             const contratado = Object.values(obra.horasContratadasPorTipo || {}).reduce((s, h) => s + (parseFloat(h) || 0), 0);
@@ -118,7 +119,12 @@ const ObrasPage = ({
     const filteredObras = useMemo(() => {
         return (obras || [])
             .filter(o => {
-                const statusMatch = filter === 'finalizadas' ? o.status === 'finalizada' : o.status !== 'finalizada';
+                const PRE_ACTIVE = ['radar', 'planejada', 'mobilizacao'];
+                const statusMatch = filter === 'finalizadas'
+                    ? o.status === 'finalizada'
+                    : filter === 'planejadas'
+                        ? PRE_ACTIVE.includes(o.status)
+                        : (o.status !== 'finalizada' && !PRE_ACTIVE.includes(o.status));
                 const searchMatch = (o.nome || '').toLowerCase().includes(searchTerm.toLowerCase()) || (o.orgao_contratante || '').toLowerCase().includes(searchTerm.toLowerCase());
                 const tipoMatch = tipoFilter === 'todos' || (o.tipo_registro || 'obra') === tipoFilter;
                 const regiaoMatch = regiaoFilter === 'todas' || o.regiao === regiaoFilter;
@@ -187,7 +193,7 @@ const ObrasPage = ({
                 <div className="flex flex-col sm:flex-row gap-2 flex-wrap">
                     {/* Filtro status */}
                     <div className="flex p-1 rounded-lg" style={{ background: '#f5f2ed' }}>
-                        {[['ativas', 'Em Andamento'], ['finalizadas', 'Finalizadas']].map(([val, lbl]) => (
+                        {[['ativas', 'Em Andamento'], ['planejadas', 'Planejadas'], ['finalizadas', 'Finalizadas']].map(([val, lbl]) => (
                             <button key={val} onClick={() => setFilter(val)}
                                 className="px-3 py-1.5 text-sm font-medium rounded-md transition-all"
                                 style={{ background: filter === val ? '#fff' : 'transparent', color: filter === val ? '#9E7A42' : '#9a8a78', boxShadow: filter === val ? '0 1px 3px rgba(0,0,0,0.08)' : 'none', border: 'none', cursor: 'pointer' }}
@@ -369,6 +375,7 @@ const ObrasPage = ({
                     setAlertMessage={setAlertMessage}
                     equipmentTypesForHours={derivedEquipmentTypes}
                     initialTipoRegistro={selectedObra ? (selectedObra.tipo_registro || 'obra') : (tipoFilter !== 'todos' ? tipoFilter : 'obra')}
+                    employees={employees}
                 />
             )}
 

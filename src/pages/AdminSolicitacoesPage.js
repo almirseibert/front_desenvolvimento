@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    Check, X, AlertTriangle, MapPin, Eye, Fuel, 
+import {
+    Check, X, AlertTriangle, MapPin, Eye, Fuel,
     Calendar, Loader, Search, RefreshCw, Smartphone, DollarSign, Image as ImageIcon,
-    ExternalLink, BarChart3, Clock, TrendingUp, TrendingDown, Lock,
+    ExternalLink, BarChart3, Clock, TrendingUp,
     RotateCw, RotateCcw, ZoomIn, ZoomOut, Maximize, AlertCircle, Unlock
 } from 'lucide-react';
-import { jsPDF } from 'jspdf'; 
-import autoTable from 'jspdf-autotable'; 
-import { getAllowedReadingTypes, getGroupForType } from '../utils/vehicleRules';
+import { jsPDF } from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { getAllowedReadingTypes } from '../utils/vehicleRules';
 import { formatObraNome } from '../utils/obraFormat';
 import RefuelingOrderModal from '../components/modals/RefuelingOrderModal';
+import BaixaForm from '../components/refueling/BaixaForm';
 
 const AdminSolicitacoesPage = ({ 
     apiClient, 
@@ -37,23 +38,7 @@ const AdminSolicitacoesPage = ({
     const [rejectReason, setRejectReason] = useState('');
     const [imageTab, setImageTab] = useState('painel'); // NOVO: Controle de aba de imagem
     
-    const [relatedOrder, setRelatedOrder] = useState(null); 
-    const [confirmForm, setConfirmForm] = useState({
-        litros: '',
-        litrosArla: '',
-        price: '',
-        nf: '',
-        reading: '',
-        outrosValor: ''
-    });
-    const [initialPartnerPrice, setInitialPartnerPrice] = useState(0);
-    const [validationState, setValidationState] = useState({
-        blockReason: null,
-        averageAlert: null,
-        isSaving: false
-    });
-    const [showPriceUpdateConfirm, setShowPriceUpdateConfirm] = useState(false);
-    const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+    const [relatedOrder, setRelatedOrder] = useState(null);
 
     const [imgTransform, setImgTransform] = useState({ rotate: 0, scale: 1 });
 
@@ -269,15 +254,11 @@ const AdminSolicitacoesPage = ({
     // === LÓGICA DE BAIXA / CONFIRMAÇÃO  ===
     // ==================================================================================
 
-    // Reinicializa o formulário APENAS quando o modal abre / muda de solicitação.
-    // Mudanças em `refuelings`/`partners` (socket sync, reload) NÃO devem limpar o que o
-    // usuário está digitando — por isso elas ficam fora das dependências.
     useEffect(() => {
         if (!modalData) return;
 
         setImgTransform({ rotate: 0, scale: 1 });
 
-        // Define a aba inicial dependendo se já tem cupom ou não
         if (modalData.status === 'AGUARDANDO_BAIXA' || modalData.status === 'CONCLUIDO') {
             setImageTab(modalData.foto_cupom_path ? 'cupom' : 'painel');
         } else {
@@ -314,200 +295,25 @@ const AdminSolicitacoesPage = ({
         }
 
         setRelatedOrder(order);
-
-        let currentPrice = '';
-        if (order.partnerId && partners.length > 0) {
-            const partner = partners.find(p => String(p.id) === String(order.partnerId));
-            if (partner && partner.fuel_prices && partner.fuel_prices[order.fuelType]) {
-                currentPrice = partner.fuel_prices[order.fuelType];
-                setInitialPartnerPrice(parseFloat(currentPrice));
-            }
-        }
-
-        setConfirmForm({
-            litros: order.litrosLiberados || '',
-            litrosArla: order.litrosLiberadosArla || '',
-            price: currentPrice || '',
-            nf: order.invoiceNumber || '',
-            reading: order.horimetro || order.odometro || modalData.odometro_informado || modalData.horimetro_informado || '',
-            outrosValor: order.outrosGeraValor ? (order.outrosValor || '') : ''
-        });
-
-        setValidationState({ blockReason: null, averageAlert: null, isSaving: false });
-        setShowPriceUpdateConfirm(false);
-        setShowPasswordPrompt(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [modalData?.id, modalData?.status]);
 
-    // Atualiza o preço de referência do posto quando `partners` ou a ordem vinculada
-    // mudam, mas sem tocar nos campos que o usuário possa estar digitando.
-    useEffect(() => {
-        if (!modalData || modalData.status !== 'AGUARDANDO_BAIXA') return;
-        if (!relatedOrder || !relatedOrder.partnerId || !partners.length) return;
-
-        const partner = partners.find(p => String(p.id) === String(relatedOrder.partnerId));
-        const price = partner?.fuel_prices?.[relatedOrder.fuelType];
-        if (price) setInitialPartnerPrice(parseFloat(price));
-    }, [partners, relatedOrder, modalData]);
-
-    useEffect(() => {
-        if (!modalData || modalData.status !== 'AGUARDANDO_BAIXA' || !relatedOrder) return;
-
-        let block = null;
-        let avgWarning = null;
-
-        const vehicle = vehicles.find(v => String(v.id) === String(modalData.veiculo_id));
-        if (vehicle && confirmForm.reading) {
-            const allowedTypes = getAllowedReadingTypes(vehicle.tipo);
-            const isKm = allowedTypes.includes('odometro');
-            const isHr = allowedTypes.includes('horimetro');
-            
-            let last = 0;
-            if (isKm) last = parseFloat(vehicle.odometro || 0);
-            else {
-                last = parseFloat(vehicle.horimetro || 0);
-            }
-
-            const current = parseFloat(confirmForm.reading);
-            
-            if (!isNaN(current) && last > 0) {
-                // Alterado: Libera se current === last. Apenas bloqueia se for ESTRITAMENTE menor.
-                if (current < last) {
-                    block = `Leitura (${current}) menor que a atual do sistema (${last}).`;
-                } else if (isHr && (current - last) > 50) {
-                    block = `Salto excessivo de Horímetro (> 50h). Dif: ${(current - last).toFixed(1)}h.`;
-                } else {
-                    const limiteKm = getGroupForType(vehicle.tipo) === 'Caminhões de Trecho' ? 2000 : 1000;
-                    if (isKm && (current - last) > limiteKm) {
-                        block = `Salto excessivo de Km (> ${limiteKm}).`;
-                    }
-                }
-            }
-        }
-
-        if (confirmForm.litros && confirmForm.reading && parseFloat(confirmForm.litros) > 0) {
-            const history = refuelings
-                .filter(r => String(r.vehicleId) === String(modalData.veiculo_id) && r.status === 'Concluída')
-                .sort((a,b) => new Date(b.data || 0) - new Date(a.data || 0));
-            
-            if (history.length > 0) {
-                const currentReading = parseFloat(confirmForm.reading);
-                const lastRefuel = history[0];
-                const lastReading = parseFloat(lastRefuel.horimetro || lastRefuel.odometro || 0);
-
-                if (currentReading > lastReading) {
-                    const diff = currentReading - lastReading;
-                    const currentAverage = diff / parseFloat(confirmForm.litros); 
-
-                    let sumAvgs = 0;
-                    let count = 0;
-                    for (let i = 0; i < Math.min(history.length - 1, 3); i++) {
-                        const rCurrent = history[i];
-                        const rPrev = history[i+1];
-                        const l = parseFloat(rCurrent.litrosAbastecidos || 0);
-                        const valCurr = parseFloat(rCurrent.horimetro || rCurrent.odometro || 0);
-                        const valPrev = parseFloat(rPrev.horimetro || rPrev.odometro || 0);
-                        
-                        if (l > 0 && valCurr > valPrev) {
-                            sumAvgs += (valCurr - valPrev) / l;
-                            count++;
-                        }
-                    }
-
-                    if (count > 0) {
-                        const baselineAverage = sumAvgs / count;
-                        if (currentAverage < (baselineAverage * 0.75)) {
-                            avgWarning = `Média caiu >25% (Atual: ${currentAverage.toFixed(2)} / Base: ${baselineAverage.toFixed(2)})`;
-                        }
-                    }
-                }
-            }
-        }
-
-        setValidationState(prev => ({ ...prev, blockReason: block, averageAlert: avgWarning }));
-
-    }, [confirmForm, modalData, relatedOrder, vehicles, refuelings]);
-
-    const handleFinalizeBaixa = (forcePriceUpdate = false) => {
-        if (!confirmForm.litros || !confirmForm.price || !confirmForm.reading || !confirmForm.nf) {
-            setAlertMessage("Preencha todos os campos obrigatórios (NF, Litros, Preço, Leitura).");
-            return;
-        }
-
-        if (validationState.blockReason && !showPasswordPrompt) {
-            setShowPasswordPrompt(true);
-            return;
-        }
-
-        const inputPrice = parseFloat(confirmForm.price);
-        if (!forcePriceUpdate && !showPriceUpdateConfirm && initialPartnerPrice > 0 && inputPrice > 0 && Math.abs(inputPrice - initialPartnerPrice) > 0.01) {
-            setShowPriceUpdateConfirm(true);
-            return;
-        }
-
-        submitBaixa(forcePriceUpdate);
-    };
-
-    const submitBaixa = async (updatePartnerPrice) => {
-        const idToProcess = modalData.id;
-        setValidationState(prev => ({ ...prev, isSaving: true }));
-        
+    const handleAfterBaixaConfirm = async () => {
+        const idToProcess = modalData?.id;
+        if (!idToProcess) return;
         try {
-            const payload = {
-                litrosAbastecidos: parseFloat(confirmForm.litros) || 0,
-                litrosAbastecidosArla: parseFloat(confirmForm.litrosArla) || 0,
-                pricePerLiter: parseFloat(confirmForm.price) || 0,
-                confirmedReading: parseFloat(confirmForm.reading) || 0,
-                confirmedBy: user,
-                outrosValor: parseFloat(confirmForm.outrosValor) || 0,
-                invoiceNumber: confirmForm.nf,
-                updatePartnerPrice: updatePartnerPrice,
-                solicitacaoId: idToProcess,
-                solicitacao_id: idToProcess 
-            };
-
-            const orderId = relatedOrder?.id;
-            
-            if (orderId) {
-                await apiClient.confirmRefuelingOrder(orderId, payload);
-
-                try {
-                    await apiClient.put(`/solicitacoes/${idToProcess}/confirmar-baixa`, {});
-                } catch (statusError) {
-                    console.warn("Ordem baixada, mas houve falha ao atualizar status da solicitação na API.", statusError);
-                }
-            } else {
-                throw new Error("Ordem de abastecimento não localizada na lista. Atualize a página e tente novamente.");
-            }
-            
-            setSolicitacoes(prev => prev.filter(s => s.id !== idToProcess));
-            setFilteredSolicitacoes(prev => prev.filter(s => s.id !== idToProcess));
-
-            setIgnoreIds(prev => new Set(prev).add(idToProcess));
-            
-            setTimeout(() => {
-                setIgnoreIds(prev => {
-                    const newSet = new Set(prev);
-                    newSet.delete(idToProcess);
-                    return newSet;
-                });
-            }, 10000);
-
-            setAlertMessage("Baixa confirmada com sucesso!");
-            setModalData(null);
-            
-            reloadData(); 
-            setTimeout(() => {
-                fetchSolicitacoes(); 
-            }, 2000);
-
-        } catch (error) {
-            setAlertMessage("Erro ao confirmar baixa: " + (error.response?.data?.error || error.message));
-        } finally {
-            setValidationState(prev => ({ ...prev, isSaving: false }));
-            setShowPriceUpdateConfirm(false);
-            setShowPasswordPrompt(false);
+            await apiClient.put(`/solicitacoes/${idToProcess}/confirmar-baixa`, {});
+        } catch (e) {
+            console.warn("Falha ao atualizar status da solicitação após baixa:", e.message);
         }
+        setSolicitacoes(prev => prev.filter(s => s.id !== idToProcess));
+        setFilteredSolicitacoes(prev => prev.filter(s => s.id !== idToProcess));
+        setIgnoreIds(prev => new Set(prev).add(idToProcess));
+        setTimeout(() => {
+            setIgnoreIds(prev => { const s = new Set(prev); s.delete(idToProcess); return s; });
+        }, 10000);
+        setModalData(null);
+        setTimeout(fetchSolicitacoes, 2000);
     };
 
     // --- CORREÇÃO DE TRAVAMENTO: FORÇAR CONCLUSÃO DIRETO NA TABELA SOLICITAÇÕES ---
@@ -861,120 +667,33 @@ const AdminSolicitacoesPage = ({
                                 </div>
                             )}
 
-                            {/* --- SEÇÃO AGUARDANDO_BAIXA: FORMULÁRIO EDITÁVEL --- */}
+                            {/* --- SEÇÃO AGUARDANDO_BAIXA: FORMULÁRIO DE BAIXA INLINE --- */}
                             {isBaixa && (
-                                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-inner">
-                                    <h5 className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
-                                        <Check size={14}/> Dados para Baixa (Preencha conforme Cupom/NF)
-                                    </h5>
-                                    
-                                    <div className="grid grid-cols-2 gap-3 mb-3">
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Nota Fiscal (NF) *</label>
-                                            <input 
-                                                type="text" 
-                                                value={confirmForm.nf} 
-                                                onChange={e => setConfirmForm({...confirmForm, nf: e.target.value})} 
-                                                className="w-full p-2 border rounded font-bold uppercase focus:ring-2 focus:ring-blue-400 outline-none text-sm" 
-                                                placeholder="Nº NF"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Preço Unit. (R$) *</label>
-                                            <div className="relative">
-                                                <span className="absolute left-2 top-2 text-gray-400 text-xs">R$</span>
-                                                <input 
-                                                    type="number" 
-                                                    step="0.001" 
-                                                    value={confirmForm.price} 
-                                                    onChange={e => setConfirmForm({...confirmForm, price: e.target.value})} 
-                                                    className={`w-full p-2 pl-7 border rounded font-bold focus:ring-2 focus:ring-blue-400 outline-none text-sm ${initialPartnerPrice > 0 && parseFloat(confirmForm.price) !== initialPartnerPrice ? 'bg-yellow-50 border-yellow-300' : ''}`}
-                                                    placeholder="0.000"
-                                                />
-                                            </div>
-                                        </div>
+                                relatedOrder && relatedOrder.id ? (
+                                    <BaixaForm
+                                        user={user}
+                                        order={relatedOrder}
+                                        onClose={() => {}}
+                                        setAlertMessage={setAlertMessage}
+                                        apiClient={apiClient}
+                                        reloadData={reloadData}
+                                        onAfterConfirm={handleAfterBaixaConfirm}
+                                        refuelings={refuelings}
+                                        vehicles={vehicles}
+                                        partners={partners}
+                                        employees={employees}
+                                        PasswordConfirmationModal={PasswordConfirmationModal}
+                                    />
+                                ) : (
+                                    <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 shadow-inner">
+                                        <h5 className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
+                                            <Check size={14}/> Aguardando Baixa
+                                        </h5>
+                                        <p className="text-[10px] text-red-600 font-bold flex items-center gap-1 mt-1">
+                                            <AlertCircle size={12}/> Ordem não localizada — atualize a página.
+                                        </p>
                                     </div>
-
-                                    <div className="grid grid-cols-2 gap-3 mb-3">
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Litros Abastecidos *</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.001" 
-                                                value={confirmForm.litros} 
-                                                onChange={e => setConfirmForm({...confirmForm, litros: e.target.value})} 
-                                                className="w-full p-2 border rounded font-bold focus:ring-2 focus:ring-blue-400 outline-none text-lg text-blue-900"
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-[10px] font-bold text-gray-600 mb-0.5">Leitura Atual ({s.odometro_informado ? 'Km' : 'Hr'}) *</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.1" 
-                                                value={confirmForm.reading} 
-                                                onChange={e => setConfirmForm({...confirmForm, reading: e.target.value})} 
-                                                className={`w-full p-2 border rounded font-bold focus:ring-2 focus:ring-blue-400 outline-none text-lg ${validationState.blockReason ? 'bg-red-50 border-red-300 text-red-900' : 'text-gray-800'}`}
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {needsArlaInput && (
-                                        <div className="mb-3 animate-fadeIn bg-blue-100 p-2 rounded border border-blue-200">
-                                            <label className="block text-[10px] font-bold text-blue-800 mb-0.5">Litros Arla 32 (Opcional)</label>
-                                            <input 
-                                                type="number" 
-                                                step="0.01" 
-                                                value={confirmForm.litrosArla} 
-                                                onChange={e => setConfirmForm({...confirmForm, litrosArla: e.target.value})} 
-                                                className="w-full p-2 border rounded text-sm focus:ring-2 focus:ring-blue-400 outline-none"
-                                                placeholder="0.00"
-                                            />
-                                        </div>
-                                    )}
-
-                                    {needsOutrosInput && (
-                                        <div className="mb-3 animate-fadeIn bg-yellow-100 p-2 rounded border border-yellow-200">
-                                            <label className="block text-[10px] font-bold text-yellow-800 mb-0.5">
-                                                Valor "Outros" (R$) - {s.descricao_outros || 'Itens Adicionais'}
-                                            </label>
-                                            <div className="relative">
-                                                <span className="absolute left-2 top-2 text-gray-500 text-xs">R$</span>
-                                                <input 
-                                                    type="number" 
-                                                    step="0.01" 
-                                                    value={confirmForm.outrosValor} 
-                                                    onChange={e => setConfirmForm({...confirmForm, outrosValor: e.target.value})} 
-                                                    className="w-full p-2 pl-7 border border-yellow-300 rounded text-sm font-bold text-yellow-900 focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
-                                                    placeholder="0.00"
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {validationState.blockReason && (
-                                        <div className="bg-red-100 text-red-800 p-2 rounded text-xs font-bold border border-red-300 flex items-center gap-2 mb-2 animate-pulse">
-                                            <Lock size={14} /> {validationState.blockReason}
-                                        </div>
-                                    )}
-
-                                    {validationState.averageAlert && (
-                                        <div className="bg-orange-100 text-orange-800 p-2 rounded text-xs font-bold border border-orange-300 flex items-center gap-2 mb-2">
-                                            <TrendingDown size={14} /> {validationState.averageAlert}
-                                        </div>
-                                    )}
-
-                                    {showPriceUpdateConfirm && (
-                                        <div className="bg-yellow-100 p-2 rounded text-xs border border-yellow-300 mb-2">
-                                            <p className="font-bold text-yellow-800 mb-1 flex items-center gap-1"><AlertTriangle size={12}/> Preço diferente do cadastro!</p>
-                                            <p className="text-yellow-700 mb-2">Deseja atualizar o preço no cadastro do posto?</p>
-                                            <div className="flex gap-2">
-                                                <button onClick={() => handleFinalizeBaixa(false)} className="flex-1 bg-white border border-yellow-300 py-1 rounded hover:bg-yellow-50 font-bold">Não, manter antigo</button>
-                                                <button onClick={() => handleFinalizeBaixa(true)} className="flex-1 bg-yellow-400 text-yellow-900 py-1 rounded hover:bg-yellow-500 font-bold shadow-sm">Sim, atualizar</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
+                                )
                             )}
 
                             {/* INFO GERAL DE RODAPÉ (COMUM PARA AMBOS) */}
@@ -1018,20 +737,15 @@ const AdminSolicitacoesPage = ({
                                     )}
                                 </>
                             ) : isBaixa ? (
-                                <div className="flex gap-2 flex-col md:flex-row">
-                                    <button 
-                                        onClick={() => handleFinalizeBaixa(false)} 
-                                        disabled={validationState.isSaving}
-                                        className={`flex-1 py-3 text-white font-bold rounded shadow text-sm flex items-center justify-center gap-2 transition ${validationState.blockReason ? 'bg-red-500 hover:bg-red-600' : 'bg-blue-600 hover:bg-blue-700'}`}
-                                    >
-                                        {validationState.isSaving ? <Loader className="animate-spin" size={18}/> : (validationState.blockReason ? <><Lock size={16}/> DESBLOQUEAR & CONFIRMAR</> : <><Check size={18}/> CONFIRMAR BAIXA & SALVAR</>)}
-                                    </button>
-                                    
+                                <div className="flex gap-2 flex-col md:flex-row items-center">
+                                    <p className="flex-1 text-[10px] text-gray-500 leading-tight">
+                                        Preencha os dados do cupom acima e clique em <span className="font-bold text-green-700">Confirmar Baixa</span>. A foto do cupom permanece visível ao lado.
+                                    </p>
+
                                     <button onClick={() => handleRejeitarComprovante(s.id)} className="px-4 py-3 bg-orange-100 hover:bg-orange-200 text-orange-700 font-bold rounded border border-orange-200 text-xs flex items-center justify-center gap-1 transition">
                                         <X size={16}/> Rejeitar Foto
                                     </button>
-                                    
-                                    {/* BOTÃO DE CORREÇÃO (Opcional na aba de baixa) */}
+
                                     <button onClick={() => handleForceConclude(s.id)} className="px-2 py-3 bg-gray-800 text-white hover:bg-gray-700 font-bold rounded text-[10px] flex items-center justify-center gap-1 transition" title="Destravar Veículo sem Salvar Dados">
                                         <Unlock size={14}/>
                                     </button>
@@ -1052,15 +766,6 @@ const AdminSolicitacoesPage = ({
                         </div>
                     </div>
                 </div>
-                
-                {showPasswordPrompt && (
-                    <PasswordConfirmationModal
-                        message={`BLOQUEIO DE SEGURANÇA:\n${validationState.blockReason}\nInsira senha para autorizar a baixa.`}
-                        onConfirm={() => handleFinalizeBaixa(false)} 
-                        onClose={() => setShowPasswordPrompt(false)}
-                        apiClient={apiClient}
-                    />
-                )}
             </div>
         );
     };

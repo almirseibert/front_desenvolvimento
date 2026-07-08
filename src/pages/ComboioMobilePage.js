@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
     Droplet, ArrowUpCircle, ArrowDownCircle, RefreshCw,
-    LogOut, Lock, Loader, Clock
+    LogOut, Lock, Loader, Clock, FileText
 } from 'lucide-react';
 
 import ComboioDistribuicaoModal from '../components/modals/ComboioDistribuicaoModal';
@@ -40,6 +40,7 @@ const ComboioMobilePage = ({
     setAlertMessage,
     socket,
     onVoltar,
+    onAbrirDocumentos,
 }) => {
     const [comboio, setComboio] = useState(initialComboio);
     const [transactions, setTransactions] = useState([]);
@@ -120,6 +121,15 @@ const ComboioMobilePage = ({
                         </p>
                     </div>
                     <div className="flex gap-2 items-center shrink-0">
+                        {onAbrirDocumentos && (
+                            <button
+                                onClick={onAbrirDocumentos}
+                                className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition"
+                                title="Documentos (PDFs)"
+                            >
+                                <FileText size={20} />
+                            </button>
+                        )}
                         <button
                             onClick={() => setShowPasswordModal(true)}
                             className="p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition"

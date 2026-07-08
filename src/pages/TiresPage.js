@@ -2,7 +2,7 @@
 import { 
     Disc, Truck, Plus, ArrowRight, ArrowLeft, Printer, Search, 
     Activity, AlertCircle, X, History, Briefcase, AlertTriangle,
-    Settings, FileText, Trash2, RotateCcw, Edit, FileCheck
+    Settings, FileText, Trash2, RotateCcw, Edit, FileCheck, CornerDownRight
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -135,7 +135,7 @@ const TiresPage = ({
     }), [tires]);
 
     const filteredVehicles = useMemo(() => {
-        return vehicles
+        const matched = vehicles
             .filter(v => {
                 if (!vehicleSearchTerm) return true;
                 const term = vehicleSearchTerm.toLowerCase();
@@ -147,6 +147,26 @@ const TiresPage = ({
                 );
             })
             .sort((a, b) => (a.registroInterno || '').localeCompare(b.registroInterno || ''));
+
+        // Reboques/acessórios atrelados aparecem aninhados sob o principal, para
+        // permitir a manutenção de pneus do reboque.
+        const matchedIds = new Set(matched.map(v => v.id));
+        const childrenByParent = new Map();
+        for (const v of vehicles) {
+            if (v.linkedParentId) {
+                if (!childrenByParent.has(v.linkedParentId)) childrenByParent.set(v.linkedParentId, []);
+                childrenByParent.get(v.linkedParentId).push(v);
+            }
+        }
+        const result = [];
+        for (const v of matched) {
+            if (v.linkedParentId && matchedIds.has(v.linkedParentId)) continue; // renderizado aninhado
+            result.push({ ...v, _isChild: !!v.linkedParentId });
+            for (const child of (childrenByParent.get(v.id) || [])) {
+                result.push({ ...child, _isChild: true });
+            }
+        }
+        return result;
     }, [vehicles, vehicleSearchTerm]);
 
     const selectedVehicle = useMemo(() => 
@@ -415,8 +435,13 @@ const TiresPage = ({
                         </div>
                         <div className="max-h-60 overflow-y-auto border rounded-lg mb-4 bg-gray-50">
                             {filteredVehicles.map(v => (
-                                <div key={v.id} onClick={() => setSelectedVehicleId(v.id)} className={`p-2 cursor-pointer text-sm border-b last:border-b-0 hover:bg-blue-50 ${selectedVehicleId === v.id ? 'bg-blue-100 border-l-4 border-blue-500 font-medium' : ''}`}>
-                                    {v.registroInterno} - {v.tipo} - {v.marca} {v.modelo}
+                                <div key={v.id} onClick={() => setSelectedVehicleId(v.id)} className={`p-2 cursor-pointer text-sm border-b last:border-b-0 hover:bg-blue-50 ${v._isChild ? 'pl-6 bg-violet-50/40' : ''} ${selectedVehicleId === v.id ? 'bg-blue-100 border-l-4 border-blue-500 font-medium' : ''}`}>
+                                    <span className="inline-flex items-center gap-1">
+                                        {v._isChild && <CornerDownRight size={13} className="text-violet-400 shrink-0"/>}
+                                        {v.registroInterno} - {v.tipo} - {v.marca} {v.modelo}
+                                        {v.isOutsourced && <span title="Veículo terceirizado" className="text-[9px] font-bold uppercase bg-purple-100 text-purple-700 border border-purple-200 rounded-full px-1.5 py-px">3º</span>}
+                                        {v._isChild && <span className="text-[9px] font-bold uppercase text-violet-500">Atrelado</span>}
+                                    </span>
                                 </div>
                             ))}
                         </div>
@@ -693,7 +718,7 @@ const StockActionModal = ({ tire, employees, obras, onClose, onSave }) => {
                             <>
                                 <div className="p-2 bg-orange-50 text-orange-800 text-xs rounded">Ao confirmar, será gerado um Termo de Responsabilidade PDF.</div>
                                 <div><label className="block text-sm font-bold mb-1">Funcionário</label><SearchableSelect items={employees} value={formData.employeeId} onChange={item => setFormData({...formData, employeeId: item?.id || ''})} getLabel={e => e.nome} getSubLabel={e => e.profissao || ''} placeholder="-- Selecione --" required /></div>
-                                <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => o.status === 'ativa').map(o => ({...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
+                                <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => ['ativa', 'mobilizacao'].includes(o.status)).map(o => ({...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
                             </>
                         )}
                         {actionType === 'maintenance' && <div><label className="block text-sm font-bold mb-1">Fornecedor</label><input required className="w-full p-2 border rounded" value={formData.vendorName} onChange={e => setFormData({...formData, vendorName: e.target.value})} placeholder="Nome do fornecedor" /></div>}
@@ -722,7 +747,7 @@ const SpareTireModal = ({ stockTires, employees, obras, onClose, onSave }) => {
                     <div className="space-y-3">
                         <div><label className="block text-sm font-bold mb-1">Pneu</label><SearchableSelect items={stockTires} value={formData.tireId} onChange={item => setFormData({...formData, tireId: item?.id || ''})} getLabel={t => `${t.fireNumber} - ${t.brand}`} placeholder="-- Selecione --" required /></div>
                         <div><label className="block text-sm font-bold mb-1">Funcionário</label><SearchableSelect items={employees} value={formData.employeeId} onChange={item => setFormData({...formData, employeeId: item?.id || ''})} getLabel={e => e.nome} getSubLabel={e => e.profissao || ''} placeholder="-- Selecione --" required /></div>
-                        <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => o.status === 'ativa').map(o => ({...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
+                        <div><label className="block text-sm font-bold mb-1">Obra</label><SearchableSelect items={obras.filter(o => ['ativa', 'mobilizacao'].includes(o.status)).map(o => ({...o, _displayNome: `${formatObraNome(o)}${o.tipo_registro === 'centro_custo' ? ' (CC)' : ''}`}))} value={formData.obraId} onChange={item => setFormData({...formData, obraId: item?.id || ''})} getLabel={o => o._displayNome || o.nome} placeholder="-- Selecione --" required /></div>
                         <div><label className="block text-sm font-bold mb-1">Obs</label><textarea className="w-full p-2 border rounded" rows="3" value={formData.observation} onChange={e => setFormData({...formData, observation: e.target.value})}></textarea></div>
                     </div>
                     <div className="mt-6 flex justify-end gap-2"><button type="button" onClick={onClose} className="px-4 py-2 bg-gray-200 rounded">Cancelar</button><button type="submit" className="px-4 py-2 bg-orange-600 text-white rounded">Enviar</button></div>
