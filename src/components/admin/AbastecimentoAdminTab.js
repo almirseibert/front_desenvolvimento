@@ -289,6 +289,7 @@ const AbastecimentoAdminTab = () => {
                 </div>
             ) : (
                 <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
                         <thead className="bg-gray-50 text-gray-500 uppercase text-xs border-b">
                             <tr>
@@ -384,6 +385,7 @@ const AbastecimentoAdminTab = () => {
                             })}
                         </tbody>
                     </table>
+                    </div>
                     <div className="px-4 py-2 bg-gray-50 border-t text-xs text-gray-400">
                         {bloqueadas.length} ordem(ns) aguardando liberação
                     </div>

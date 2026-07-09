@@ -3,6 +3,7 @@ import { HardHat, DollarSign, Clock } from 'lucide-react';
 import { vehicleGroups } from '../../utils/vehicleRules';
 import SearchableObraSelect from '../SearchableObraSelect';
 import { formatObraNome } from '../../utils/obraFormat';
+import TerceirizadoObraResumo from '../analise/TerceirizadoObraResumo';
 
 const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
     const [selectedObraId, setSelectedObraId] = useState('');
@@ -165,6 +166,8 @@ const ObraProgressBI = ({ obras = [], vehicles = [], dailyWorkLogs = [] }) => {
                             </div>
                         )}
                     </div>
+
+                    <TerceirizadoObraResumo obraId={selectedObraId} />
                 </div>
             ) : (
                 <div className="flex-1 flex flex-col items-center justify-center text-gray-400 text-sm italic">

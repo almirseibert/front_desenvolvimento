@@ -9,6 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import SearchableSelect from '../components/SearchableSelect';
 import { formatObraNome } from '../utils/obraFormat';
 import { getAllowedReadingTypes } from '../utils/vehicleRules';
+import TerceirizadoBadge from '../components/ui/TerceirizadoBadge';
 
 const GAP_THRESHOLD_DAYS = 10;
 
@@ -935,7 +936,7 @@ const OperacionalPage = ({
                                                         {obraStatsFiltered.map(stat => (
                                                             <tr key={stat.vehicleId} className={`hover:bg-gray-50 ${stat.status === 'nunca' ? 'bg-red-50' : stat.status === 'atencao' ? 'bg-orange-50' : ''}`}>
                                                                 <td className="px-4 py-3">
-                                                                    <p className="font-semibold text-gray-800">{stat.vehicle.registroInterno}</p>
+                                                                    <p className="font-semibold text-gray-800 flex items-center gap-1.5">{stat.vehicle.registroInterno} <TerceirizadoBadge vehicle={stat.vehicle} /></p>
                                                                     <p className="text-xs text-gray-400">{stat.vehicle.tipo} · {stat.vehicle.marca} {stat.vehicle.modelo}</p>
                                                                 </td>
                                                                 <td className="px-4 py-3">
@@ -1120,7 +1121,7 @@ const OperacionalPage = ({
                                             <tr key={vehicle.id} onClick={() => setSelectedMachineId(vehicle.id)} title="Ver detalhes do equipamento"
                                                 className={`border-b last:border-b-0 hover:brightness-95 transition-all cursor-pointer ${cfg.row}`}>
                                                 <td className="px-4 py-3">
-                                                    <div className="font-semibold text-gray-800">{vehicle.registroInterno || '—'}</div>
+                                                    <div className="font-semibold text-gray-800 flex items-center gap-1.5">{vehicle.registroInterno || '—'} <TerceirizadoBadge vehicle={vehicle} /></div>
                                                     <div className="text-xs text-gray-500">{vehicle.tipo}{vehicle.modelo ? ` · ${vehicle.modelo}` : ''}</div>
                                                 </td>
                                                 <td className="px-4 py-3">
@@ -1193,7 +1194,7 @@ const OperacionalPage = ({
                                     <Truck size={22} className="text-yellow-600" />
                                 </div>
                                 <div className="min-w-0">
-                                    <h3 className="text-lg font-bold text-gray-800 truncate">{selectedMachine.vehicle.registroInterno || 'Equipamento'}</h3>
+                                    <h3 className="text-lg font-bold text-gray-800 truncate flex items-center gap-2">{selectedMachine.vehicle.registroInterno || 'Equipamento'} <TerceirizadoBadge vehicle={selectedMachine.vehicle} /></h3>
                                     <p className="text-xs text-gray-500 truncate">
                                         {selectedMachine.vehicle.tipo}
                                         {selectedMachine.vehicle.modelo ? ` · ${selectedMachine.vehicle.modelo}` : ''}

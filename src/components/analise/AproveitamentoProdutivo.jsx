@@ -8,6 +8,8 @@ import autoTable from 'jspdf-autotable';
 import SearchableSelect from '../SearchableSelect';
 import { formatObraNome } from '../../utils/obraFormat';
 import DrillDownDiaModal from './DrillDownDiaModal';
+import { useData } from '../../contexts/DataContext';
+import TerceirizadoObraResumo from './TerceirizadoObraResumo';
 
 // ============================================================================
 // Helpers
@@ -88,6 +90,15 @@ const UtilBar = ({ pct }) => {
 // Componente principal
 // ============================================================================
 const AproveitamentoProdutivo = ({ apiClient, setAlertMessage }) => {
+    const { obras: obrasFull = [], vehicles: vehiclesFull = [] } = useData();
+    const obrasComTerceirizado = useMemo(() => {
+        const outsourcedIds = new Set(vehiclesFull.filter(v => v.isOutsourced).map(v => v.id));
+        const set = new Set();
+        obrasFull.forEach(o => {
+            if ((o.historicoVeiculos || []).some(h => outsourcedIds.has(h.veiculoId))) set.add(o.id);
+        });
+        return set;
+    }, [obrasFull, vehiclesFull]);
     const presets = useMemo(buildPresets, []);
     const [obras, setObras] = useState([]);
     const [filtroObra, setFiltroObra] = useState('geral');
@@ -552,7 +563,8 @@ const AproveitamentoProdutivo = ({ apiClient, setAlertMessage }) => {
                                         {data.porObra.map(o => {
                                             const tone = utilTone(o.aproveitamento);
                                             return (
-                                                <tr key={o.obraId} className="hover:bg-slate-50">
+                                                <React.Fragment key={o.obraId}>
+                                                <tr className="hover:bg-slate-50">
                                                     <td className="p-3 font-bold text-slate-800">{o.obraNome}</td>
                                                     <td className="p-3 text-slate-600">{o.responsavel || <span className="text-slate-400 italic">—</span>}</td>
                                                     <td className="p-3 text-slate-600">{o.fiscal || <span className="text-slate-400 italic">—</span>}</td>
@@ -566,6 +578,14 @@ const AproveitamentoProdutivo = ({ apiClient, setAlertMessage }) => {
                                                     </td>
                                                     <td className="p-3 text-right text-red-600 font-semibold">{fmtH(o.horas_perdidas)}</td>
                                                 </tr>
+                                                {obrasComTerceirizado.has(o.obraId) && (
+                                                    <tr className="bg-purple-50/40">
+                                                        <td colSpan={7} className="px-3 pb-2">
+                                                            <TerceirizadoObraResumo obraId={o.obraId} variant="inline" hideWhenEmpty={false} />
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                                </React.Fragment>
                                             );
                                         })}
                                     </tbody>

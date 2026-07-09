@@ -6,6 +6,7 @@ import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
 import { formatObraNome } from '../../utils/obraFormat';
 import SearchableSelect from '../SearchableSelect';
+import { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] }) => {
     // Filtros
@@ -56,7 +57,7 @@ const EmployeeReport = ({ employees = [], obras = [], vehicles = [], fines = [] 
                 if (history.employeeId && !history.dataSaida) { 
                     const vehicle = vehicles.find(v => v.id === history.veiculoId);
                     if (!allocations.has(history.employeeId)) allocations.set(history.employeeId, { obraId: obra.id, obraNome: formatObraNome(obra), vehicleRegistros: [] });
-                    if (vehicle) allocations.get(history.employeeId).vehicleRegistros.push(vehicle.registroInterno || 'N/A');
+                    if (vehicle) allocations.get(history.employeeId).vehicleRegistros.push((vehicle.registroInterno || 'N/A') + terceirizadoPdfMark(vehicle));
                 }
             });
         });

@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { FileText, Download } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
 import { formatObraNome } from '../../utils/obraFormat';
+import { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipmentTypesForHours = [] }) => {
     const [pdfWorkplanSelectedObras, setPdfWorkplanSelectedObras] = useState([]);
@@ -167,8 +168,8 @@ const WorkPlanReport = ({ obras, vehicles, vehicleGroups, expenses = [], equipme
 
                     const totalWorked = (endReading >= startReading) ? (endReading - startReading).toFixed(1) : 'Erro';
                     
-                    return [ 
-                        h.registroInterno || vehicle?.registroInterno || 'N/A', 
+                    return [
+                        (h.registroInterno || vehicle?.registroInterno || 'N/A') + terceirizadoPdfMark(vehicle),
                         h.tipo || vehicle?.tipo || 'N/A', 
                         h.employeeName || 'N/A', 
                         h.dataEntrada ? new Date(h.dataEntrada).toLocaleDateString('pt-BR', { timeZone: 'UTC' }) : 'N/A', 

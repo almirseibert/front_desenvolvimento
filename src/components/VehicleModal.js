@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel, FileText, Trash2, Upload, ExternalLink } from 'lucide-react';
 import { checkReadingConsistency, vehicleSubTypes, getGroupUnit } from '../utils/vehicleRules';
 import SearchableSelect from './SearchableSelect';
+import { getEquipmentTarifaHora } from '../utils/terceirizados';
 
 const ModalBtn = ({ variant = 'primary', onClick, disabled, children }) => {
     const [h, setH] = React.useState(false);
@@ -32,6 +33,7 @@ const VehicleModal = ({
     user,
     vehicle,
     vehicles = [],
+    partners = [],
     vehicleTypes = [],
     vehicleGroups = {},
     vehicleTypeConfigs = [],
@@ -77,6 +79,13 @@ const VehicleModal = ({
         // Dados do terceirizado (campos dedicados no banco)
         nomeEmpresaTerceiro: vehicle?.nomeEmpresaTerceiro || '',
         contratoTerceiro:    vehicle?.contratoTerceiro    || '',
+
+        // Contrato de locação (equipamento terceirizado) — alimenta cálculo de tarifa/hora
+        locadorId:               vehicle?.locadorId || '',
+        locacaoHorasContratadas: vehicle?.locacaoHorasContratadas != null ? vehicle.locacaoHorasContratadas.toString() : '',
+        locacaoValorTotal:       vehicle?.locacaoValorTotal       != null ? vehicle.locacaoValorTotal.toString()       : '',
+        locacaoVigenciaInicio:   vehicle?.locacaoVigenciaInicio ? new Date(vehicle.locacaoVigenciaInicio).toISOString().split('T')[0] : '',
+        locacaoVigenciaFim:      vehicle?.locacaoVigenciaFim    ? new Date(vehicle.locacaoVigenciaFim).toISOString().split('T')[0]    : '',
 
         // Rastreador
         rastreador: vehicle?.rastreador || 'Sem Rastreador',
@@ -229,6 +238,12 @@ const VehicleModal = ({
 
     const availableSubTypes = useMemo(() => vehicleSubTypes[formData.tipo] || [], [formData.tipo]);
 
+    // Locadores (parceiros tipo 'locador') para vincular equipamento terceirizado
+    const locadores = useMemo(
+        () => (partners || []).filter(p => p.tipo_parceiro === 'locador'),
+        [partners]
+    );
+
     // Busca a config padrão do tipo/sub-tipo cadastrada
     const typeConfigDefault = useMemo(() => {
         if (!vehicleTypeConfigs.length) return null;
@@ -355,6 +370,12 @@ const VehicleModal = ({
             sub_tipo:   formData.sub_tipo || null,
             media_consumo: formData.media_consumo !== '' ? parseFloat(formData.media_consumo) : null,
             percentual_tolerancia: formData.percentual_tolerancia !== '' ? parseFloat(formData.percentual_tolerancia) : 20,
+            // Contrato de locação (só faz sentido para terceirizado)
+            locadorId:               formData.isOutsourced ? (formData.locadorId || null) : null,
+            locacaoHorasContratadas: formData.isOutsourced && formData.locacaoHorasContratadas !== '' ? parseFloat(formData.locacaoHorasContratadas) : null,
+            locacaoValorTotal:       formData.isOutsourced && formData.locacaoValorTotal       !== '' ? parseFloat(formData.locacaoValorTotal)       : null,
+            locacaoVigenciaInicio:   formData.isOutsourced ? (formData.locacaoVigenciaInicio || null) : null,
+            locacaoVigenciaFim:      formData.isOutsourced ? (formData.locacaoVigenciaFim    || null) : null,
             // Sucata: força canCirculate = false e remove alocações ativas
             ...(isSucata && { canCirculate: false }),
         };
@@ -550,9 +571,24 @@ const VehicleModal = ({
                                     </div>
                                     {formData.isOutsourced && (
                                         <div className="px-3 pb-3 space-y-2.5 border-t border-purple-200 pt-3">
-                                            <p className="text-[10px] text-purple-500 font-medium uppercase tracking-wide">Dados do fornecedor</p>
+                                            <p className="text-[10px] text-purple-500 font-medium uppercase tracking-wide">Locador</p>
                                             <div>
-                                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Empresa / Fornecedor</label>
+                                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Empresa Locadora (cadastro)</label>
+                                                <select
+                                                    name="locadorId"
+                                                    value={formData.locadorId}
+                                                    onChange={handleChange}
+                                                    className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
+                                                >
+                                                    <option value="">— Selecionar locador —</option>
+                                                    {locadores.map(l => (
+                                                        <option key={l.id} value={l.id}>{l.razaoSocial}</option>
+                                                    ))}
+                                                </select>
+                                                <p className="text-[10px] text-gray-400 mt-1">Cadastre locadores em Postos &amp; Fornecedores → aba Locadores.</p>
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Empresa / Fornecedor (texto livre)</label>
                                                 <input
                                                     name="nomeEmpresaTerceiro"
                                                     value={formData.nomeEmpresaTerceiro}
@@ -570,6 +606,65 @@ const VehicleModal = ({
                                                     placeholder="Ex: CT-2025-042"
                                                     className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm font-mono"
                                                 />
+                                            </div>
+
+                                            <p className="text-[10px] text-purple-500 font-medium uppercase tracking-wide pt-1">Contrato de locação</p>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Horas Contratadas</label>
+                                                    <input
+                                                        type="number" min="0" step="any"
+                                                        name="locacaoHorasContratadas"
+                                                        value={formData.locacaoHorasContratadas}
+                                                        onChange={handleChange}
+                                                        placeholder="Ex: 100"
+                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Valor Total (R$)</label>
+                                                    <input
+                                                        type="number" min="0" step="any"
+                                                        name="locacaoValorTotal"
+                                                        value={formData.locacaoValorTotal}
+                                                        onChange={handleChange}
+                                                        placeholder="Ex: 15000"
+                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {(() => {
+                                                const tarifa = getEquipmentTarifaHora({
+                                                    locacaoValorTotal: formData.locacaoValorTotal,
+                                                    locacaoHorasContratadas: formData.locacaoHorasContratadas,
+                                                });
+                                                return tarifa > 0 ? (
+                                                    <p className="text-xs text-purple-700 font-semibold">
+                                                        Tarifa derivada: {tarifa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / hora
+                                                    </p>
+                                                ) : null;
+                                            })()}
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Vigência Início</label>
+                                                    <input
+                                                        type="date"
+                                                        name="locacaoVigenciaInicio"
+                                                        value={formData.locacaoVigenciaInicio}
+                                                        onChange={handleChange}
+                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Vigência Fim</label>
+                                                    <input
+                                                        type="date"
+                                                        name="locacaoVigenciaFim"
+                                                        value={formData.locacaoVigenciaFim}
+                                                        onChange={handleChange}
+                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     )}

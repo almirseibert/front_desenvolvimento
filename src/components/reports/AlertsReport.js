@@ -5,6 +5,7 @@ import { AlertTriangle, Download } from 'lucide-react';
 import { SectionHeader, FilterSection } from './ReportComponents';
 import { checkVehicleRestrictions } from '../../utils/vehicleRules';
 import { formatObraNome } from '../../utils/obraFormat';
+import { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], obras = [], refuelings = [], revisions = [] }) => {
     const [filterType, setFilterType] = useState('Todos');
@@ -29,7 +30,7 @@ const AlertsReport = ({ vehicles = [], employees = [], inactivityAlerts = [], ob
                 const obraNome = formatObraNome(obras.find(o => o.id === v.obraAtualId)) || 'Local N/A';
 
                 list.push({
-                    entity: `${v.registroInterno} - ${v.placa}`,
+                    entity: `${v.registroInterno} - ${v.placa}${terceirizadoPdfMark(v)}`,
                     type,
                     location: obraNome,
                     days: '-', 

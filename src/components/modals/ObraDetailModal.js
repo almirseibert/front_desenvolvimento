@@ -3,6 +3,7 @@ import { X, Loader, Edit, BarChart3, Truck, Calendar, MapPin, AlertTriangle, Clo
 import ProtectedComponent from '../ProtectedComponent';
 import SearchableSelect from '../SearchableSelect';
 import { formatObraNome } from '../../utils/obraFormat';
+import TerceirizadoObraResumo from '../analise/TerceirizadoObraResumo';
 
 // --- COMPONENTES AUXILIARES INTERNOS ---
 
@@ -535,6 +536,11 @@ const ObraDetailModal = ({ user, obra, vehicles = [], onClose, setAlertMessage, 
                                         {isLoadingDetails && <span className="text-xs text-blue-500 flex items-center gap-1"><Loader size={12} className="animate-spin"/> Atualizando...</span>}
                                         <button onClick={fetchDetails} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-500" title="Atualizar dados"><RefreshCw size={16}/></button>
                                     </div>
+                                </div>
+
+                                {/* Custos com equipamentos terceirizados (locados) */}
+                                <div className="mb-4">
+                                    <TerceirizadoObraResumo obraId={detailedObra.id} />
                                 </div>
 
                                 {/* Contrato por HORAS */}

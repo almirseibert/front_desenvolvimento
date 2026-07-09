@@ -123,7 +123,7 @@ const PartnersPage = ({
                 <h1 style={{ fontSize: 22, fontWeight: 700, color: "#1e1a14" }} className="">Postos & Fornecedores</h1>
                 <ProtectedComponent requiredPermission="editor">
                     <button onClick={() => openModal()} className="flex items-center gap-2 px-3 py-2 mak-btn mak-btn-primary">
-                        <PlusCircle size={18} /> Cadastrar {activeTab === 'posto' ? 'Posto' : 'Fornecedor'}
+                        <PlusCircle size={18} /> Cadastrar {activeTab === 'posto' ? 'Posto' : activeTab === 'locador' ? 'Locador' : 'Fornecedor'}
                     </button>
                 </ProtectedComponent>
             </div>
@@ -141,6 +141,12 @@ const PartnersPage = ({
                     className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'fornecedor' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42] bg-yellow-50' : 'text-[#9a8a78] hover:text-[#6a5e4e] hover:bg-gray-50'}`}
                 >
                     <PackageOpen size={16} /> Peças & Serviços (Fornecedores)
+                </button>
+                <button
+                    onClick={() => setActiveTab('locador')}
+                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 whitespace-nowrap transition-colors ${activeTab === 'locador' ? 'border-b-2 border-[#9E7A42] text-[#9E7A42] bg-yellow-50' : 'text-[#9a8a78] hover:text-[#6a5e4e] hover:bg-gray-50'}`}
+                >
+                    <Truck size={16} /> Locadores (Equip. Terceirizados)
                 </button>
             </div>
 
@@ -322,6 +328,7 @@ const PartnerModal = ({ user, partner, defaultTipo, onClose, setAlertMessage, ap
                             <div className="flex gap-4">
                                 <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_parceiro" value="posto" checked={formData.tipo_parceiro === 'posto'} onChange={handleChange} className="text-yellow-500 focus:ring-yellow-500" /> Posto de Combustível</label>
                                 <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_parceiro" value="fornecedor" checked={formData.tipo_parceiro === 'fornecedor'} onChange={handleChange} className="text-yellow-500 focus:ring-yellow-500" /> Fornecedor (Peças, Serviços, etc)</label>
+                                <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo_parceiro" value="locador" checked={formData.tipo_parceiro === 'locador'} onChange={handleChange} className="text-yellow-500 focus:ring-yellow-500" /> Locador (Equip. Terceirizados)</label>
                             </div>
                         </div>
 

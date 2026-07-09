@@ -28,6 +28,8 @@ const ObraModal = ({
     const [nome, setNome] = useState('');
     const [responsavel, setResponsavel] = useState('');
     const [responsavelEmail, setResponsavelEmail] = useState('');
+    const [responsavelWhatsapp, setResponsavelWhatsapp] = useState('');
+    const [internalContacts, setInternalContacts] = useState([]);
     const [fiscal, setFiscal] = useState('');
     const [contractType, setContractType] = useState('horas'); // 'horas' | 'metrosQuadrados'
     const [dataInicio, setDataInicio] = useState(new Date().toISOString().split('T')[0]);
@@ -58,6 +60,13 @@ const ObraModal = ({
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // Contatos internos (para vincular WhatsApp do responsável da obra)
+    useEffect(() => {
+        apiClient.getInternalContacts()
+            .then(data => setInternalContacts(Array.isArray(data) ? data : []))
+            .catch(() => setInternalContacts([]));
+    }, []);
+
     // --- INICIALIZAÇÃO (Modo Edição) ---
     useEffect(() => {
         if (obra) {
@@ -65,6 +74,7 @@ const ObraModal = ({
             setNome(obra.nome || '');
             setResponsavel(obra.responsavel || '');
             setResponsavelEmail(obra.responsavel_email || '');
+            setResponsavelWhatsapp(obra.responsavel_whatsapp || '');
             setFiscal(obra.fiscal || '');
             setContractType(obra.contractType || 'horas');
             setDataInicio(obra.dataInicio ? new Date(obra.dataInicio).toISOString().split('T')[0] : '');
@@ -179,6 +189,7 @@ const ObraModal = ({
             nome,
             responsavel,
             responsavel_email: responsavelEmail || null,
+            responsavel_whatsapp: responsavelWhatsapp || null,
             fiscal,
             contractType,
             // Pré-obra não tem início real — é preenchido na 1ª alocação de equipamento
@@ -349,6 +360,27 @@ const ObraModal = ({
                                     />
                                 )}
                                 <p className="text-xs text-gray-400 mt-0.5">Recebe alertas de progresso da obra (30/50/70%) e de orçamento de combustível.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
+                                    <User size={14}/> WhatsApp do Responsável
+                                </label>
+                                <select
+                                    value={responsavelWhatsapp}
+                                    onChange={(e) => setResponsavelWhatsapp(e.target.value)}
+                                    className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
+                                >
+                                    <option value="">— Nenhum —</option>
+                                    {internalContacts.filter(c => c.whatsapp).map(c => (
+                                        <option key={c.id} value={c.whatsapp}>
+                                            {c.nome}{c.cargo ? ` — ${c.cargo}` : ''}{c.setor ? ` (${c.setor})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                {internalContacts.length === 0 && (
+                                    <p className="text-xs text-red-500 mt-0.5">Nenhum contato interno com WhatsApp. Cadastre em Administração → Contatos Internos.</p>
+                                )}
+                                <p className="text-xs text-gray-400 mt-0.5">Contato Interno que recebe por WhatsApp os alertas de progresso e de orçamento de combustível.</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">

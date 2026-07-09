@@ -10,6 +10,7 @@ import apiClient from '../services/apiClient';
 import { useAuth } from '../contexts/AuthContext'; // Importar Auth Context
 import SearchableObraSelect from '../components/SearchableObraSelect';
 import { formatObraNome } from '../utils/obraFormat';
+import TerceirizadoBadge, { terceirizadoPdfMark } from '../components/ui/TerceirizadoBadge';
 
 const RECENT_OBRAS_KEY = 'mak_billing_recent_obras';
 
@@ -834,8 +835,8 @@ const BillingPage = ({
         if (reportVehicleId) {
             const v = vehicles.find(ve => ve.id === reportVehicleId);
             if (v) {
-                vehicleLabel = `${v.tipo} ${v.marca} ${v.modelo}`;
-                frotaLabel = v.registroInterno;
+                vehicleLabel = `${v.tipo} ${v.marca} ${v.modelo}${terceirizadoPdfMark(v)}`;
+                frotaLabel = `${v.registroInterno}${terceirizadoPdfMark(v)}`;
                 const operators = reportData.map(d => d.employeeName).filter(Boolean);
                 if (operators.length > 0) {
                     const mode = operators.sort((a,b) =>
@@ -989,7 +990,7 @@ const BillingPage = ({
             const vId = log.vehicleId;
             if (!vehicleSummary[vId]) {
                 vehicleSummary[vId] = {
-                    label: `${log.registroInterno} - ${log.modelo}`,
+                    label: `${log.registroInterno} - ${log.modelo}${terceirizadoPdfMark(vehicles.find(v => v.id === vId))}`,
                     type: type,
                     hours: 0
                 };
@@ -1152,7 +1153,7 @@ const BillingPage = ({
                                             <optgroup label="Presentes na obra">
                                                 {getObraVehicles.filter(v => v.statusNaObra === 'presente').map(v => (
                                                     <option key={v.id} value={v.id}>
-                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}
+                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}{terceirizadoPdfMark(v)}
                                                     </option>
                                                 ))}
                                             </optgroup>
@@ -1161,7 +1162,7 @@ const BillingPage = ({
                                             <optgroup label="Saíram da obra (histórico)">
                                                 {getObraVehicles.filter(v => v.statusNaObra === 'historico').map(v => (
                                                     <option key={v.id} value={v.id}>
-                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}
+                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}{terceirizadoPdfMark(v)}
                                                     </option>
                                                 ))}
                                             </optgroup>
@@ -1564,7 +1565,7 @@ const BillingPage = ({
                                                         <optgroup label={`Com registros no período (${vehiclesWithDataInPeriod.length})`}>
                                                             {vehiclesWithDataInPeriod.map(v => (
                                                                 <option key={v.id} value={v.id}>
-                                                                    {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}
+                                                                    {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}{terceirizadoPdfMark(v)}
                                                                 </option>
                                                             ))}
                                                         </optgroup>
@@ -1573,7 +1574,7 @@ const BillingPage = ({
                                                         <optgroup label={`Sem registros no período (${getObraVehicles.length - vehiclesWithDataInPeriod.length})`}>
                                                             {getObraVehicles.filter(v => !vehiclesWithDataInPeriod.find(vd => vd.id === v.id)).map(v => (
                                                                 <option key={v.id} value={v.id}>
-                                                                    {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}
+                                                                    {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}{terceirizadoPdfMark(v)}
                                                                 </option>
                                                             ))}
                                                         </optgroup>
@@ -1582,7 +1583,7 @@ const BillingPage = ({
                                             ) : (
                                                 getObraVehicles.map(v => (
                                                     <option key={v.id} value={v.id}>
-                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}
+                                                        {v.registroInterno} - {v.tipo} - {v.marca} - {v.modelo}{terceirizadoPdfMark(v)}
                                                     </option>
                                                 ))
                                             )}
@@ -1651,7 +1652,12 @@ const BillingPage = ({
                                                 <tr key={log.id} className="border-b hover:bg-gray-50">
                                                     {/* DATA CORRIGIDA NA VISUALIZAÇÃO DE TELA */}
                                                     <td className="px-4 py-2">{formatDateToBR(log.date)}</td>
-                                                    <td className="px-4 py-2 font-medium">{log.registroInterno} <span className="text-gray-500 font-normal text-xs">({log.tipo})</span></td>
+                                                    <td className="px-4 py-2 font-medium">
+                                                        <span className="inline-flex items-center gap-1.5">
+                                                            {log.registroInterno} <span className="text-gray-500 font-normal text-xs">({log.tipo})</span>
+                                                            <TerceirizadoBadge vehicle={vehicles.find(v => v.id === log.vehicleId)} />
+                                                        </span>
+                                                    </td>
                                                     <td className="px-4 py-2">{log.employeeName}</td>
                                                     <td className="px-4 py-2 font-bold text-blue-600">{formatDecimalToTime(log.totalHours)}</td>
                                                 </tr>

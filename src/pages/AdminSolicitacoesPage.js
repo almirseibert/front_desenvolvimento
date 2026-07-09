@@ -671,6 +671,7 @@ const AdminSolicitacoesPage = ({
                             {isBaixa && (
                                 relatedOrder && relatedOrder.id ? (
                                     <BaixaForm
+                                        key={relatedOrder.id}
                                         user={user}
                                         order={relatedOrder}
                                         onClose={() => {}}

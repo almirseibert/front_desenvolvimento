@@ -90,6 +90,7 @@ const SigaSulPage                  = lazy(() => import('./pages/SigaSulPage'));
 const AnaliseGerencialPage         = lazy(() => import('./pages/AnaliseGerencialPage'));
 const AproveitamentoProdutivoPage  = lazy(() => import('./pages/AproveitamentoProdutivoPage'));
 const ProjecaoObraPage             = lazy(() => import('./pages/ProjecaoObraPage'));
+const TerceirizadosPage            = lazy(() => import('./pages/TerceirizadosPage'));
 const AdminUsuariosPage            = lazy(() => import('./pages/AdminUsuariosPage'));
 const AdminFrotaPage               = lazy(() => import('./pages/AdminFrotaPage'));
 const AdminComunicacaoPage         = lazy(() => import('./pages/AdminComunicacaoPage'));
@@ -596,6 +597,7 @@ const AppContent = () => {
         orders:               ['orders'],
         obras:                ['revisions'],
         operacional:          ['dailyWorkLogs', 'refuelings'],
+        terceirizados:        ['dailyWorkLogs', 'refuelings', 'comboioTransactions', 'terceirizadoPagamentos'],
         supervisor_dashboard: ['revisions', 'fines'],
         supervisor_detail:    ['revisions', 'fines', 'refuelings', 'expenses'],
     }), []);
@@ -871,6 +873,8 @@ const AppContent = () => {
                 return <RevisionsPage {...commonProps} />;
             case 'partners':
                 return <PartnersPage {...commonProps} />;
+            case 'terceirizados':
+                return <TerceirizadosPage {...commonProps} />;
             case 'refueling':
                 return canAccessPage(user.roleNormalized, 'refueling')
                     ? <RefuelingPage {...commonProps} /> : <Denied />;

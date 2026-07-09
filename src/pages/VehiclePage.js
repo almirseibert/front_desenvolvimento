@@ -70,7 +70,7 @@ const ActionMenu = ({ items }) => {
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 const VehiclePage = ({
-    user, vehicles = [], obras = [], revisions = [], employees = [], fines = [],
+    user, vehicles = [], obras = [], revisions = [], employees = [], fines = [], partners = [],
     setAlertMessage, initialFilter, PasswordConfirmationModal,
     vehicleGroups = {}, operationalSubGroups = [], apiClient, reloadData
 }) => {
@@ -790,7 +790,7 @@ const [vehicleTypeConfigs, setVehicleTypeConfigs] = useState([]);
             </div>
 
             {/* ── Modais ──────────────────────────────────────────────────── */}
-            {isModalOpen && <VehicleModal user={user} vehicle={selectedVehicle} vehicles={vehicles} vehicleTypes={vehicleTypes} vehicleGroups={vehicleGroups} vehicleTypeConfigs={vehicleTypeConfigs} onClose={() => setIsModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} PasswordConfirmationModal={PasswordConfirmationModal}/>}
+            {isModalOpen && <VehicleModal user={user} vehicle={selectedVehicle} vehicles={vehicles} partners={partners} vehicleTypes={vehicleTypes} vehicleGroups={vehicleGroups} vehicleTypeConfigs={vehicleTypeConfigs} onClose={() => setIsModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} PasswordConfirmationModal={PasswordConfirmationModal}/>}
 {isObraAllocationModalOpen && <ObraAllocationModal user={user} vehicle={selectedVehicle} obras={obras} employees={employees} revisions={revisions} onClose={() => setIsObraAllocationModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} vehicles={vehicles} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isOperationalModalOpen && <OperationalAssignmentModal user={user} vehicle={selectedVehicle} employees={employees} revisions={revisions} onClose={() => setIsOperationalModalOpen(false)} setAlertMessage={setAlertMessage} apiClient={apiClient} reloadData={reloadData} operationalSubGroups={operationalSubGroups} PasswordConfirmationModal={PasswordConfirmationModal}/>}
             {isHistoryModalOpen && <HistoryModal vehicle={selectedVehicle} onClose={() => setIsHistoryModalOpen(false)} obras={obras} apiClient={apiClient} employees={employees}/>}

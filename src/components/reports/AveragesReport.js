@@ -6,6 +6,7 @@ import { SectionHeader, FilterSection } from './ReportComponents';
 import { getGroupUnit, getReadingSourceForUnit, computeConsumption } from '../../utils/vehicleRules';
 import { formatObraNome } from '../../utils/obraFormat';
 import SearchableObraSelect from '../SearchableObraSelect';
+import TerceirizadoBadge, { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 // Helper para ordenação alfanumérica
 const sortAlphaNum = (a, b) => (a || '').toString().localeCompare((b || '').toString(), 'pt-BR', { numeric: true, sensitivity: 'base' });
@@ -64,6 +65,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
 
                 grouped[vId] = {
                     vehicleId: vId,
+                    isOutsourced: !!vehicleObj.isOutsourced,
                     placa: vehicleObj.placa || 'N/A',
                     nome: vehicleObj.nome || 'Desconhecido',
                     grupo: vehicleObj.grupo || vehicleObj.tipo || 'N/A',
@@ -132,7 +134,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
 
         const tableColumn = ["Placa/Nome", "Tipo", "Obra Atual", "Unidade", "Total Consumido (L)", "Uso Total (Km/Hr)", "Média"];
         const tableRows = reportData.map(item => [
-            `${item.placa} - ${item.nome}`,
+            `${item.placa} - ${item.nome}${terceirizadoPdfMark(item.isOutsourced)}`,
             item.grupo,
             item.obraAtual,
             item.unit,
@@ -237,7 +239,7 @@ const AveragesReport = ({ vehicles = [], obras = [], refuelings = [], vehicleGro
                             ) : (
                                 reportData.map(item => (
                                     <tr key={item.vehicleId} className="hover:bg-gray-50">
-                                        <td className="p-3 font-medium text-gray-800">{item.placa} - {item.nome}</td>
+                                        <td className="p-3 font-medium text-gray-800"><span className="inline-flex items-center gap-1.5">{item.placa} - {item.nome} <TerceirizadoBadge show={item.isOutsourced} /></span></td>
                                         <td className="p-3 text-gray-600">{item.grupo}</td>
                                         <td className="p-3 text-gray-600 max-w-[150px] truncate" title={item.obraAtual}>{item.obraAtual}</td>
                                         <td className="p-3 text-right font-medium">{item.totalLiters.toFixed(2)}</td>

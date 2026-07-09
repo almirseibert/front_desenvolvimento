@@ -483,7 +483,8 @@ const RefuelingPage = ({
             )}
 
             {isConfirmModalOpen && orderToConfirm && (
-                <ConfirmRefuelingModal 
+                <ConfirmRefuelingModal
+                    key={orderToConfirm.id}
                     user={user}
                     order={orderToConfirm}
                     obras={obras}

@@ -6,6 +6,7 @@ import { SectionHeader, FilterSection } from './ReportComponents';
 import SearchableObraSelect from '../SearchableObraSelect';
 import { formatObraNome } from '../../utils/obraFormat';
 import SearchableSelect from '../SearchableSelect';
+import TerceirizadoBadge, { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
     const [filters, setFilters] = useState({ type: '', obraId: '', status: '', group: '' });
@@ -85,7 +86,10 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
         const headers = selectedColumns.map(colKey => allColumns.find(c => c.key === colKey)?.label || colKey);
         const body = filteredVehicles
             .filter(v => selectedVehicleIds.includes(v.id))
-            .map(vehicle => selectedColumns.map(colKey => vehicle[colKey] != null ? String(vehicle[colKey]) : ''));
+            .map(vehicle => selectedColumns.map(colKey => {
+                const raw = vehicle[colKey] != null ? String(vehicle[colKey]) : '';
+                return colKey === 'registroInterno' ? raw + terceirizadoPdfMark(vehicle) : raw;
+            }));
 
         // Larguras específicas por tipo de coluna para melhor aproveitamento do espaço
         const colWidths = {
@@ -177,7 +181,7 @@ const VehicleReport = ({ vehicles = [], obras = [], vehicleGroups = {} }) => {
                         {filteredVehicles.map(v => (
                             <tr key={v.id} className={`hover:bg-red-50 ${selectedVehicleIds.includes(v.id) ? 'bg-red-50' : ''}`}>
                                 <td className="p-3 text-center"><input type="checkbox" checked={selectedVehicleIds.includes(v.id)} onChange={() => setSelectedVehicleIds(prev => prev.includes(v.id) ? prev.filter(id => id !== v.id) : [...prev, v.id])} className="rounded text-red-600 focus:ring-red-500"/></td>
-                                <td className="p-3 font-bold text-gray-700">{v.registroInterno}</td>
+                                <td className="p-3 font-bold text-gray-700"><span className="inline-flex items-center gap-1.5">{v.registroInterno} <TerceirizadoBadge vehicle={v} /></span></td>
                                 <td className="p-3">{v.placa}</td>
                                 <td className="p-3">{v.tipo}</td>
                                 <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${v.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>{v.status}</span></td>

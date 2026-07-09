@@ -4,6 +4,7 @@ import autoTable from 'jspdf-autotable';
 import { HardHat, Printer } from 'lucide-react';
 import { SectionHeader } from './ReportComponents';
 import { formatObraNome } from '../../utils/obraFormat';
+import { terceirizadoPdfMark } from '../ui/TerceirizadoBadge';
 
 const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) => {
     const [statusFilter, setStatusFilter] = useState('ativa');
@@ -73,7 +74,7 @@ const ConstructionReport = ({ obras, vehicles, dailyWorkLogs, vehicleGroups }) =
                     }
                 }
                 const worked = Math.max(0, current - start);
-                physicalBody.push([v.registroInterno, v.tipo, `${start.toFixed(1)} ${unit}`, `${current.toFixed(1)} ${unit}`, `${worked.toFixed(1)} ${unit}`]);
+                physicalBody.push([v.registroInterno + terceirizadoPdfMark(v), v.tipo, `${start.toFixed(1)} ${unit}`, `${current.toFixed(1)} ${unit}`, `${worked.toFixed(1)} ${unit}`]);
             });
 
             if (physicalBody.length > 0) {

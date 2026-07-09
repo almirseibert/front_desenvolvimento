@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import SearchableObraSelect from '../../SearchableObraSelect';
 import apiClient from '../../../services/apiClient';
+import TerceirizadoObraResumo from '../TerceirizadoObraResumo';
 
 // ─── Paleta ─────────────────────────────────────────────────────────────────
 const C = {
@@ -438,6 +439,9 @@ const ProjecaoObra = ({ obras = [] }) => {
                         color={colorForPercent(combustivel.projecaoFinalPercent).text}
                     />
                 </div>
+
+                {/* Custos com equipamentos terceirizados (locados) */}
+                <TerceirizadoObraResumo obraId={selectedObra.id} />
 
                 {/* Layout de dois painéis */}
                 <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
