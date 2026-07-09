@@ -330,7 +330,7 @@ const ObraModal = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
-                                    <User size={14}/> Responsável da Obra
+                                    <User size={14}/> Líder de Obra
                                 </label>
                                 {employees.length > 0 ? (
                                     <select
@@ -359,7 +359,7 @@ const ObraModal = ({
                                         placeholder="Nome do Responsável"
                                     />
                                 )}
-                                <p className="text-xs text-gray-400 mt-0.5">Recebe alertas de progresso da obra (30/50/70%) e de orçamento de combustível.</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Recebe alertas da obra</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
@@ -380,7 +380,7 @@ const ObraModal = ({
                                 {internalContacts.length === 0 && (
                                     <p className="text-xs text-red-500 mt-0.5">Nenhum contato interno com WhatsApp. Cadastre em Administração → Contatos Internos.</p>
                                 )}
-                                <p className="text-xs text-gray-400 mt-0.5">Contato Interno que recebe por WhatsApp os alertas de progresso e de orçamento de combustível.</p>
+                                <p className="text-xs text-gray-400 mt-0.5">Recebe alertas da obra</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
