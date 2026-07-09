@@ -56,3 +56,6 @@ tmp/
 # Arquivos sensíveis
 credentials.json
 secrets.json
+
+# Saída da ferramenta graphify (pode conter dados sensíveis do corpus)
+graphify-out/
