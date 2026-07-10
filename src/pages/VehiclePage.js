@@ -1,4 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo } from 'react';
+import ReactDOM from 'react-dom';
 import {
     HardHat, Users, Wrench, ShieldAlert, Edit, Clock, Trash2, PlusCircle,
     Download, ChevronsUpDown, AlertTriangle, Truck,
@@ -30,25 +31,70 @@ const ALL_STATUS_OPTIONS = ['Disponível', 'Em Obra', 'Em Operação', 'Em Manut
 // Menu de "três pontinhos" (kebab) — agrupa as ações secundárias do veículo.
 const ActionMenu = ({ items }) => {
     const [open, setOpen] = useState(false);
+    const [coords, setCoords] = useState(null);
     const ref = React.useRef(null);
+    const btnRef = React.useRef(null);
+
+    // Posiciona o menu a partir do retângulo do botão (viewport). Como o menu
+    // é renderizado em portal no body com position:fixed, ele escapa do stacking
+    // context da lista e fica acima do sidebar em qualquer tamanho de tela.
+    const MENU_WIDTH = 178;
+    const ITEM_H = 33;      // altura aproximada de cada item
+    const MENU_PAD = 8;     // padding vertical do container (4 + 4)
+    const GAP = 4;          // folga entre botão e menu
+    const MARGIN = 8;       // margem mínima da borda da viewport
+    const updateCoords = React.useCallback((count) => {
+        const r = btnRef.current?.getBoundingClientRect();
+        if (!r) return;
+        const left = Math.max(MARGIN, r.right - MENU_WIDTH);
+        const menuH = count * ITEM_H + MENU_PAD;
+        const spaceBelow = window.innerHeight - r.bottom;
+        const spaceAbove = r.top;
+        // Abre pra baixo se couber; senão pra cima; se não couber em nenhum, fixa
+        // no lado com mais espaço e limita a altura (o menu rola internamente).
+        if (menuH + GAP <= spaceBelow) {
+            setCoords({ top: r.bottom + GAP, left, maxHeight: null });
+        } else if (menuH + GAP <= spaceAbove) {
+            setCoords({ top: r.top - GAP - menuH, left, maxHeight: null });
+        } else if (spaceBelow >= spaceAbove) {
+            setCoords({ top: r.bottom + GAP, left, maxHeight: spaceBelow - GAP - MARGIN });
+        } else {
+            const maxH = spaceAbove - GAP - MARGIN;
+            setCoords({ top: r.top - GAP - maxH, left, maxHeight: maxH });
+        }
+    }, []);
+
     useEffect(() => {
         if (!open) return;
-        const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+        const handler = (e) => {
+            if (ref.current && ref.current.contains(e.target)) return;
+            if (e.target.closest && e.target.closest('[data-action-menu]')) return;
+            setOpen(false);
+        };
+        const reposition = () => setOpen(false); // scroll/resize: fecha para não descolar do botão
         document.addEventListener('mousedown', handler);
-        return () => document.removeEventListener('mousedown', handler);
+        window.addEventListener('scroll', reposition, true);
+        window.addEventListener('resize', reposition);
+        return () => {
+            document.removeEventListener('mousedown', handler);
+            window.removeEventListener('scroll', reposition, true);
+            window.removeEventListener('resize', reposition);
+        };
     }, [open]);
+
     const list = (items || []).filter(Boolean);
     if (!list.length) return null;
     return (
         <div ref={ref} style={{ position: 'relative' }}>
             <button
-                type="button" onClick={() => setOpen(o => !o)} title="Mais ações"
+                ref={btnRef}
+                type="button" onClick={() => { if (!open) updateCoords(list.length); setOpen(o => !o); }} title="Mais ações"
                 style={{ padding: '5px', borderRadius: 6, border: 'none', cursor: 'pointer', lineHeight: 0, color: open ? '#6a5e4e' : '#b0a090', background: open ? '#faf9f7' : 'transparent' }}
             >
                 <MoreVertical size={15} />
             </button>
-            {open && (
-                <div style={{ position: 'absolute', right: 0, top: 'calc(100% + 4px)', zIndex: 30, background: '#fff', border: '1px solid #f0ebe3', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.14)', minWidth: 178, padding: 4 }}>
+            {open && coords && ReactDOM.createPortal(
+                <div data-action-menu style={{ position: 'fixed', top: coords.top, left: coords.left, zIndex: 1000, background: '#fff', border: '1px solid #f0ebe3', borderRadius: 8, boxShadow: '0 6px 20px rgba(0,0,0,0.14)', minWidth: MENU_WIDTH, padding: 4, maxHeight: coords.maxHeight || undefined, overflowY: coords.maxHeight ? 'auto' : undefined }}>
                     {list.map((it, i) => (
                         <button
                             key={i} type="button"
@@ -61,7 +107,8 @@ const ActionMenu = ({ items }) => {
                             {it.label}
                         </button>
                     ))}
-                </div>
+                </div>,
+                document.body
             )}
         </div>
     );

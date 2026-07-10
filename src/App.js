@@ -533,12 +533,22 @@ const AppContent = () => {
                 } catch (e) {}
             };
 
+            // Notificações de "estado" do WhatsApp são reemitidas enquanto o serviço
+            // permanece fora — deve existir no máximo um pop-up por tipo na tela.
+            const TIPOS_ESTADO_UNICO = ['whatsapp_desconectado', 'whatsapp_nao_configurado'];
+
             const mostrarPopup = () => {
-                tocarBeep();
-                setAdminPopups(prev => [
-                    ...prev,
-                    { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, tipo: data.tipo, message: data.mensagem || data.message || null },
-                ]);
+                setAdminPopups(prev => {
+                    // Se já existe um pop-up deste tipo de estado, não abre outro (nem toca beep).
+                    if (TIPOS_ESTADO_UNICO.includes(data.tipo) && prev.some(p => p.tipo === data.tipo)) {
+                        return prev;
+                    }
+                    tocarBeep();
+                    return [
+                        ...prev,
+                        { id: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, tipo: data.tipo, message: data.mensagem || data.message || null },
+                    ];
+                });
             };
 
             // Nova solicitação de abastecimento (página Solicitações App): o pop-up vai

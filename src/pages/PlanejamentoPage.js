@@ -17,16 +17,16 @@ import ObraModal from '../components/modals/ObraModal';
 
 const PRE_ACTIVE = ['radar', 'planejada', 'mobilizacao'];
 
-// Ciclo 100% automático: criada → radar; contrato de horas → planejada;
-// 1ª alocação de máquina → mobilização; 1º lançamento de horas → em andamento.
+// Ciclo 100% automático: criada → radar; plano de trabalho → plano definido;
+// 1ª alocação de máquina → mobilização; 1º lançamento de horas → em operação.
 const COLUNAS = [
-    { id: 'radar',       label: 'Radar',        sub: 'sem contrato de horas',      drag: false, cor: '#94a3b8' },
-    { id: 'planejada',   label: 'Planejada',    sub: 'contrato registrado',        drag: false, cor: '#f59e0b' },
-    { id: 'mobilizacao', label: 'Mobilização',  sub: 'aguardando 1º apontamento',  drag: false, cor: '#8b5cf6' },
-    { id: 'and_0_30',    label: 'Em andamento', sub: '0–30%',                     drag: false, cor: '#10b981' },
-    { id: 'and_30_70',   label: 'Em andamento', sub: '30–70%',                    drag: false, cor: '#0ea5e9' },
-    { id: 'terminando',  label: 'Terminando',   sub: '≥70% ou ≤15 dias',          drag: false, cor: '#ef4444' },
-    { id: 'finalizada',  label: 'Finalizadas',  sub: 'últimos 30 dias',           drag: false, cor: '#9ca3af' },
+    { id: 'radar',       label: 'No radar',        sub: 'sem contrato',                drag: false, cor: '#94a3b8' },
+    { id: 'planejada',   label: 'Plano definido',  sub: 'plano de trabalho registrado', drag: false, cor: '#f59e0b' },
+    { id: 'mobilizacao', label: 'Em mobilização',  sub: 'equipamento alocado',         drag: false, cor: '#8b5cf6' },
+    { id: 'and_0_30',    label: 'Em operação',     sub: '0–30%',                      drag: false, cor: '#10b981' },
+    { id: 'and_30_70',   label: 'Em operação',     sub: '30–70%',                     drag: false, cor: '#0ea5e9' },
+    { id: 'terminando',  label: 'Terminando',      sub: '≥70% ou ≤15 dias',           drag: false, cor: '#ef4444' },
+    { id: 'finalizada',  label: 'Finalizadas',     sub: 'últimos 30 dias',            drag: false, cor: '#9ca3af' },
 ];
 
 const colunaDaObra = (o) => {
@@ -67,14 +67,7 @@ const ObraCard = ({ obra, draggable, onDragStart, onOpen }) => {
             </div>
 
             <div className="flex flex-wrap gap-1 text-[10px]">
-                {obra.regiao && <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 flex items-center gap-0.5"><MapPin size={9}/>{obra.regiao}</span>}
                 {obra.orgao_contratante && <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">{obra.orgao_contratante}</span>}
-                {obra.confiancaInfo && PRE_ACTIVE.includes(obra.status) && (
-                    <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 uppercase">{obra.confiancaInfo.replace('_', ' ')}</span>
-                )}
-                {obra.planoNivelGrupo && (
-                    <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 flex items-center gap-0.5"><AlertTriangle size={9}/>plano por grupo</span>
-                )}
                 {PRE_ACTIVE.includes(obra.status) && obra.totalContratado === 0 && obra.contractType === 'horas' && (
                     <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 flex items-center gap-0.5"><AlertTriangle size={9}/>sem plano de horas</span>
                 )}
@@ -293,9 +286,6 @@ const ObraDetalheModal = ({ obra, onClose, onEdit }) => {
                             {obra.responsavel && <span className="flex items-center gap-0.5"><User size={11}/>{obra.responsavel}</span>}
                         </div>
                         <div className="flex flex-wrap gap-1 mt-1.5 text-[10px]">
-                            {obra.confiancaInfo && isPre && (
-                                <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 uppercase">{obra.confiancaInfo.replace('_', ' ')}</span>
-                            )}
                             {obra.planoNivelGrupo && (
                                 <span className="px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 flex items-center gap-0.5"><AlertTriangle size={9}/>plano por grupo</span>
                             )}
@@ -440,14 +430,6 @@ const ObraDetalheModal = ({ obra, onClose, onEdit }) => {
                         </div>
                     )}
 
-                    {/* Informações de planejamento */}
-                    {(obra.origemInfo || obra.obsPlanejamento) && (
-                        <div>
-                            <h4 className="text-xs font-bold text-gray-500 uppercase mb-1">Informações de planejamento</h4>
-                            {obra.origemInfo && <p className="text-xs text-gray-600"><b>Origem da informação:</b> {obra.origemInfo}</p>}
-                            {obra.obsPlanejamento && <p className="text-xs text-gray-600 whitespace-pre-wrap mt-1">{obra.obsPlanejamento}</p>}
-                        </div>
-                    )}
                 </div>
 
                 {/* Rodapé */}
@@ -653,7 +635,7 @@ const PlanejamentoPage = ({ apiClient, setAlertMessage, user, employees, equipme
                     </p>
                     {balanco.length === 0 ? (
                         <p className="text-sm text-gray-400 italic">
-                            Sem demanda planejada nem obras terminando na janela. Cadastre obras futuras (fase Radar/Planejada) para alimentar o balanço.
+                            Sem demanda planejada nem obras terminando na janela. Cadastre obras futuras (fase No radar / Plano definido) para alimentar o balanço.
                         </p>
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-4">

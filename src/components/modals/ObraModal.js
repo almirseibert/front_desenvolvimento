@@ -5,10 +5,10 @@ import { vehicleSubTypes } from '../../utils/vehicleRules';
 // Ciclo de vida de planejamento — transições automáticas:
 // radar (criada) → planejada (contrato de horas) → mobilização (1ª alocação) → ativa (1º lançamento de horas)
 const OBRA_FASES = [
-    { value: 'radar',       label: 'Radar (apenas criada)' },
-    { value: 'planejada',   label: 'Planejada (contrato de horas registrado)' },
-    { value: 'mobilizacao', label: 'Mobilização (máquinas alocadas)' },
-    { value: 'ativa',       label: 'Ativa (horas em apontamento)' },
+    { value: 'radar',       label: 'No radar (cadastrada, sem contrato)' },
+    { value: 'planejada',   label: 'Plano definido (plano de trabalho registrado)' },
+    { value: 'mobilizacao', label: 'Em mobilização (equipamento alocado)' },
+    { value: 'ativa',       label: 'Em operação (apontando horas)' },
 ];
 const PRE_ACTIVE_STATUSES = ['radar', 'planejada', 'mobilizacao'];
 
@@ -52,11 +52,10 @@ const ObraModal = ({
     const [regiao, setRegiao] = useState('');
 
     // --- ESTADOS DE PLANEJAMENTO (pré-obra) ---
-    const [statusObra, setStatusObra] = useState('ativa');
+    // Na criação a obra sempre nasce 'radar' e sobe de fase por gatilho; o seletor
+    // de fase só aparece na edição (regressão manual do admin).
+    const [statusObra, setStatusObra] = useState('radar');
     const [dataInicioPrevisto, setDataInicioPrevisto] = useState('');
-    const [origemInfo, setOrigemInfo] = useState('');
-    const [confiancaInfo, setConfiancaInfo] = useState('');
-    const [obsPlanejamento, setObsPlanejamento] = useState('');
 
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -88,9 +87,6 @@ const ObraModal = ({
 
             setStatusObra(obra.status && obra.status !== 'finalizada' ? obra.status : 'ativa');
             setDataInicioPrevisto(obra.dataInicioPrevisto ? new Date(obra.dataInicioPrevisto).toISOString().split('T')[0] : '');
-            setOrigemInfo(obra.origemInfo || '');
-            setConfiancaInfo(obra.confiancaInfo || '');
-            setObsPlanejamento(obra.obsPlanejamento || '');
 
             // Restaura Contrato por Horas — prefere o plano por SUBGRUPO; legado por grupo como fallback
             const parseMaybe = (v) => (typeof v === 'string' ? JSON.parse(v) : (v || {}));
@@ -197,9 +193,6 @@ const ObraModal = ({
             dataFimPrevisto: dataFim || null,
             dataInicioPrevisto: dataInicioPrevisto || null,
             status: tipoRegistro === 'centro_custo' ? 'ativa' : statusObra,
-            origemInfo: origemInfo || null,
-            confiancaInfo: confiancaInfo || null,
-            obsPlanejamento: obsPlanejamento || null,
             latitude,
             longitude,
             kmContratadoPrancha: parseFloat(kmContratadoPrancha) || 0,
@@ -399,61 +392,31 @@ const ObraModal = ({
                         {/* Fase (ciclo de vida de planejamento) — não se aplica a centro de custo */}
                         {tipoRegistro !== 'centro_custo' && (
                             <div className="bg-amber-50 p-4 rounded-lg border border-amber-200 space-y-3">
-                                <div>
-                                    <label className="block text-sm font-bold text-gray-700 mb-1">Fase da Obra</label>
-                                    <select
-                                        value={statusObra}
-                                        onChange={(e) => setStatusObra(e.target.value)}
-                                        className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
-                                    >
-                                        {OBRA_FASES.map(f => (
-                                            <option key={f.value} value={f.value}>{f.label}</option>
-                                        ))}
-                                    </select>
-                                    {PRE_ACTIVE_STATUSES.includes(statusObra) && (
-                                        <p className="text-xs text-amber-700 mt-1">
-                                            Obra em fase de planejamento: fica fora dos fluxos operacionais e é ativada
-                                            automaticamente ao receber o primeiro equipamento.
-                                        </p>
-                                    )}
-                                </div>
-
-                                {PRE_ACTIVE_STATUSES.includes(statusObra) && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Origem da informação</label>
-                                            <input
-                                                type="text"
-                                                value={origemInfo}
-                                                onChange={(e) => setOrigemInfo(e.target.value)}
-                                                className="w-full p-2 border rounded"
-                                                placeholder="Ex: contato na prefeitura, edital nº..."
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Confiança</label>
-                                            <select
-                                                value={confiancaInfo}
-                                                onChange={(e) => setConfiancaInfo(e.target.value)}
-                                                className="w-full p-2 border rounded bg-white"
-                                            >
-                                                <option value="">Selecione...</option>
-                                                <option value="rumor">Rumor</option>
-                                                <option value="plano_oficial">Plano oficial</option>
-                                                <option value="contrato_assinado">Contrato assinado</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-sm font-bold text-gray-700 mb-1">Observações de planejamento</label>
-                                            <textarea
-                                                value={obsPlanejamento}
-                                                onChange={(e) => setObsPlanejamento(e.target.value)}
-                                                className="w-full p-2 border rounded text-sm"
-                                                rows={2}
-                                                placeholder="Contexto, pendências, condições..."
-                                            />
-                                        </div>
+                                {obra ? (
+                                    <div>
+                                        <label className="block text-sm font-bold text-gray-700 mb-1">Fase da Obra</label>
+                                        <select
+                                            value={statusObra}
+                                            onChange={(e) => setStatusObra(e.target.value)}
+                                            className="w-full p-2 border rounded focus:ring-2 focus:ring-yellow-400 outline-none bg-white"
+                                        >
+                                            {OBRA_FASES.map(f => (
+                                                <option key={f.value} value={f.value}>{f.label}</option>
+                                            ))}
+                                        </select>
+                                        {PRE_ACTIVE_STATUSES.includes(statusObra) && (
+                                            <p className="text-xs text-amber-700 mt-1">
+                                                Obra em fase de planejamento: fica fora dos fluxos operacionais e é ativada
+                                                automaticamente ao receber o primeiro equipamento.
+                                            </p>
+                                        )}
                                     </div>
+                                ) : (
+                                    <p className="text-xs text-amber-700">
+                                        A obra será criada <strong>no radar</strong> e avança de fase
+                                        automaticamente conforme os dados chegam: plano de trabalho registrado,
+                                        equipamento alocado e horas apontadas.
+                                    </p>
                                 )}
                             </div>
                         )}
