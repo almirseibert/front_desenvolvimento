@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Loader, X, AlertTriangle, Save, Camera, ShieldCheck, Briefcase, Gauge, MapPin, Package, Fuel, FileText, Trash2, Upload, ExternalLink } from 'lucide-react';
 import { checkReadingConsistency, vehicleSubTypes, getGroupUnit } from '../utils/vehicleRules';
 import SearchableSelect from './SearchableSelect';
-import { getEquipmentTarifaHora } from '../utils/terceirizados';
 
 const ModalBtn = ({ variant = 'primary', onClick, disabled, children }) => {
     const [h, setH] = React.useState(false);
@@ -82,10 +81,6 @@ const VehicleModal = ({
 
         // Contrato de locação (equipamento terceirizado) — alimenta cálculo de tarifa/hora
         locadorId:               vehicle?.locadorId || '',
-        locacaoHorasContratadas: vehicle?.locacaoHorasContratadas != null ? vehicle.locacaoHorasContratadas.toString() : '',
-        locacaoValorTotal:       vehicle?.locacaoValorTotal       != null ? vehicle.locacaoValorTotal.toString()       : '',
-        locacaoVigenciaInicio:   vehicle?.locacaoVigenciaInicio ? new Date(vehicle.locacaoVigenciaInicio).toISOString().split('T')[0] : '',
-        locacaoVigenciaFim:      vehicle?.locacaoVigenciaFim    ? new Date(vehicle.locacaoVigenciaFim).toISOString().split('T')[0]    : '',
 
         // Rastreador
         rastreador: vehicle?.rastreador || 'Sem Rastreador',
@@ -372,10 +367,6 @@ const VehicleModal = ({
             percentual_tolerancia: formData.percentual_tolerancia !== '' ? parseFloat(formData.percentual_tolerancia) : 20,
             // Contrato de locação (só faz sentido para terceirizado)
             locadorId:               formData.isOutsourced ? (formData.locadorId || null) : null,
-            locacaoHorasContratadas: formData.isOutsourced && formData.locacaoHorasContratadas !== '' ? parseFloat(formData.locacaoHorasContratadas) : null,
-            locacaoValorTotal:       formData.isOutsourced && formData.locacaoValorTotal       !== '' ? parseFloat(formData.locacaoValorTotal)       : null,
-            locacaoVigenciaInicio:   formData.isOutsourced ? (formData.locacaoVigenciaInicio || null) : null,
-            locacaoVigenciaFim:      formData.isOutsourced ? (formData.locacaoVigenciaFim    || null) : null,
             // Sucata: força canCirculate = false e remove alocações ativas
             ...(isSucata && { canCirculate: false }),
         };
@@ -608,64 +599,11 @@ const VehicleModal = ({
                                                 />
                                             </div>
 
-                                            <p className="text-[10px] text-purple-500 font-medium uppercase tracking-wide pt-1">Contrato de locação</p>
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Horas Contratadas</label>
-                                                    <input
-                                                        type="number" min="0" step="any"
-                                                        name="locacaoHorasContratadas"
-                                                        value={formData.locacaoHorasContratadas}
-                                                        onChange={handleChange}
-                                                        placeholder="Ex: 100"
-                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Valor Total (R$)</label>
-                                                    <input
-                                                        type="number" min="0" step="any"
-                                                        name="locacaoValorTotal"
-                                                        value={formData.locacaoValorTotal}
-                                                        onChange={handleChange}
-                                                        placeholder="Ex: 15000"
-                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-                                                    />
-                                                </div>
-                                            </div>
-                                            {(() => {
-                                                const tarifa = getEquipmentTarifaHora({
-                                                    locacaoValorTotal: formData.locacaoValorTotal,
-                                                    locacaoHorasContratadas: formData.locacaoHorasContratadas,
-                                                });
-                                                return tarifa > 0 ? (
-                                                    <p className="text-xs text-purple-700 font-semibold">
-                                                        Tarifa derivada: {tarifa.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} / hora
-                                                    </p>
-                                                ) : null;
-                                            })()}
-                                            <div className="grid grid-cols-2 gap-2">
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Vigência Início</label>
-                                                    <input
-                                                        type="date"
-                                                        name="locacaoVigenciaInicio"
-                                                        value={formData.locacaoVigenciaInicio}
-                                                        onChange={handleChange}
-                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-                                                    />
-                                                </div>
-                                                <div>
-                                                    <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Vigência Fim</label>
-                                                    <input
-                                                        type="date"
-                                                        name="locacaoVigenciaFim"
-                                                        value={formData.locacaoVigenciaFim}
-                                                        onChange={handleChange}
-                                                        className="w-full p-2 border border-purple-200 rounded-lg bg-white focus:ring-2 focus:ring-purple-400 outline-none text-sm"
-                                                    />
-                                                </div>
-                                            </div>
+                                            <p className="text-[10px] text-gray-400 pt-1 leading-relaxed">
+                                                Os dados de contrato (horas, valor, vigência) são gerenciados na tela
+                                                <b> Terceirizados</b> — 1 contrato por obra, com valor fechado. Aqui basta
+                                                marcar o veículo como terceirizado e indicar o locador.
+                                            </p>
                                         </div>
                                     )}
                                 </div>

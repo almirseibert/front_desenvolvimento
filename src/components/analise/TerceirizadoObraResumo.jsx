@@ -23,14 +23,17 @@ const TerceirizadoObraResumo = ({ obraId, period, variant = 'card', hideWhenEmpt
     const {
         obras = [], vehicles = [], partners = [],
         dailyWorkLogs = [], refuelings = [], comboioTransactions = [],
-        terceirizadoPagamentos = [],
+        terceirizadoPagamentos = [], terceiroContratos = [],
     } = useData();
 
     const resumo = useMemo(() => {
         if (!obraId) return null;
-        const ctx = { dailyWorkLogs, refuelings, comboioTransactions, partners, pagamentos: terceirizadoPagamentos };
-        return computeTerceirizadoPorObra(obraId, obras, vehicles, ctx, period || {});
-    }, [obraId, obras, vehicles, partners, dailyWorkLogs, refuelings, comboioTransactions, terceirizadoPagamentos, period]);
+        const ctx = {
+            vehicles, obras, dailyWorkLogs, refuelings, comboioTransactions, partners,
+            pagamentos: terceirizadoPagamentos, contratos: terceiroContratos,
+        };
+        return computeTerceirizadoPorObra(obraId, obras, vehicles, ctx);
+    }, [obraId, obras, vehicles, partners, dailyWorkLogs, refuelings, comboioTransactions, terceirizadoPagamentos, terceiroContratos]);
 
     const isEmpty = !resumo || resumo.equipamentos.length === 0;
     if (isEmpty && hideWhenEmpty) return null;

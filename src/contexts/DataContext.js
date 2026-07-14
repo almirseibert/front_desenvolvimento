@@ -134,6 +134,11 @@ const RESOURCE_DEFS = {
         essential: false,
         allowedFor: (u) => !isOperador(u),
     },
+    terceiroContratos: {
+        getter: () => apiClient.getTerceiroContratos(),
+        essential: false,
+        allowedFor: (u) => !isOperador(u),
+    },
 };
 
 const RESOURCE_KEYS = Object.keys(RESOURCE_DEFS);
@@ -160,6 +165,8 @@ const TARGET_TO_RESOURCE = {
     partnerFuelCredits: 'partnerFuelCredits',
     terceirizado_pagamentos: 'terceirizadoPagamentos',
     terceirizadoPagamentos: 'terceirizadoPagamentos',
+    terceiro_contratos: 'terceiroContratos',
+    terceiroContratos: 'terceiroContratos',
 };
 
 // ============================================================================
@@ -184,6 +191,7 @@ export const DataProvider = ({ children }) => {
     const [orders, setOrders] = useState(EMPTY_ARRAY);
     const [partnerFuelCredits, setPartnerFuelCredits] = useState(EMPTY_ARRAY);
     const [terceirizadoPagamentos, setTerceirizadoPagamentos] = useState(EMPTY_ARRAY);
+    const [terceiroContratos, setTerceiroContratos] = useState(EMPTY_ARRAY);
 
     // Status de carregamento essencial (bloqueia tela até terminar)
     const [bootstrapLoading, setBootstrapLoading] = useState(true);
@@ -219,6 +227,7 @@ export const DataProvider = ({ children }) => {
         orders: setOrders,
         partnerFuelCredits: setPartnerFuelCredits,
         terceirizadoPagamentos: setTerceirizadoPagamentos,
+        terceiroContratos: setTerceiroContratos,
     }), []);
 
     // ------------------------------------------------------------------------
@@ -464,6 +473,7 @@ export const DataProvider = ({ children }) => {
         orders,
         partnerFuelCredits,
         terceirizadoPagamentos,
+        terceiroContratos,
 
         // Status
         bootstrapLoading,
@@ -482,7 +492,7 @@ export const DataProvider = ({ children }) => {
         vehicles, obras, employees, partners,
         revisions, expenses, refuelings, comboioTransactions, fines,
         diarioDeBordoLogs, dailyWorkLogs, orders, partnerFuelCredits,
-        terceirizadoPagamentos,
+        terceirizadoPagamentos, terceiroContratos,
         bootstrapLoading, syncing,
         ensure, ensureAll, refresh, invalidate, reload,
         socket,

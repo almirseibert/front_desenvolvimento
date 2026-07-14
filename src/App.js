@@ -607,7 +607,7 @@ const AppContent = () => {
         orders:               ['orders'],
         obras:                ['revisions'],
         operacional:          ['dailyWorkLogs', 'refuelings'],
-        terceirizados:        ['dailyWorkLogs', 'refuelings', 'comboioTransactions', 'terceirizadoPagamentos'],
+        terceirizados:        ['dailyWorkLogs', 'refuelings', 'comboioTransactions', 'terceirizadoPagamentos', 'terceiroContratos'],
         supervisor_dashboard: ['revisions', 'fines'],
         supervisor_detail:    ['revisions', 'fines', 'refuelings', 'expenses'],
     }), []);

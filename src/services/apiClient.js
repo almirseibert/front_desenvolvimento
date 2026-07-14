@@ -4,17 +4,52 @@
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api'; 
 
 const getToken = () => localStorage.getItem('authToken');
+const getRefreshToken = () => localStorage.getItem('refreshToken');
+
+// Compartilhada entre chamadas 401 simultâneas: todas esperam UMA renovação
+// em vez de disparar várias (mesmo padrão de dedupe do DataContext).
+let refreshPromise = null;
+
+// Limpa a sessão e avisa o AuthContext para redirecionar ao login.
+const forceLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    window.dispatchEvent(new Event('auth:logout'));
+};
+
+// Troca o refresh token por um novo access token. Retorna true se renovou.
+const runRefresh = async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) return false;
+    try {
+        const res = await fetch(`${API_URL}/auth/refresh`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ refreshToken }),
+        });
+        if (!res.ok) return false;
+        const data = await res.json();
+        if (data.token) {
+            localStorage.setItem('authToken', data.token);
+            if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
+            return true;
+        }
+        return false;
+    } catch {
+        return false;
+    }
+};
 
 const apiFetch = async (endpoint, options = {}) => {
     const token = getToken();
-    
+
     const headers = {
         'Content-Type': 'application/json',
         ...options.headers,
     };
 
     if (token) {
-        headers['Authorization'] = `Bearer ${token}`; 
+        headers['Authorization'] = `Bearer ${token}`;
     }
 
     if (options.body instanceof FormData) {
@@ -27,6 +62,25 @@ const apiFetch = async (endpoint, options = {}) => {
             headers,
         });
 
+        // Access token expirado (401): tenta renovar silenciosamente UMA vez e
+        // refaz a requisição. Não se aplica às próprias rotas de auth.
+        if (
+            response.status === 401 &&
+            !options._retry &&
+            !endpoint.startsWith('/auth/login') &&
+            !endpoint.startsWith('/auth/refresh')
+        ) {
+            if (!refreshPromise) {
+                refreshPromise = runRefresh().finally(() => { refreshPromise = null; });
+            }
+            const renewed = await refreshPromise;
+            if (renewed) {
+                return apiFetch(endpoint, { ...options, _retry: true });
+            }
+            // Refresh token ausente/expirado/revogado → sessão realmente acabou.
+            forceLogout();
+        }
+
         if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
             const errorMessage = errorData.message || errorData.error || `Erro ${response.status}: ${response.statusText}`;
@@ -38,15 +92,15 @@ const apiFetch = async (endpoint, options = {}) => {
             err.response = { status: response.status, data: errorData };
             throw err;
         }
-        
+
         if (response.status === 204) {
             return null;
         }
 
-        return await response.json(); 
+        return await response.json();
     } catch (error) {
         console.error(`Erro na chamada da API para ${API_URL}${endpoint}:`, error);
-        throw error; 
+        throw error;
     }
 };
 
@@ -60,6 +114,15 @@ const apiClient = {
             method: 'POST',
             body: JSON.stringify({ email, password }),
         });
+    },
+    // Revoga o refresh token no servidor (best-effort no logout).
+    logout: async () => {
+        const refreshToken = localStorage.getItem('refreshToken');
+        if (!refreshToken) return { ok: true };
+        return apiFetch('/auth/logout', {
+            method: 'POST',
+            body: JSON.stringify({ refreshToken }),
+        }).catch(() => ({ ok: false }));
     },
     getMe: async () => {
         return apiFetch('/auth/me');
@@ -229,6 +292,13 @@ const apiClient = {
     createTerceirizadoPagamento: async (data) => apiFetch('/terceirizadoPagamentos', { method: 'POST', body: JSON.stringify(data) }),
     updateTerceirizadoPagamento: async (id, data) => apiFetch(`/terceirizadoPagamentos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
     deleteTerceirizadoPagamento: async (id) => apiFetch(`/terceirizadoPagamentos/${id}`, { method: 'DELETE' }),
+
+    // --- Contratos de terceirizados (1 contrato = 1 terceiro + 1 obra) ---
+    getTerceiroContratos: async () => apiFetch('/terceiroContratos'),
+    createTerceiroContrato: async (data) => apiFetch('/terceiroContratos', { method: 'POST', body: JSON.stringify(data) }),
+    updateTerceiroContrato: async (id, data) => apiFetch(`/terceiroContratos/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteTerceiroContrato: async (id) => apiFetch(`/terceiroContratos/${id}`, { method: 'DELETE' }),
+    gerarContratoPdf: async (id) => apiFetch(`/terceiroContratos/${id}/pdf`, { method: 'POST' }),
 
     // --- Parceiros (Postos) ---
     getPartners: async () => apiFetch('/partners'),

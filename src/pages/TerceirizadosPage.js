@@ -1,15 +1,13 @@
 import React, { useState, useMemo } from 'react';
-import { Truck, Calendar, DollarSign, Droplet, Clock, Wallet, Building2, PlusCircle, FileDown } from 'lucide-react';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import {
+    Truck, DollarSign, Droplet, Wallet, Building2, PlusCircle, FileText,
+    Pencil, Trash2, ChevronDown, ChevronRight, Clock, Loader, FileDown, AlertTriangle,
+} from 'lucide-react';
 import { useData, useEnsureResources } from '../contexts/DataContext';
 import ProtectedComponent from '../components/ProtectedComponent';
 import TerceirizadoPagamentoModal from '../components/modals/TerceirizadoPagamentoModal';
-import {
-    computeTerceirizadoPorVeiculo,
-    computeTerceirizadoPorLocador,
-    isVehicleTerceirizado,
-} from '../utils/terceirizados';
+import ContratoTerceiroModal from '../components/modals/ContratoTerceiroModal';
+import { computeContratosPorTerceiro } from '../utils/terceirizados';
 
 const fmtBRL = (n) =>
     (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -18,24 +16,8 @@ const fmtH = (n) =>
 const fmtL = (n) =>
     (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + ' L';
 
-// Presets de período (retornam { inicio, fim } em 'YYYY-MM-DD')
-const isoDay = (d) => d.toISOString().split('T')[0];
-const buildPreset = (preset) => {
-    const now = new Date();
-    if (preset === 'mesAtual') {
-        return { inicio: isoDay(new Date(now.getFullYear(), now.getMonth(), 1)),
-                 fim: isoDay(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
-    }
-    if (preset === 'mesPassado') {
-        return { inicio: isoDay(new Date(now.getFullYear(), now.getMonth() - 1, 1)),
-                 fim: isoDay(new Date(now.getFullYear(), now.getMonth(), 0)) };
-    }
-    if (preset === '3meses') {
-        return { inicio: isoDay(new Date(now.getFullYear(), now.getMonth() - 2, 1)),
-                 fim: isoDay(new Date(now.getFullYear(), now.getMonth() + 1, 0)) };
-    }
-    return { inicio: '', fim: '' }; // 'tudo'
-};
+// Origem do backend p/ abrir PDFs estáticos (/uploads/...), sem o sufixo /api.
+const FILE_ORIGIN = (process.env.REACT_APP_API_URL || 'http://localhost:3001/api').replace(/\/api\/?$/, '');
 
 const KpiCard = ({ icon: Icon, label, value, tone = 'gray' }) => {
     const tones = {
@@ -57,333 +39,334 @@ const KpiCard = ({ icon: Icon, label, value, tone = 'gray' }) => {
     );
 };
 
+const StatusBadge = ({ status }) => {
+    const map = {
+        ativo:     { t: 'Ativo', c: 'bg-green-50 text-green-700 border-green-200' },
+        concluido: { t: 'Concluído', c: 'bg-gray-100 text-gray-600 border-gray-200' },
+        cancelado: { t: 'Cancelado', c: 'bg-red-50 text-red-700 border-red-200' },
+    };
+    const s = map[status] || map.ativo;
+    return <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${s.c}`}>{s.t}</span>;
+};
+
+// Barra de progresso físico (horas executadas / contratadas)
+const ProgressBar = ({ ratio }) => {
+    const pct = Math.max(0, Math.min(1, ratio || 0)) * 100;
+    return (
+        <div className="w-full">
+            <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                <div className="h-full bg-purple-500" style={{ width: `${pct}%` }} />
+            </div>
+        </div>
+    );
+};
+
 const TerceirizadosPage = ({ user, apiClient, setAlertMessage }) => {
-    useEnsureResources(['dailyWorkLogs', 'refuelings', 'comboioTransactions', 'terceirizadoPagamentos']);
+    useEnsureResources(['dailyWorkLogs', 'refuelings', 'comboioTransactions', 'terceirizadoPagamentos', 'terceiroContratos']);
     const {
-        vehicles = [], partners = [],
+        vehicles = [], obras = [], partners = [],
         dailyWorkLogs = [], refuelings = [], comboioTransactions = [],
-        terceirizadoPagamentos = [], refresh,
+        terceirizadoPagamentos = [], terceiroContratos = [], refresh,
     } = useData();
 
-    const [activeTab, setActiveTab] = useState('visao');
-    const [presetKey, setPresetKey] = useState('mesAtual');
-    const [period, setPeriod] = useState(() => buildPreset('mesAtual'));
-    const [selectedLocadorId, setSelectedLocadorId] = useState('');
-    const [pagamentoModalOpen, setPagamentoModalOpen] = useState(false);
+    const [expandedTerceiros, setExpandedTerceiros] = useState({});
+    const [expandedContratos, setExpandedContratos] = useState({});
+    const [contratoModal, setContratoModal] = useState(null);   // { contrato } | { contrato: null } (novo)
+    const [pagamentoModal, setPagamentoModal] = useState(null); // { contrato, locador }
+    const [confirmDelete, setConfirmDelete] = useState(null);   // contrato
+    const [pdfLoadingId, setPdfLoadingId] = useState(null);
 
-    const reloadPagamentos = () => refresh?.('terceirizadoPagamentos');
-
-    const applyPreset = (key) => {
-        setPresetKey(key);
-        setPeriod(buildPreset(key));
-    };
-    const setPeriodField = (field, value) => {
-        setPresetKey('custom');
-        setPeriod((p) => ({ ...p, [field]: value }));
-    };
+    const reload = () => { refresh?.('terceiroContratos'); refresh?.('terceirizadoPagamentos'); };
 
     const ctx = useMemo(() => ({
-        dailyWorkLogs, refuelings, comboioTransactions, partners, pagamentos: terceirizadoPagamentos,
-    }), [dailyWorkLogs, refuelings, comboioTransactions, partners, terceirizadoPagamentos]);
+        vehicles, obras, dailyWorkLogs, refuelings, comboioTransactions, partners,
+        pagamentos: terceirizadoPagamentos,
+    }), [vehicles, obras, dailyWorkLogs, refuelings, comboioTransactions, partners, terceirizadoPagamentos]);
 
-    const locadores = useMemo(
-        () => partners.filter((p) => p.tipo_parceiro === 'locador'),
-        [partners]
-    );
+    // Terceiros = locadores (por tipo_parceiro, por veículo terceirizado ou por contrato existente)
+    const terceiros = useMemo(() => {
+        const byId = new Map();
+        const add = (id) => {
+            if (!id || byId.has(id)) return;
+            const p = partners.find((x) => x.id === id);
+            if (p) byId.set(id, p);
+        };
+        partners.forEach((p) => { if (p.tipo_parceiro === 'locador') byId.set(p.id, p); });
+        vehicles.forEach((v) => { if (v.isOutsourced) add(v.locadorId); });
+        terceiroContratos.forEach((c) => add(c.locadorId));
+        return [...byId.values()].sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
+    }, [partners, vehicles, terceiroContratos]);
 
-    const terceirizados = useMemo(
-        () => vehicles.filter(isVehicleTerceirizado),
-        [vehicles]
-    );
+    const obraNome = useMemo(() => {
+        const m = new Map(obras.map((o) => [o.id, o.nome]));
+        return (id) => m.get(id) || '—';
+    }, [obras]);
 
-    // Visão Geral: agregado por locador (+ grupo "Sem locador")
-    const resumoPorLocador = useMemo(() => {
-        const grupos = locadores.map((l) => ({
-            locador: l,
-            ...computeTerceirizadoPorLocador(l.id, vehicles, ctx, period),
-        }));
+    // Agrupa contratos por terceiro (só terceiros que têm contrato)
+    const grupos = useMemo(() => {
+        return terceiros
+            .map((t) => ({ terceiro: t, ...computeContratosPorTerceiro(t.id, terceiroContratos, ctx) }))
+            .filter((g) => g.contratos.length > 0)
+            .sort((a, b) => b.saldo - a.saldo);
+    }, [terceiros, terceiroContratos, ctx]);
 
-        // Equipamentos terceirizados sem locadorId vinculado
-        const semLocadorVeiculos = terceirizados.filter((v) => !v.locadorId);
-        if (semLocadorVeiculos.length > 0) {
-            const equipamentos = semLocadorVeiculos.map((vehicle) => ({
-                vehicle,
-                ...computeTerceirizadoPorVeiculo(vehicle, ctx, period),
-            }));
-            const tot = equipamentos.reduce((a, e) => ({
-                horas: a.horas + e.horas, devido: a.devido + e.devido,
-                litros: a.litros + e.litros, combustivelAbatido: a.combustivelAbatido + e.combustivelAbatido,
-                pagamentos: a.pagamentos + e.pagamentos, saldo: a.saldo + e.saldo,
-            }), { horas: 0, devido: 0, litros: 0, combustivelAbatido: 0, pagamentos: 0, saldo: 0 });
-            grupos.push({ locador: { id: '__none__', razaoSocial: 'Sem locador vinculado' }, equipamentos, ...tot });
+    const totaisGerais = useMemo(() => grupos.reduce((a, g) => ({
+        contratos: a.contratos + g.contratos.length,
+        valorTotal: a.valorTotal + g.valorTotal,
+        diesel: a.diesel + g.diesel,
+        adiantamentos: a.adiantamentos + g.adiantamentos,
+        saldo: a.saldo + g.saldo,
+    }), { contratos: 0, valorTotal: 0, diesel: 0, adiantamentos: 0, saldo: 0 }), [grupos]);
+
+    const toggleTerceiro = (id) => setExpandedTerceiros((s) => ({ ...s, [id]: !s[id] }));
+    const toggleContrato = (id) => setExpandedContratos((s) => ({ ...s, [id]: !s[id] }));
+
+    const handleGerarPdf = async (contrato) => {
+        setPdfLoadingId(contrato.id);
+        try {
+            const { url } = await apiClient.gerarContratoPdf(contrato.id);
+            window.open(`${FILE_ORIGIN}${url}`, '_blank', 'noopener');
+            refresh?.('terceiroContratos');
+        } catch (err) {
+            setAlertMessage?.(err.message || 'Erro ao gerar PDF do contrato.');
+        } finally {
+            setPdfLoadingId(null);
         }
-        return grupos.filter((g) => g.equipamentos.length > 0);
-    }, [locadores, terceirizados, vehicles, ctx, period]);
-
-    const totaisGerais = useMemo(() =>
-        resumoPorLocador.reduce((a, g) => ({
-            devido: a.devido + g.devido,
-            combustivelAbatido: a.combustivelAbatido + g.combustivelAbatido,
-            pagamentos: a.pagamentos + g.pagamentos,
-            saldo: a.saldo + g.saldo,
-        }), { devido: 0, combustivelAbatido: 0, pagamentos: 0, saldo: 0 }),
-        [resumoPorLocador]);
-
-    // Conta Corrente: por equipamento do locador selecionado
-    const contaCorrente = useMemo(() => {
-        if (!selectedLocadorId) return null;
-        if (selectedLocadorId === '__none__') {
-            const equipamentos = terceirizados
-                .filter((v) => !v.locadorId)
-                .map((vehicle) => ({ vehicle, ...computeTerceirizadoPorVeiculo(vehicle, ctx, period) }));
-            return { equipamentos };
-        }
-        return computeTerceirizadoPorLocador(selectedLocadorId, vehicles, ctx, period);
-    }, [selectedLocadorId, terceirizados, vehicles, ctx, period]);
-
-    const selectedLocador = useMemo(() => {
-        if (selectedLocadorId === '__none__') return { id: '__none__', razaoSocial: 'Sem locador vinculado' };
-        return locadores.find((l) => l.id === selectedLocadorId) || null;
-    }, [selectedLocadorId, locadores]);
-
-    const periodoLabel = period.inicio || period.fim
-        ? `${period.inicio || '…'} a ${period.fim || '…'}`
-        : 'Todo o histórico';
-
-    const PRESETS = [
-        { key: 'mesAtual', label: 'Mês atual' },
-        { key: 'mesPassado', label: 'Mês passado' },
-        { key: '3meses', label: 'Últimos 3 meses' },
-        { key: 'tudo', label: 'Tudo' },
-    ];
-
-    const exportExtratoPDF = () => {
-        if (!contaCorrente || contaCorrente.equipamentos.length === 0) return;
-        const doc = new jsPDF();
-        doc.setFontSize(16);
-        doc.text('Extrato de Terceirizado', 14, 16);
-        doc.setFontSize(10);
-        doc.text(`Locador: ${selectedLocador?.razaoSocial || '-'}`, 14, 23);
-        doc.text(`Período: ${periodoLabel}`, 14, 28);
-        const body = contaCorrente.equipamentos.map((e) => [
-            `${e.vehicle.registroInterno || e.vehicle.placa} - ${e.vehicle.tipo}`,
-            fmtH(e.horas), fmtBRL(e.tarifaHora), fmtBRL(e.devido),
-            fmtL(e.litros), fmtBRL(e.combustivelAbatido), fmtBRL(e.pagamentos), fmtBRL(e.saldo),
-        ]);
-        const tot = contaCorrente.equipamentos.reduce((a, e) => ({
-            horas: a.horas + e.horas, devido: a.devido + e.devido, litros: a.litros + e.litros,
-            comb: a.comb + e.combustivelAbatido, pag: a.pag + e.pagamentos, saldo: a.saldo + e.saldo,
-        }), { horas: 0, devido: 0, litros: 0, comb: 0, pag: 0, saldo: 0 });
-        autoTable(doc, {
-            startY: 33,
-            head: [['Equipamento', 'Horas', 'Tarifa/h', 'Devido', 'Litros', 'Combustível', 'Pagamentos', 'Saldo']],
-            body,
-            foot: [['Total', fmtH(tot.horas), '', fmtBRL(tot.devido), fmtL(tot.litros), fmtBRL(tot.comb), fmtBRL(tot.pag), fmtBRL(tot.saldo)]],
-            styles: { fontSize: 8 },
-            headStyles: { fillColor: [168, 85, 247] },
-            footStyles: { fillColor: [243, 232, 255], textColor: [0, 0, 0], fontStyle: 'bold' },
-        });
-        doc.save(`Extrato_Terceirizado_${(selectedLocador?.razaoSocial || 'locador').replace(/[^a-zA-Z0-9]/g, '_')}.pdf`);
     };
+
+    const handleDelete = async () => {
+        if (!confirmDelete) return;
+        try {
+            await apiClient.deleteTerceiroContrato(confirmDelete.id);
+            setAlertMessage?.('Contrato excluído.');
+            reload();
+        } catch (err) {
+            setAlertMessage?.(err.message || 'Erro ao excluir contrato.');
+        } finally {
+            setConfirmDelete(null);
+        }
+    };
+
+    const saldoTone = (v) => (v > 0 ? 'red' : v < 0 ? 'blue' : 'green');
 
     return (
         <div className="container mx-auto p-4 md:p-6 lg:p-8 animate-fade-in">
-            <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14' }} className="mb-1 flex items-center gap-2">
-                <Truck className="text-purple-500" /> Terceirizados
-            </h1>
-            <p className="text-sm text-gray-500 mb-6">
-                Gestão de equipamentos locados: horas apuradas no Faturamento, combustível fornecido abatido e saldo a pagar por locador.
-            </p>
-
-            {/* Filtro de período */}
-            <div className="bg-white p-4 rounded-lg shadow mb-6">
-                <div className="flex flex-wrap items-end gap-3">
-                    <div className="flex items-center gap-2">
-                        <Calendar size={16} className="text-gray-400" />
-                        <span className="text-xs font-bold text-gray-600 uppercase">Período</span>
-                    </div>
-                    <div className="flex gap-1.5 flex-wrap">
-                        {PRESETS.map((p) => (
-                            <button key={p.key} onClick={() => applyPreset(p.key)}
-                                className={`px-3 py-1.5 text-xs rounded-full border transition font-medium ${
-                                    presetKey === p.key
-                                        ? 'bg-purple-50 border-purple-200 text-purple-800'
-                                        : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'}`}>
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
-                    <div className="flex items-end gap-2 ml-auto">
-                        <div>
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Início</label>
-                            <input type="date" value={period.inicio} onChange={(e) => setPeriodField('inicio', e.target.value)}
-                                className="p-2 border rounded-lg text-sm bg-white" />
-                        </div>
-                        <div>
-                            <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Fim</label>
-                            <input type="date" value={period.fim} onChange={(e) => setPeriodField('fim', e.target.value)}
-                                className="p-2 border rounded-lg text-sm bg-white" />
-                        </div>
-                    </div>
+            <div className="flex items-start justify-between mb-1 flex-wrap gap-3">
+                <div>
+                    <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1e1a14' }} className="flex items-center gap-2">
+                        <Truck className="text-purple-500" /> Terceirizados
+                    </h1>
+                    <p className="text-sm text-gray-500 mt-1 max-w-2xl">
+                        Contratos por terceiro e obra (valor fechado). As horas são acompanhamento físico;
+                        o saldo a pagar é o valor do contrato menos o diesel fornecido e os adiantamentos.
+                    </p>
                 </div>
+                <ProtectedComponent requiredPermission="editor">
+                    <button onClick={() => setContratoModal({ contrato: null })}
+                        className="flex items-center gap-1.5 px-4 py-2 text-sm font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        <PlusCircle size={16} /> Novo Contrato
+                    </button>
+                </ProtectedComponent>
             </div>
 
             {/* Totais gerais */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <KpiCard icon={DollarSign} tone="purple" label="Devido (bruto)" value={fmtBRL(totaisGerais.devido)} />
-                <KpiCard icon={Droplet} tone="blue" label="Combustível abatido" value={fmtBRL(totaisGerais.combustivelAbatido)} />
-                <KpiCard icon={Wallet} tone="gray" label="Pagamentos" value={fmtBRL(totaisGerais.pagamentos)} />
-                <KpiCard icon={DollarSign} tone={totaisGerais.saldo > 0 ? 'red' : 'green'} label="Saldo a pagar" value={fmtBRL(totaisGerais.saldo)} />
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-3 my-6">
+                <KpiCard icon={FileText} tone="purple" label="Contratos" value={totaisGerais.contratos} />
+                <KpiCard icon={DollarSign} tone="gray" label="Valor contratado" value={fmtBRL(totaisGerais.valorTotal)} />
+                <KpiCard icon={Droplet} tone="blue" label="Diesel abatido" value={fmtBRL(totaisGerais.diesel)} />
+                <KpiCard icon={Wallet} tone="gray" label="Adiantamentos" value={fmtBRL(totaisGerais.adiantamentos)} />
+                <KpiCard icon={DollarSign} tone={saldoTone(totaisGerais.saldo)} label="Saldo a pagar" value={fmtBRL(totaisGerais.saldo)} />
             </div>
 
-            {/* Abas */}
-            <div className="flex border-b border-gray-200 mb-4 bg-white rounded-t-lg pt-2 px-2 shadow-sm">
-                <button onClick={() => setActiveTab('visao')}
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 transition-colors ${activeTab === 'visao' ? 'border-b-2 border-purple-500 text-purple-700 bg-purple-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                    <Building2 size={16} /> Visão Geral
-                </button>
-                <button onClick={() => setActiveTab('conta')}
-                    className={`py-3 px-4 font-bold text-sm flex items-center gap-2 transition-colors ${activeTab === 'conta' ? 'border-b-2 border-purple-500 text-purple-700 bg-purple-50' : 'text-gray-500 hover:bg-gray-50'}`}>
-                    <Wallet size={16} /> Conta Corrente
-                </button>
-            </div>
+            {grupos.length === 0 && (
+                <div className="bg-white rounded-lg shadow p-12 text-center text-gray-400 text-sm">
+                    Nenhum contrato de terceirizado cadastrado. Clique em <b>Novo Contrato</b> para começar.
+                </div>
+            )}
 
-            {/* VISÃO GERAL */}
-            {activeTab === 'visao' && (
-                <div className="space-y-4">
-                    {resumoPorLocador.length === 0 && (
-                        <div className="bg-white rounded-lg shadow p-12 text-center text-gray-400 text-sm">
-                            Nenhum equipamento terceirizado com movimentação no período ({periodoLabel}).
-                        </div>
-                    )}
-                    {resumoPorLocador.map((g) => (
-                        <div key={g.locador.id} className="bg-white rounded-lg shadow p-4">
-                            <div className="flex items-center justify-between mb-3">
-                                <div className="flex items-center gap-2">
-                                    <Truck size={16} className="text-purple-500" />
-                                    <span className="font-bold text-gray-800">{g.locador.razaoSocial}</span>
-                                    <span className="text-xs text-gray-400">({g.equipamentos.length} equip.)</span>
+            <div className="space-y-3">
+                {grupos.map((g) => {
+                    const openT = !!expandedTerceiros[g.terceiro.id];
+                    return (
+                        <div key={g.terceiro.id} className="bg-white rounded-lg shadow overflow-hidden">
+                            {/* Cabeçalho do terceiro */}
+                            <button onClick={() => toggleTerceiro(g.terceiro.id)}
+                                className="w-full flex items-center gap-3 p-4 hover:bg-gray-50 text-left">
+                                {openT ? <ChevronDown size={18} className="text-gray-400" /> : <ChevronRight size={18} className="text-gray-400" />}
+                                <Truck size={18} className="text-purple-500" />
+                                <span className="font-bold text-gray-800">{g.terceiro.razaoSocial}</span>
+                                <span className="text-xs text-gray-400">
+                                    {g.contratos.length} contrato(s) · {g.numObras} obra(s) · {g.numMaquinas} máquina(s)
+                                </span>
+                                <div className="ml-auto flex items-center gap-4 text-xs">
+                                    <span className="text-gray-500">Diesel <b className="text-blue-700">{fmtBRL(g.diesel)}</b></span>
+                                    <span className="text-gray-500">Saldo <b className={g.saldo > 0 ? 'text-red-600' : g.saldo < 0 ? 'text-blue-600' : 'text-green-600'}>{fmtBRL(g.saldo)}</b></span>
                                 </div>
-                                {g.locador.id !== '__none__' && (
-                                    <button onClick={() => { setSelectedLocadorId(g.locador.id); setActiveTab('conta'); }}
-                                        className="text-xs font-semibold text-purple-600 hover:underline">
-                                        Ver conta corrente →
-                                    </button>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                                <KpiCard icon={Clock} label="Horas" value={fmtH(g.horas)} />
-                                <KpiCard icon={DollarSign} tone="purple" label="Devido" value={fmtBRL(g.devido)} />
-                                <KpiCard icon={Droplet} tone="blue" label="Combustível" value={fmtBRL(g.combustivelAbatido)} />
-                                <KpiCard icon={Wallet} label="Pagamentos" value={fmtBRL(g.pagamentos)} />
-                                <KpiCard icon={DollarSign} tone={g.saldo > 0 ? 'red' : 'green'} label="Saldo" value={fmtBRL(g.saldo)} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                            </button>
 
-            {/* CONTA CORRENTE */}
-            {activeTab === 'conta' && (
-                <div className="bg-white rounded-lg shadow p-4">
-                    <div className="flex flex-wrap items-center gap-3 mb-4">
-                        <label className="text-xs font-bold text-gray-600 uppercase">Locador</label>
-                        <select value={selectedLocadorId} onChange={(e) => setSelectedLocadorId(e.target.value)}
-                            className="p-2 border rounded-lg text-sm bg-white min-w-[240px]">
-                            <option value="">— Selecionar locador —</option>
-                            {locadores.map((l) => <option key={l.id} value={l.id}>{l.razaoSocial}</option>)}
-                            {terceirizados.some((v) => !v.locadorId) && <option value="__none__">Sem locador vinculado</option>}
-                        </select>
-                        <span className="text-xs text-gray-400">Período: {periodoLabel}</span>
-                        <div className="ml-auto flex items-center gap-2">
-                            {contaCorrente && contaCorrente.equipamentos.length > 0 && (
-                                <button onClick={exportExtratoPDF}
-                                    className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
-                                    <FileDown size={15} /> Extrato PDF
-                                </button>
+                            {/* Contratos do terceiro */}
+                            {openT && (
+                                <div className="border-t border-gray-100 divide-y divide-gray-100">
+                                    {g.contratos.map((r) => {
+                                        const c = r.contrato;
+                                        const openC = !!expandedContratos[c.id];
+                                        return (
+                                            <div key={c.id} className="p-4 bg-gray-50/40">
+                                                <div className="flex items-start justify-between gap-3 flex-wrap">
+                                                    <div className="flex items-start gap-2">
+                                                        <button onClick={() => toggleContrato(c.id)} className="mt-0.5">
+                                                            {openC ? <ChevronDown size={16} className="text-gray-400" /> : <ChevronRight size={16} className="text-gray-400" />}
+                                                        </button>
+                                                        <div>
+                                                            <div className="flex items-center gap-2 flex-wrap">
+                                                                <span className="font-bold text-gray-800 text-sm">{c.numero}</span>
+                                                                <StatusBadge status={c.status} />
+                                                            </div>
+                                                            <div className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
+                                                                <Building2 size={12} /> {obraNome(c.obraId)}
+                                                                {c.tipoMaquina ? ` · ${c.tipoMaquina}` : ''} · {r.numMaquinas} máq.
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button onClick={() => handleGerarPdf(c)} disabled={pdfLoadingId === c.id}
+                                                            title="Gerar PDF do contrato"
+                                                            className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-medium bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-60">
+                                                            {pdfLoadingId === c.id ? <Loader size={13} className="animate-spin" /> : <FileDown size={13} />} PDF
+                                                        </button>
+                                                        <ProtectedComponent requiredPermission="editor">
+                                                            <button onClick={() => setPagamentoModal({ contrato: c, locador: g.terceiro })}
+                                                                title="Registrar adiantamento"
+                                                                className="flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                                                                <Wallet size={13} /> Adiantamento
+                                                            </button>
+                                                            <button onClick={() => setContratoModal({ contrato: c })}
+                                                                title="Editar contrato"
+                                                                className="p-1.5 text-gray-500 rounded-lg hover:bg-gray-200"><Pencil size={14} /></button>
+                                                            <button onClick={() => setConfirmDelete(c)}
+                                                                title="Excluir contrato"
+                                                                className="p-1.5 text-red-500 rounded-lg hover:bg-red-50"><Trash2 size={14} /></button>
+                                                        </ProtectedComponent>
+                                                    </div>
+                                                </div>
+
+                                                {/* Números do contrato */}
+                                                <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-3 pl-6">
+                                                    <div>
+                                                        <div className="text-[10px] uppercase font-bold text-gray-400">Valor contrato</div>
+                                                        <div className="text-sm font-bold text-gray-800">{fmtBRL(r.valorTotal)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] uppercase font-bold text-gray-400">Diesel abatido</div>
+                                                        <div className="text-sm font-bold text-blue-700">{fmtBRL(r.diesel)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] uppercase font-bold text-gray-400">Adiantamentos</div>
+                                                        <div className="text-sm font-bold text-gray-700">{fmtBRL(r.adiantamentos)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] uppercase font-bold text-gray-400">Saldo a pagar</div>
+                                                        <div className={`text-sm font-bold ${r.saldo > 0 ? 'text-red-600' : r.saldo < 0 ? 'text-blue-600' : 'text-green-600'}`}>{fmtBRL(r.saldo)}</div>
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-[10px] uppercase font-bold text-gray-400 flex items-center gap-1">
+                                                            <Clock size={11} /> Progresso
+                                                        </div>
+                                                        <div className="text-xs font-semibold text-gray-700">{fmtH(r.horasExecutadas)} / {fmtH(r.horasContratadas)}</div>
+                                                        <ProgressBar ratio={r.progresso} />
+                                                    </div>
+                                                </div>
+
+                                                {c.status === 'ativo' && r.numMaquinas === 0 && (
+                                                    <div className="mt-2 ml-6 flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                                                        <AlertTriangle size={13} />
+                                                        Contrato ativo sem máquina vinculada — nenhum diesel é abatido. Edite o contrato e marque a máquina.
+                                                    </div>
+                                                )}
+
+                                                {r.saldo < 0 && (
+                                                    <p className="text-[11px] text-blue-600 mt-2 pl-6">
+                                                        ⚠ Diesel + adiantamentos já ultrapassaram o valor do contrato — o terceiro deve {fmtBRL(-r.saldo)} à MAK.
+                                                    </p>
+                                                )}
+
+                                                {/* Drill por máquina */}
+                                                {openC && r.equipamentos.length > 0 && (
+                                                    <div className="mt-3 pl-6 overflow-x-auto">
+                                                        <table className="w-full text-xs">
+                                                            <thead>
+                                                                <tr className="text-left text-[10px] uppercase text-gray-400 border-b">
+                                                                    <th className="p-1.5">Máquina</th>
+                                                                    <th className="p-1.5 text-right">Diesel (L)</th>
+                                                                    <th className="p-1.5 text-right">Diesel (R$)</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {r.equipamentos.map((e) => (
+                                                                    <tr key={e.vehicle.id} className="border-b border-gray-50">
+                                                                        <td className="p-1.5">
+                                                                            <span className="font-semibold text-gray-700">{e.vehicle.registroInterno || e.vehicle.placa}</span>
+                                                                            <span className="text-gray-400"> · {e.vehicle.tipo}{e.vehicle.modelo ? ` ${e.vehicle.modelo}` : ''}</span>
+                                                                        </td>
+                                                                        <td className="p-1.5 text-right">{fmtL(e.litros)}</td>
+                                                                        <td className="p-1.5 text-right text-blue-700">{fmtBRL(e.diesel)}</td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                )}
+                                                {openC && r.equipamentos.length === 0 && (
+                                                    <p className="text-[11px] text-gray-400 mt-2 pl-6">Nenhuma máquina do terceiro alocada nesta obra ainda (alocação feita na tela de Obras).</p>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             )}
-                            {selectedLocador && selectedLocador.id !== '__none__' && (
-                                <ProtectedComponent requiredPermission="editor">
-                                    <button onClick={() => setPagamentoModalOpen(true)}
-                                        className="flex items-center gap-1.5 px-3 py-2 text-sm font-semibold bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                                        <PlusCircle size={15} /> Registrar Pagamento
-                                    </button>
-                                </ProtectedComponent>
-                            )}
                         </div>
-                    </div>
+                    );
+                })}
+            </div>
 
-                    {!contaCorrente && (
-                        <div className="p-8 text-center text-gray-400 text-sm">Selecione um locador para ver a conta corrente.</div>
-                    )}
-
-                    {contaCorrente && contaCorrente.equipamentos.length === 0 && (
-                        <div className="p-8 text-center text-gray-400 text-sm">Nenhum equipamento locado deste locador com movimentação no período.</div>
-                    )}
-
-                    {contaCorrente && contaCorrente.equipamentos.length > 0 && (
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm">
-                                <thead>
-                                    <tr className="text-left text-[11px] uppercase text-gray-500 border-b">
-                                        <th className="p-2">Equipamento</th>
-                                        <th className="p-2 text-right">Horas</th>
-                                        <th className="p-2 text-right">Tarifa/h</th>
-                                        <th className="p-2 text-right">Devido</th>
-                                        <th className="p-2 text-right">Litros</th>
-                                        <th className="p-2 text-right">Combustível</th>
-                                        <th className="p-2 text-right">Pagamentos</th>
-                                        <th className="p-2 text-right">Saldo</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {contaCorrente.equipamentos.map((e) => (
-                                        <tr key={e.vehicle.id} className="border-b hover:bg-gray-50">
-                                            <td className="p-2">
-                                                <span className="font-bold text-gray-800">{e.vehicle.registroInterno || e.vehicle.placa}</span>
-                                                <span className="text-gray-400 text-xs"> · {e.vehicle.tipo}{e.vehicle.modelo ? ` ${e.vehicle.modelo}` : ''}</span>
-                                            </td>
-                                            <td className="p-2 text-right">{fmtH(e.horas)}</td>
-                                            <td className="p-2 text-right">{fmtBRL(e.tarifaHora)}</td>
-                                            <td className="p-2 text-right font-semibold text-purple-700">{fmtBRL(e.devido)}</td>
-                                            <td className="p-2 text-right">{fmtL(e.litros)}</td>
-                                            <td className="p-2 text-right text-blue-700">{fmtBRL(e.combustivelAbatido)}</td>
-                                            <td className="p-2 text-right">{fmtBRL(e.pagamentos)}</td>
-                                            <td className={`p-2 text-right font-bold ${e.saldo > 0 ? 'text-red-600' : 'text-green-600'}`}>{fmtBRL(e.saldo)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                                <tfoot>
-                                    <tr className="border-t-2 font-bold text-gray-800">
-                                        <td className="p-2">Total</td>
-                                        <td className="p-2 text-right">{fmtH(contaCorrente.equipamentos.reduce((a, e) => a + e.horas, 0))}</td>
-                                        <td className="p-2"></td>
-                                        <td className="p-2 text-right text-purple-700">{fmtBRL(contaCorrente.equipamentos.reduce((a, e) => a + e.devido, 0))}</td>
-                                        <td className="p-2 text-right">{fmtL(contaCorrente.equipamentos.reduce((a, e) => a + e.litros, 0))}</td>
-                                        <td className="p-2 text-right text-blue-700">{fmtBRL(contaCorrente.equipamentos.reduce((a, e) => a + e.combustivelAbatido, 0))}</td>
-                                        <td className="p-2 text-right">{fmtBRL(contaCorrente.equipamentos.reduce((a, e) => a + e.pagamentos, 0))}</td>
-                                        <td className="p-2 text-right">{fmtBRL(contaCorrente.equipamentos.reduce((a, e) => a + e.saldo, 0))}</td>
-                                    </tr>
-                                </tfoot>
-                            </table>
-                            <p className="text-[11px] text-gray-400 mt-3">
-                                Horas apuradas em Faturamento &amp; Controle. Combustível valorado pelo preço real de cada abastecimento (fallback: tabela do posto parceiro). Saldo = devido − combustível − pagamentos.
-                            </p>
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {pagamentoModalOpen && selectedLocador && selectedLocador.id !== '__none__' && (
-                <TerceirizadoPagamentoModal
-                    locador={selectedLocador}
-                    equipamentos={(contaCorrente?.equipamentos || []).map((e) => e.vehicle)}
+            {contratoModal && (
+                <ContratoTerceiroModal
+                    contrato={contratoModal.contrato}
+                    terceiros={terceiros}
+                    obras={obras}
+                    vehicles={vehicles}
+                    contratos={terceiroContratos}
                     user={user}
                     apiClient={apiClient}
                     setAlertMessage={setAlertMessage}
-                    onClose={() => setPagamentoModalOpen(false)}
-                    onSaved={reloadPagamentos}
+                    onClose={() => setContratoModal(null)}
+                    onSaved={reload}
                 />
+            )}
+
+            {pagamentoModal && (
+                <TerceirizadoPagamentoModal
+                    locador={pagamentoModal.locador}
+                    contrato={pagamentoModal.contrato}
+                    user={user}
+                    apiClient={apiClient}
+                    setAlertMessage={setAlertMessage}
+                    onClose={() => setPagamentoModal(null)}
+                    onSaved={reload}
+                />
+            )}
+
+            {confirmDelete && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-xl w-full max-w-sm shadow-xl p-5">
+                        <h3 className="text-base font-bold text-gray-800 mb-2">Excluir contrato {confirmDelete.numero}?</h3>
+                        <p className="text-sm text-gray-500 mb-4">Esta ação não pode ser desfeita. Os adiantamentos vinculados a ele deixarão de ser abatidos.</p>
+                        <div className="flex justify-end gap-2">
+                            <button onClick={() => setConfirmDelete(null)} className="px-4 py-2 bg-gray-200 rounded-lg text-sm font-medium hover:bg-gray-300">Cancelar</button>
+                            <button onClick={handleDelete} className="px-4 py-2 bg-red-600 text-white rounded-lg text-sm font-semibold hover:bg-red-700">Excluir</button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

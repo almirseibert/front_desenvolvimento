@@ -11,9 +11,8 @@ import { X, Loader, Save, Wallet } from 'lucide-react';
  *  pagamento     objeto existente (edição) ou null (novo)
  *  apiClient, setAlertMessage, onClose, onSaved
  */
-const TerceirizadoPagamentoModal = ({ locador, equipamentos = [], pagamento, user, apiClient, setAlertMessage, onClose, onSaved }) => {
+const TerceirizadoPagamentoModal = ({ locador, contrato, pagamento, user, apiClient, setAlertMessage, onClose, onSaved }) => {
     const [form, setForm] = useState({
-        vehicleId: pagamento?.vehicleId || '',
         data: pagamento?.data ? String(pagamento.data).split('T')[0] : new Date().toISOString().split('T')[0],
         valor: pagamento?.valor != null ? String(pagamento.valor) : '',
         descricao: pagamento?.descricao || '',
@@ -33,7 +32,7 @@ const TerceirizadoPagamentoModal = ({ locador, equipamentos = [], pagamento, use
         try {
             const payload = {
                 locadorId: locador.id,
-                vehicleId: form.vehicleId || null,
+                contratoId: contrato?.id || null,
                 data: form.data,
                 valor: valorNum,
                 descricao: form.descricao || null,
@@ -66,19 +65,17 @@ const TerceirizadoPagamentoModal = ({ locador, equipamentos = [], pagamento, use
                 </div>
                 <form onSubmit={handleSubmit} className="p-4 space-y-3">
                     <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Locador</label>
+                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Terceiro</label>
                         <div className="p-2 bg-gray-50 border rounded-lg text-sm font-medium text-gray-700">{locador?.razaoSocial}</div>
                     </div>
-                    <div>
-                        <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Equipamento (opcional)</label>
-                        <select name="vehicleId" value={form.vehicleId} onChange={handleChange}
-                            className="w-full p-2 border rounded-lg bg-white text-sm">
-                            <option value="">— Geral (todo o locador) —</option>
-                            {equipamentos.map((v) => (
-                                <option key={v.id} value={v.id}>{v.registroInterno || v.placa} · {v.tipo}</option>
-                            ))}
-                        </select>
-                    </div>
+                    {contrato && (
+                        <div>
+                            <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Contrato</label>
+                            <div className="p-2 bg-purple-50 border border-purple-100 rounded-lg text-sm font-medium text-purple-700">
+                                {contrato.numero}{contrato.tipoMaquina ? ` · ${contrato.tipoMaquina}` : ''}
+                            </div>
+                        </div>
+                    )}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Data</label>
