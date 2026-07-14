@@ -356,7 +356,7 @@ const ObraModal = ({
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1 flex items-center gap-1">
-                                    <User size={14}/> WhatsApp do Responsável
+                                    <User size={14}/> Responsável da Obra
                                 </label>
                                 <select
                                     value={responsavelWhatsapp}
