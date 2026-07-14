@@ -11,13 +11,21 @@ import { X, Loader, Save, Wallet } from 'lucide-react';
  *  pagamento     objeto existente (edição) ou null (novo)
  *  apiClient, setAlertMessage, onClose, onSaved
  */
-const TerceirizadoPagamentoModal = ({ locador, contrato, pagamento, user, apiClient, setAlertMessage, onClose, onSaved }) => {
+const fmtBRL = (n) => (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const TerceirizadoPagamentoModal = ({ locador, contrato, pagamento, saldo, user, apiClient, setAlertMessage, onClose, onSaved }) => {
     const [form, setForm] = useState({
         data: pagamento?.data ? String(pagamento.data).split('T')[0] : new Date().toISOString().split('T')[0],
         valor: pagamento?.valor != null ? String(pagamento.valor) : '',
         descricao: pagamento?.descricao || '',
     });
     const [isSaving, setIsSaving] = useState(false);
+
+    // Máximo que pode ser pago = saldo restante. Na edição, o saldo já veio com este
+    // pagamento abatido, então o teto é saldo + valor atual do próprio pagamento.
+    const saldoNum = Number(saldo);
+    const temSaldo = Number.isFinite(saldoNum);
+    const maxPagavel = temSaldo ? saldoNum + (pagamento?.id ? (Number(pagamento.valor) || 0) : 0) : Infinity;
 
     const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -26,6 +34,15 @@ const TerceirizadoPagamentoModal = ({ locador, contrato, pagamento, user, apiCli
         const valorNum = parseFloat(form.valor);
         if (!valorNum || valorNum <= 0) {
             setAlertMessage?.('Informe um valor de pagamento válido.');
+            return;
+        }
+        // Tolerância de 1 centavo para arredondamento.
+        if (temSaldo && valorNum > maxPagavel + 0.005) {
+            setAlertMessage?.(
+                maxPagavel <= 0
+                    ? 'Não há saldo a pagar neste contrato — o valor já foi quitado.'
+                    : `O valor excede o saldo a pagar (${fmtBRL(maxPagavel)}). Não é possível pagar mais do que o restante do contrato.`
+            );
             return;
         }
         setIsSaving(true);
@@ -84,10 +101,18 @@ const TerceirizadoPagamentoModal = ({ locador, contrato, pagamento, user, apiCli
                         </div>
                         <div>
                             <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Valor (R$)</label>
-                            <input type="number" min="0" step="any" name="valor" value={form.valor} onChange={handleChange}
+                            <input type="number" min="0" step="any" max={temSaldo ? Math.max(0, maxPagavel) : undefined}
+                                name="valor" value={form.valor} onChange={handleChange}
                                 placeholder="0,00" className="w-full p-2 border rounded-lg bg-white text-sm" required />
                         </div>
                     </div>
+                    {temSaldo && (
+                        <p className={`text-xs ${maxPagavel > 0 ? 'text-gray-500' : 'text-red-600 font-semibold'}`}>
+                            {maxPagavel > 0
+                                ? <>Saldo a pagar: <span className="font-semibold text-gray-700">{fmtBRL(maxPagavel)}</span></>
+                                : 'Sem saldo a pagar — contrato já quitado.'}
+                        </p>
+                    )}
                     <div>
                         <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Descrição / Referência</label>
                         <input name="descricao" value={form.descricao} onChange={handleChange}

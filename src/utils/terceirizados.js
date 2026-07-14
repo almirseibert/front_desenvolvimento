@@ -136,11 +136,14 @@ export const computeContrato = (contrato, ctx = {}) => {
     // Atribuição pela MÁQUINA vinculada ao contrato (não por obra), evitando
     // dupla contagem quando o terceiro tem vários contratos na mesma obra.
     let horasExecutadas = 0;
+    const horasPorMaquina = new Map();
     dailyWorkLogs.forEach((log) => {
         if (!machineIds.has(log?.vehicleId)) return;
         if (log?.justificativaTipo) return;
         if (!inPeriod(recordDate(log), inicio, fim)) return;
-        horasExecutadas += num(log.totalHours);
+        const h = num(log.totalHours);
+        horasExecutadas += h;
+        horasPorMaquina.set(log.vehicleId, (horasPorMaquina.get(log.vehicleId) || 0) + h);
     });
 
     // Diesel abatido — por máquina
@@ -183,15 +186,61 @@ export const computeContrato = (contrato, ctx = {}) => {
 
     const equipamentos = machines.map((v) => {
         const m = porMaquina.get(v.id) || { litros: 0, valor: 0 };
-        return { vehicle: v, litros: m.litros, diesel: m.valor };
+        return { vehicle: v, litros: m.litros, diesel: m.valor, horas: horasPorMaquina.get(v.id) || 0 };
     });
 
+    // Plano contratado por subgrupo (itensContratados), normalizado.
+    let itens = contrato?.itensContratados;
+    if (typeof itens === 'string') { try { itens = JSON.parse(itens); } catch { itens = []; } }
+    const itensContratados = Array.isArray(itens)
+        ? itens.filter((i) => i && i.type).map((i) => ({ type: i.type, horas: num(i.hours), valorHora: num(i.price), subtotal: num(i.hours) * num(i.price) }))
+        : [];
+
     return {
-        contrato, obra, machines, equipamentos,
+        contrato, obra, machines, equipamentos, itensContratados,
         numMaquinas: machines.length,
         horasExecutadas, horasContratadas, progresso,
         valorTotal, litros, diesel, adiantamentos, saldo,
     };
+};
+
+/**
+ * Lista os abastecimentos (registros individuais) que abatem de UM contrato:
+ * refuelings comuns + saídas de comboio das máquinas do contrato, dentro da vigência.
+ * Retorna [{ date, vehicle, litros, valor, fonte }] ordenado do mais recente.
+ */
+export const getContratoAbastecimentos = (contrato, ctx = {}) => {
+    const {
+        vehicles = [], refuelings = [], comboioTransactions = [], partners = [],
+    } = ctx;
+    const { inicio, fim } = normalizePeriod({ inicio: contrato?.vigenciaInicio, fim: contrato?.vigenciaFim });
+    const machineIds = new Set(contratoMaquinaIds(contrato));
+    if (machineIds.size === 0) return [];
+    const vById = new Map(vehicles.map((v) => [v.id, v]));
+    const out = [];
+
+    refuelings.forEach((r) => {
+        if (!machineIds.has(r?.vehicleId)) return;
+        if (r?.status && r.status !== 'Concluída') return;
+        const d = recordDate(r);
+        if (!inPeriod(d, inicio, fim)) return;
+        out.push({
+            date: d, vehicle: vById.get(r.vehicleId) || null,
+            litros: num(r.litrosAbastecidos), valor: getRefuelingFuelValue(r, partners), fonte: 'posto',
+        });
+    });
+    comboioTransactions.forEach((t) => {
+        if (t?.type !== 'saida') return;
+        if (!machineIds.has(t?.receivingVehicleId)) return;
+        const d = recordDate(t);
+        if (!inPeriod(d, inicio, fim)) return;
+        out.push({
+            date: d, vehicle: vById.get(t.receivingVehicleId) || null,
+            litros: num(t.liters), valor: getComboioSaidaFuelValue(t, comboioTransactions, partners), fonte: 'comboio',
+        });
+    });
+
+    return out.sort((a, b) => (b.date?.getTime() || 0) - (a.date?.getTime() || 0));
 };
 
 /** Agrega todos os contratos de um terceiro (locador). */
