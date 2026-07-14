@@ -275,10 +275,16 @@ const ComboioPage = ({
     const closeModal = () => setModalState({ type: null, data: null, isEditing: false });
     
     const handleEdit = (transaction) => {
+        // Drenagem tem efeitos colaterais (ajuste de média + custo). A edição não é
+        // suportada — para corrigir, exclua e registre novamente.
+        if (transaction.type === 'drenagem') {
+            setAlertMessage("Drenagem não pode ser editada. Exclua e registre novamente.");
+            return;
+        }
+
         let modalType = null;
         if (transaction.type === 'entrada') modalType = 'entrada';
         else if (transaction.type === 'saida') modalType = 'saida';
-        else if (transaction.type === 'drenagem') modalType = 'drenagem';
 
         if (modalType) {
             setModalState({ type: modalType, data: transaction, isEditing: true });
@@ -474,7 +480,7 @@ const ComboioPage = ({
                                 <div className="flex-1 min-w-0">
                                     <div className="flex justify-between items-center mb-1">
                                         <p className="text-sm font-bold text-gray-800 truncate pr-2">
-                                            {t.type === 'entrada' ? `ENTRADA: ${t.partnerName}` : t.type === 'saida' ? `SAÍDA: ${t.receivingVehicleName || 'Veículo'}` : `DRENAGEM: ${t.drainingVehicleName}`}
+                                            {t.type === 'entrada' ? `ENTRADA: ${t.partnerName}` : t.type === 'saida' ? `SAÍDA: ${t.receivingVehicleName || 'Veículo'}` : `DRENAGEM ← ${t.drainingVehicleName}`}
                                         </p>
                                         <span className={`text-base font-mono font-bold whitespace-nowrap ${t.type === 'entrada' || t.type === 'drenagem' ? 'text-green-600' : 'text-red-600'}`}>
                                             {t.type === 'entrada' || t.type === 'drenagem' ? '+' : '-'}{parseFloat(t.liters).toFixed(1)} L
@@ -583,9 +589,11 @@ const ComboioPage = ({
             {modalState.type === 'drenagem' && (
                 <ComboioDrenagemModal
                     onClose={closeModal}
-                    transactionData={modalState.isEditing ? modalState.data : null}
                     user={user}
                     vehicles={vehicles}
+                    refuelings={refuelings}
+                    employees={employees}
+                    obras={obras}
                     apiClient={apiClient}
                     setAlertMessage={setAlertMessage}
                     reloadData={reloadData}
