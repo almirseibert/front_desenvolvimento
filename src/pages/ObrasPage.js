@@ -36,6 +36,7 @@ const ObrasPage = ({
 }) => {
     // --- ESTADOS DA PÁGINA ---
     const [filter, setFilter] = useState('todos'); // 'todos' | 'radar' | 'planejada' | 'mobilizacao' | 'ativa' | 'finalizada'
+    const [showFinalizadas, setShowFinalizadas] = useState(false); // oculta finalizadas por padrão
     const [tipoFilter, setTipoFilter] = useState('todos'); // 'todos' | 'obra' | 'centro_custo'
     const [regiaoFilter, setRegiaoFilter] = useState('todas'); // 'todas' | 'Lajeado' | 'Santa Maria'
     const [orgaoFilter, setOrgaoFilter] = useState('todos'); // 'todos' | <nome do órgão>
@@ -173,10 +174,13 @@ const ObrasPage = ({
                 const tipoMatch = tipoFilter === 'todos' || (o.tipo_registro || 'obra') === tipoFilter;
                 const regiaoMatch = regiaoFilter === 'todas' || o.regiao === regiaoFilter;
                 const orgaoMatch = orgaoFilter === 'todos' || o.orgao_contratante === orgaoFilter;
-                return statusMatch && searchMatch && tipoMatch && regiaoMatch && orgaoMatch;
+                // Finalizadas ficam ocultas por padrão; o toggle "Mostrar finalizadas" ou
+                // selecionar o status "Finalizada" explicitamente no filtro as reexibe.
+                const finalizadaMatch = showFinalizadas || filter === 'finalizada' || o.status !== 'finalizada';
+                return statusMatch && searchMatch && tipoMatch && regiaoMatch && orgaoMatch && finalizadaMatch;
             })
             .sort(sorters[sortBy] || sorters['nome-asc']);
-    }, [obras, filter, tipoFilter, regiaoFilter, orgaoFilter, sortBy, searchTerm]);
+    }, [obras, filter, tipoFilter, regiaoFilter, orgaoFilter, sortBy, searchTerm, showFinalizadas]);
 
     const exportToCSV = () => {
         if (!filteredObras || filteredObras.length === 0) {
@@ -295,6 +299,15 @@ const ObrasPage = ({
                             ))}
                         </select>
                     </div>
+                    <label className="flex items-center gap-2" style={{ cursor: 'pointer' }}>
+                        <input
+                            type="checkbox"
+                            checked={showFinalizadas}
+                            onChange={(e) => setShowFinalizadas(e.target.checked)}
+                            style={{ cursor: 'pointer' }}
+                        />
+                        <span style={labelStyle}>Mostrar finalizadas</span>
+                    </label>
                     <span style={{ marginLeft: 'auto', fontSize: 12, fontWeight: 600, color: '#9a8a78', whiteSpace: 'nowrap' }}>
                         {filteredObras.length} {filteredObras.length === 1 ? 'registro' : 'registros'}
                     </span>
