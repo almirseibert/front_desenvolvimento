@@ -122,7 +122,7 @@ const TerceirizadosPage = ({ user, apiClient, setAlertMessage }) => {
         setPdfLoadingId(contrato.id);
         try {
             const { url } = await apiClient.gerarContratoPdf(contrato.id);
-            window.open(`${FILE_ORIGIN}${url}`, '_blank', 'noopener');
+            window.open(`${FILE_ORIGIN}${url}?v=${Date.now()}`, '_blank', 'noopener');
             refresh?.('terceiroContratos');
         } catch (err) {
             setAlertMessage?.(err.message || 'Erro ao gerar PDF do contrato.');

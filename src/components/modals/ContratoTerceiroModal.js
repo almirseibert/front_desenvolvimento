@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
-import { X, Loader, Save, FileText, Clock, Plus, Trash2, DollarSign } from 'lucide-react';
+import { X, Loader, Save, FileText, Clock, Plus, Trash2, DollarSign, Scale } from 'lucide-react';
 import { vehicleSubTypes, equipmentTypesForHours } from '../../utils/vehicleRules';
+
+const FOROS = ['Santa Maria', 'Lajeado'];
 
 const fmtBRL = (n) =>
     (Number(n) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -34,6 +36,14 @@ const ContratoTerceiroModal = ({ contrato, terceiros = [], obras = [], vehicles 
         vigenciaFim: contrato?.vigenciaFim ? String(contrato.vigenciaFim).split('T')[0] : '',
         status: contrato?.status || 'ativo',
         observacoes: contrato?.observacoes || '',
+        prazoPagamentoDias: contrato?.prazoPagamentoDias != null ? String(contrato.prazoPagamentoDias) : '30',
+        percentualJurosMora: contrato?.percentualJurosMora != null ? String(contrato.percentualJurosMora) : '1',
+        percentualMultaMora: contrato?.percentualMultaMora != null ? String(contrato.percentualMultaMora) : '1',
+        prazoSubstituicaoHoras: contrato?.prazoSubstituicaoHoras != null ? String(contrato.prazoSubstituicaoHoras) : '48',
+        prazoInicioServicoHoras: contrato?.prazoInicioServicoHoras != null ? String(contrato.prazoInicioServicoHoras) : '48',
+        percentualMultaInadimplemento: contrato?.percentualMultaInadimplemento != null ? String(contrato.percentualMultaInadimplemento) : '0.5',
+        avisoPrevioRescisaoDias: contrato?.avisoPrevioRescisaoDias != null ? String(contrato.avisoPrevioRescisaoDias) : '2',
+        foroComarca: contrato?.foroComarca || 'Santa Maria',
     });
     const [itens, setItens] = useState(() => normalizeItens(contrato?.itensContratados));
     const [maquinas, setMaquinas] = useState(() => normalizeMaquinas(contrato?.maquinas));
@@ -103,6 +113,14 @@ const ContratoTerceiroModal = ({ contrato, terceiros = [], obras = [], vehicles 
                 vigenciaFim: form.vigenciaFim || null,
                 status: form.status,
                 observacoes: form.observacoes || null,
+                prazoPagamentoDias: parseInt(form.prazoPagamentoDias, 10) || 30,
+                percentualJurosMora: parseFloat(form.percentualJurosMora) || 0,
+                percentualMultaMora: parseFloat(form.percentualMultaMora) || 0,
+                prazoSubstituicaoHoras: parseInt(form.prazoSubstituicaoHoras, 10) || 0,
+                prazoInicioServicoHoras: parseInt(form.prazoInicioServicoHoras, 10) || 0,
+                percentualMultaInadimplemento: parseFloat(form.percentualMultaInadimplemento) || 0,
+                avisoPrevioRescisaoDias: parseInt(form.avisoPrevioRescisaoDias, 10) || 0,
+                foroComarca: form.foroComarca,
                 maquinas: maquinas.filter((id) => maquinasDoTerceiro.some((v) => v.id === id)),
                 createdBy: { userEmail: user?.email || user?.userEmail || '' },
             };
@@ -258,6 +276,50 @@ const ContratoTerceiroModal = ({ contrato, terceiros = [], obras = [], vehicles 
                             <label className="block text-xs font-bold text-gray-600 uppercase mb-1">Vigência fim</label>
                             <input type="date" name="vigenciaFim" value={form.vigenciaFim} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
                         </div>
+                    </div>
+
+                    {/* Cláusulas contratuais (parametrizáveis no PDF gerado) */}
+                    <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2 mb-3">
+                            <Scale size={16} className="text-purple-500" /> Cláusulas contratuais
+                        </h3>
+                        <div className="grid grid-cols-2 gap-3">
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Prazo de pagamento (dias após conclusão)</label>
+                                <input type="number" min="0" name="prazoPagamentoDias" value={form.prazoPagamentoDias} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Foro / Comarca</label>
+                                <select name="foroComarca" value={form.foroComarca} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm">
+                                    {FOROS.map((f) => <option key={f} value={f}>{f}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Juros de mora (% ao mês)</label>
+                                <input type="number" min="0" step="0.01" name="percentualJurosMora" value={form.percentualJurosMora} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Multa moratória (%)</label>
+                                <input type="number" min="0" step="0.01" name="percentualMultaMora" value={form.percentualMultaMora} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Multa por inadimplemento contratual (% do valor)</label>
+                                <input type="number" min="0" step="0.01" name="percentualMultaInadimplemento" value={form.percentualMultaInadimplemento} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Prazo de substituição de equipamento (horas)</label>
+                                <input type="number" min="0" name="prazoSubstituicaoHoras" value={form.prazoSubstituicaoHoras} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Prazo de início do serviço após autorização (horas)</label>
+                                <input type="number" min="0" name="prazoInicioServicoHoras" value={form.prazoInicioServicoHoras} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-bold text-gray-500 mb-1">Aviso prévio para rescisão/suspensão (dias)</label>
+                                <input type="number" min="0" name="avisoPrevioRescisaoDias" value={form.avisoPrevioRescisaoDias} onChange={handleChange} className="w-full p-2 border rounded-lg bg-white text-sm" />
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-gray-400 mt-2">Esses valores preenchem as cláusulas de pagamento, penalidades, rescisão e foro no PDF gerado. Os valores padrão seguem o modelo de contrato de terceiros da MAK.</p>
                     </div>
 
                     {contrato && (
